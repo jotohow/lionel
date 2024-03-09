@@ -1,8 +1,21 @@
+import os
+import sys
+from pathlib import Path
 import numpy as np
 import datetime as dt
 import pandas as pd
 from pulp import LpVariable, LpProblem, lpSum, LpMaximize
 from abc import abstractmethod, ABC
+
+# Add root to path when module is run as a script
+ROOT = Path(os.path.dirname(os.path.abspath(__file__))).parent
+sys.path.append(os.path.dirname(str(ROOT)))
+
+from src.utils import setup_logger
+from src.scrape.managers.budgeter import Budgeter
+from src.scrape.managers.scrape import get_my_team_info
+
+logger = setup_logger(__name__)
 
 
 class BaseSelector(ABC):
@@ -41,11 +54,12 @@ class XISelector(BaseSelector):
         "GK": [1, 1],
     }
 
-    def __init__(self, player_df, season=24):
+    def __init__(self, player_df, season):
         super().__init__(player_df, season)
         self.first_xv = pd.DataFrame()
         self.other_players = pd.DataFrame()
         self.players = self._create_decision_var("player_", self.first_xv)
+        logger.debug("Initialising XI selector object")
 
     @property
     def first_xv(self):
@@ -142,7 +156,7 @@ class NewXVSelector(BaseSelector):
     def __init__(
         self,
         player_df,
-        season=24,
+        season,
         budget=1000,
     ):
         super().__init__(player_df, season)
@@ -157,6 +171,7 @@ class NewXVSelector(BaseSelector):
         self.captains = self._create_decision_var("captain_", self.player_df)
 
         self.xi_selector = None
+        logger.debug("Initialising XV selector object")
 
     @property
     def first_xv(self):
@@ -274,6 +289,23 @@ class UpdateXVSelector(NewXVSelector):
         self.inital_xi_added = False
         self.initial_xi = initial_xi
         super().__init__(player_df, season, budget)
+        self.budgeter = None
+        logger.debug("Initialising update selector object")
+
+    @property
+    def budgeter(self):
+        if self._budgeter is None:
+            try:
+                picks = get_my_team_info()["picks"]
+                self._budgeter = Budgeter(picks)
+            except ValueError:
+                logger.info("Cannot create budgeter object. No login info.")
+                pass
+        return self._budgeter
+
+    @budgeter.setter
+    def budgeter(self, val):
+        self._budgeter = val
 
     @property
     def player_df(self):
@@ -305,51 +337,3 @@ class UpdateXVSelector(NewXVSelector):
         prob = super().initialise_xv_prob()
         prob = self._add_changes_constraint(prob, max_changes)
         return prob
-
-
-if __name__ == "__main__":
-    import sys
-
-    sys.path.append("/Users/toby/Dev/lionel/src")
-
-    # from team.team import Team
-    # from run import run
-
-    # from scrape.combine import BetFPLCombiner
-    # from scrape.players.process import FPLProcessor
-    # from scrape.bet.scrape import FutureBetScraper
-
-    # fproc = FPLProcessor(24, 28)
-    # bs = FutureBetScraper()
-    # bs.run_scrape()
-    # df_odds = bs.to_df()
-
-    # bfc = BetFPLCombiner(24, df_odds, fproc.player_stats)
-    # bfc.prepare_next_gw()
-    # df_final = bfc.df_next_game
-
-    # selector = DumbOptimiser(df_final, 24)
-    # selector._pick_xv()
-    # team1 = selector.first_xv
-    # selector.pick_xi()
-    # team2 = selector.first_xi
-
-    # assert len(team2[team2.picked == 1]) == 15
-    # assert len(team2[team2.first_xi == 1]) == 11
-
-    # print(team2)
-    # test team update
-    path = "/Users/toby/Dev/lionel/data/"
-    df_next_game_2 = pd.read_csv(path + "df_next_game_2.csv", index_col=0)
-    xv_selector = NewXVSelector(df_next_game_2, season=24)
-    initial_xv = [5, 19, 20, 60, 85, 263, 294, 342, 353, 355, 362, 377, 409, 430, 509]
-    update_selector = UpdateXVSelector(df_next_game_2, season=24, initial_xi=initial_xv)
-    update_selector.pick_xv()
-    new_xv = sorted(
-        update_selector.first_xv[update_selector.first_xv.picked == 1].element.to_list()
-    )
-    existing = [name for name in new_xv if name in initial_xv]
-    print(len(existing))
-    new = [name for name in new_xv if name not in initial_xv]
-    dropped = [name for name in initial_xv if name not in new_xv]
-    pass

@@ -6,6 +6,7 @@ dependencies:
   - pip
   - plotly
   - ipykernel
+  - pytest
   - pip:
     - pulp
     - python-dotenv
