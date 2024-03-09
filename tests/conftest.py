@@ -18,7 +18,13 @@ logger = setup_logger(__name__)
 @pytest.fixture
 def df_next_game():
     logger.info("Loading df_next_game")
-    return pd.read_csv(DATA_DIR / "df_next_game.csv")
+    return pd.read_csv(DATA_DIR / "df_next_game.csv", index_col=0)
+
+
+@pytest.fixture
+def df_first_xv():
+    logger.info("Loading first_xv")
+    return pd.read_csv(DATA_DIR / "first_xv.csv", index_col=0)
 
 
 @pytest.fixture
