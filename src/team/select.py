@@ -4,6 +4,12 @@ import pandas as pd
 from pulp import LpVariable, LpProblem, lpSum, LpMaximize
 from abc import abstractmethod, ABC
 
+from utils import setup_logger
+from scrape.managers.budgeter import Budgeter
+from scrape.managers.scrape import get_my_team_info
+
+logger = setup_logger(__name__)
+
 
 class BaseSelector(ABC):
 
@@ -46,6 +52,7 @@ class XISelector(BaseSelector):
         self.first_xv = pd.DataFrame()
         self.other_players = pd.DataFrame()
         self.players = self._create_decision_var("player_", self.first_xv)
+        logger.debug("Initialising XI selector object")
 
     @property
     def first_xv(self):
@@ -157,6 +164,7 @@ class NewXVSelector(BaseSelector):
         self.captains = self._create_decision_var("captain_", self.player_df)
 
         self.xi_selector = None
+        logger.debug("Initialising XV selector object")
 
     @property
     def first_xv(self):
@@ -274,6 +282,23 @@ class UpdateXVSelector(NewXVSelector):
         self.inital_xi_added = False
         self.initial_xi = initial_xi
         super().__init__(player_df, season, budget)
+        self.budgeter = None
+        logger.debug("Initialising update selector object")
+
+    @property
+    def budgeter(self):
+        if self._budgeter is None:
+            try:
+                picks = get_my_team_info()["picks"]
+                self._budgeter = Budgeter(picks)
+            except ValueError:
+                logger.info("Cannot create budgeter object. No login info.")
+                pass
+        return self._budgeter
+
+    @budgeter.setter
+    def budgeter(self, val):
+        self._budgeter = val
 
     @property
     def player_df(self):
