@@ -1,9 +1,9 @@
-from typing import Type
 import pandas as pd
-import numpy as np
+from utils import setup_logger
 
 from team.select import NewXVSelector, UpdateXVSelector
 
+logger = setup_logger(__name__)
 
 """ 
 Steps to enable updating from an existing Team:
@@ -82,6 +82,7 @@ class Team:
         self.testing = testing
         self.selector_obj = None
         self.selector = None
+        logger.info(f"Initialising team object. Update:{self.update_existing_team}")
 
     def __repr__(self):
         return (
@@ -93,8 +94,10 @@ class Team:
     def selector_obj(self):
         if self._selector_obj is None and self.update_existing_team:
             self._selector_obj = UpdateXVSelector
+            logger.debug("Adding update selector")
         elif self._selector_obj is None and not self.update_existing_team:
             self._selector_obj = NewXVSelector
+            logger.debug("Adding new selector")
         return self._selector_obj
 
     @selector_obj.setter
