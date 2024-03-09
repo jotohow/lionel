@@ -1,7 +1,16 @@
 from typing import Type
 import pandas as pd
+import numpy as np
 
-from team.select import DumbOptimiser
+from team.select import NewXVSelector, UpdateXVSelector
+
+
+""" 
+Steps to enable updating from an existing Team:
+1. Allow player ids to be passed in
+2. Get the data for those players from dataframe etc as normal
+3. Run optimisation with current players as a starting point
+"""
 
 
 class Team:
@@ -30,10 +39,9 @@ class Team:
         season,
         next_gameweek,  # adjusted from current_gameweek to next_gameweek
         df_next_game=pd.DataFrame(),
-        initial_xi: Type["Team"] = None,  # The previous team for updates to be made to
+        initial_xi=[],  # The previous team for updates to be made to
         odds_weight_def=0.6,
         odds_weight_fwd=0.4,
-        optimisation_obj=DumbOptimiser,
         budget=1000,
         testing=False,
         processor=None,
@@ -56,13 +64,13 @@ class Team:
 
         self.season = season
         self.gameweek = next_gameweek
-        self.odds_weight_def = 0.6
-        self.odds_weight_fwd = 0.4
-
-        self.selector = optimisation_obj
+        self.processor = None
+        self.odds_weight_def = odds_weight_def
+        self.odds_weight_fwd = odds_weight_fwd
 
         self.df_next_game = df_next_game
         self.initial_xi = initial_xi  # Could be another object of the same class? That would be v. nice
+        self.update_existing_team = len(initial_xi) > 0
         self.first_xi = pd.DataFrame()
         self.first_xv = pd.DataFrame()
 
@@ -72,6 +80,8 @@ class Team:
 
         self.selected = False
         self.testing = testing
+        self.selector_obj = None
+        self.selector = None
 
     def __repr__(self):
         return (
@@ -80,11 +90,28 @@ class Team:
         )
 
     @property
+    def selector_obj(self):
+        if self._selector_obj is None and self.update_existing_team:
+            self._selector_obj = UpdateXVSelector
+        elif self._selector_obj is None and not self.update_existing_team:
+            self._selector_obj = NewXVSelector
+        return self._selector_obj
+
+    @selector_obj.setter
+    def selector_obj(self, val):
+        self._selector_obj = val
+
+    @property
     def selector(self):
-        if isinstance(self._selector, type):
-            self._selector = self._selector(
-                self.df_next_game, self.season, budget=self.budget, testing=self.testing
-            )
+        if self._selector is None:
+            kwargs = {
+                "player_df": self.df_next_game,
+                "season": self.season,
+                "budget": self.budget,
+            }
+            if self.update_existing_team:
+                kwargs["initial_xi"] = self.initial_xi
+            self._selector = self.selector_obj(**kwargs)
         return self._selector
 
     @selector.setter
@@ -99,6 +126,7 @@ class Team:
             raise Exception("No processor has been set and no data has been passed.")
         elif self._df_next_game.empty:
             self._df_next_game = self.processor.prepare_next_gw()
+
         return self._df_next_game
 
     @df_next_game.setter
@@ -129,31 +157,14 @@ class Team:
     def value(self, val):
         self._value = val
 
-    @property
-    def budget(self):
-        return self._budget
-
-    @budget.setter
-    def budget(self, val):
-        if self.initial_xi is None:
-            self._budget = val
-        else:
-            remaining = self._get_deficit_budget()
-            budget = self.initial_xi.value
-            self._budget = budget
-
-    def _get_deficit_budget(self):
-        """Get budget after adjustments for penalties"""
+    def _pick_xv(self, max_changes):
         pass
 
-    def pick_xi(self):
+    def pick_xi(self, max_changes=None):
         """Run picks"""
+        if self.update_existing_team:
+            assert max_changes is not None
+        self.selector.pick_xv(max_changes)
         self.first_xi = self.selector.pick_xi()
         self.selected = True
         return self.first_xi
-
-    def suggest_transfers(self):
-        pass
-
-    def suggest_specific_transfer(self):
-        pass
