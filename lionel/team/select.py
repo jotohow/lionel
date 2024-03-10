@@ -11,9 +11,9 @@ from abc import abstractmethod, ABC
 ROOT = Path(os.path.dirname(os.path.abspath(__file__))).parent
 sys.path.append(os.path.dirname(str(ROOT)))
 
-from src.utils import setup_logger
-from src.scrape.managers.budgeter import Budgeter
-from src.scrape.managers.scrape import get_my_team_info
+from lionel.utils import setup_logger
+from lionel.scrape.managers.budgeter import Budgeter
+from lionel.scrape.managers.scrape import get_my_team_info
 
 logger = setup_logger(__name__)
 
