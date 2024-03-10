@@ -6,7 +6,7 @@ import json
 import sys
 
 CWD = Path(os.path.dirname(os.path.realpath(__file__)))
-SRC = CWD.parent / "src"
+SRC = CWD.parent / "lionel"
 sys.path.append(str(SRC))
 DATA_DIR = CWD / "data"
 
