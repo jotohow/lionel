@@ -6,6 +6,7 @@ import datetime as dt
 import pandas as pd
 from pulp import LpVariable, LpProblem, lpSum, LpMaximize
 from abc import abstractmethod, ABC
+from dotenv import load_dotenv
 
 # Add root to path when module is run as a script
 ROOT = Path(os.path.dirname(os.path.abspath(__file__))).parent
@@ -16,6 +17,7 @@ from lionel.scrape.managers.budgeter import Budgeter
 from lionel.scrape.managers.scrape import get_my_team_info
 
 logger = setup_logger(__name__)
+load_dotenv()
 
 
 class BaseSelector(ABC):
@@ -290,15 +292,20 @@ class UpdateXVSelector(NewXVSelector):
         self.initial_xi = initial_xi
         super().__init__(player_df, season, budget)
         self.budgeter = None
+        self.cant_use_budgeter = False
         logger.debug("Initialising update selector object")
 
     @property
     def budgeter(self):
-        if self._budgeter is None:
+        if self._budgeter is None and not self.cant_use_budgeter:
+            # maybe change budgeter object so that it can work
+            # for when we can connect or not
+            team_id = os.environ.get("FPL_TEAM_ID")
             try:
                 picks = get_my_team_info()["picks"]
                 self._budgeter = Budgeter(picks)
             except ValueError:
+                self.cant_use_budgeter = True
                 logger.info("Cannot create budgeter object. No login info.")
                 pass
         return self._budgeter
@@ -321,6 +328,8 @@ class UpdateXVSelector(NewXVSelector):
     def player_df(self, val):
         self._player_df = val
 
+    # how to add a budget constriant where the budget is adjusted by the sale price of
+    # each player only when they are the one that is swapped out...
     def _add_changes_constraint(self, prob, max_changes):
         prob += (
             lpSum(
@@ -331,6 +340,23 @@ class UpdateXVSelector(NewXVSelector):
             <= max_changes
         )
         return prob
+
+    # add a constraint where the cost of new players is less than budget plus cost of old players
+    def _add_budget_changes_constraint(self, prob, max_changes):
+        pass
+        # prob += (
+        #     lpSum(
+        #         self.players[i] * self.player_df["value"][i]
+        #         for i in range(len(self.player_df))
+        #         if not self.player_df["initial_xi"][i]
+        #     )
+        #     <= self.budget + lpSum(
+        #         self.players[i] * self.player_df["value"][i]
+        #         for i in range(len(self.player_df))
+        #         if self.player_df["initial_xi"][i]
+        #     )
+        # )
+        # return prob
 
     def initialise_xv_prob(self, max_changes=1):
         # add to method from parent class

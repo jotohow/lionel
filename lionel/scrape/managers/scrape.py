@@ -15,10 +15,15 @@ def get_entry_response(team_id, gw) -> dict:
     return get_response(url)
 
 
-def get_existing_player_elements(json_) -> list:
+def _get_existing_player_elements(json_) -> list:
     picks = json_["picks"]
     assert len(picks) == 15, logger.exception(f"Expected 15 picks, got {len(picks)}")
     return [pick["element"] for pick in picks]
+
+
+def get_existing_player_elements(team_id, gw) -> list:
+    r = get_entry_response(team_id, gw)
+    return _get_existing_player_elements(r)
 
 
 def get_budget(json_) -> dict:
