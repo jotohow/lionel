@@ -1,0 +1,18 @@
+name: lionel-forecasting
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - pip
+  - plotly
+  - ipykernel
+  - pytest
+  - pytorch
+  - neuralforecast
+  - matplotlib
+  - pip:
+    - pulp
+    - python-dotenv
+    - pandas
+    - numpy
+    - requests

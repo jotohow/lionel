@@ -1,5 +1,4 @@
 import pandas as pd
-from pathlib import Path
 from lionel.data_load.constants import (
     BASE,
     DATA,
@@ -33,6 +32,22 @@ NEEDED_COLS = {
     "was_home": ("bool", "bool"),
     "kickoff_time": ("object", "datetime64[D]"),
 }
+
+NAME_MAP = {
+    "team_name": {
+        "Man City": "Manchester City",
+        "Man Utd": "Manchester Utd",
+        "Spurs": "Tottenham",
+        "Nott'm Forest": "Nottingham",
+    },
+    "name": {
+        "Son Heung-min": "Heung-Min Son",
+        "João Cancelo": "João Pedro Cavaco Cancelo",
+        "Emerson Leite de Souza Junior": "Emerson Aparecido Leite de Souza Junior",
+    },
+}
+
+COL_RENAME = {"team": "team_name", "GW": "gameweek", "kickoff_time": "game_date"}
 
 
 def validate_gw_stats(df_gw):
@@ -69,6 +84,12 @@ def update_gw_stats(df_gw_existing, df_gw_new, season):
     return df_gw_new
 
 
+def clean_gw_stats(df_gw):
+    df_gw = df_gw.rename(columns=COL_RENAME)
+    df_gw = df_gw.replace(NAME_MAP)
+    return df_gw
+
+
 def update_local_csv(season):
     df_gw_new = get_gw_stats(season)
 
@@ -81,7 +102,7 @@ def update_local_csv(season):
     except FileNotFoundError:
         pass
     df_gw_new.to_csv(RAW / "gw_stats.csv", index=False)
-    return None
+    return df_gw_new
 
 
 def run_update(season):
