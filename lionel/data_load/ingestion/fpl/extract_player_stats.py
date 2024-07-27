@@ -1,22 +1,12 @@
 import pandas as pd
 from pathlib import Path
-
-BASE = Path(__file__).parents[4]
-DATA = BASE / "data"
-RAW = DATA / "raw"
-
-BASE_URL = (
-    "https://raw.githubusercontent.com/vaastav/Fantasy-Premier-League/master/data"
+from lionel.data_load.constants import (
+    BASE,
+    DATA,
+    RAW,
+    BASE_URL,
+    SEASON_MAP,
 )
-
-SEASON_MAP = {
-    24: "2023-24",
-    23: "2022-23",
-    22: "2021-22",
-    21: "2020-21",
-    20: "2019-20",
-    19: "2018-19",
-}
 
 NEEDED_COLS = {
     "GW": ("int64", "int64"),
@@ -87,7 +77,6 @@ def update_local_csv(season):
             RAW / "gw_stats.csv",
         )
         df_gw_existing = update_dtypes(df_gw_existing)
-        print(df_gw_existing.dtypes)
         df_gw_new = update_gw_stats(df_gw_existing, df_gw_new, season)
     except FileNotFoundError:
         pass
