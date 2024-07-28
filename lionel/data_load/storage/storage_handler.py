@@ -1,7 +1,11 @@
 import pandas as pd
+from lionel.data_load.constants import DATA, RAW, CLEANED, PROCESSED
 
 
 class S3Storer:
+    def __init__(self):
+        self.data = ""  # wherever the S3 bucket is
+
     def store(self, data, path, **kwargs):
         data.to_csv(path, **kwargs)
         # code to upload to S3
@@ -9,13 +13,13 @@ class S3Storer:
 
 class CSVStorer:
     def __init__(self):
-        pass
+        self.data = DATA
 
     def store(self, data, path, **kwargs):
-        data.to_csv(path, **kwargs)
+        data.to_csv(self.data / path, **kwargs)
 
     def load(self, path):
-        return pd.read_csv(path)
+        return pd.read_csv(self.data / path)
 
 
 class StorageHandler:

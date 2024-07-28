@@ -15,7 +15,7 @@ def update_local_team_ids(season):
 
 
 def clean_team_ids(team_ids):
-    team_ids = team_ids.rename(columns={"name": "team", "id": "team_id"})
+    team_ids = team_ids.rename(columns={"name": "team_name", "id": "team_id"})
     team_ids = team_ids.replace(TEAM_MAP)
     return team_ids
 

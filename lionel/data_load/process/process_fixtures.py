@@ -13,7 +13,7 @@ def add_team_names(df_fixtures, df_team_ids):
 
     # Cleaning
     df_fixtures = df_fixtures.rename(
-        {"team_x": "away_team_name", "team_y": "home_team_name"}, axis=1
+        {"team_name_x": "away_team_name", "team_name_y": "home_team_name"}, axis=1
     )
     df_fixtures = df_fixtures.drop(["team_id_x", "team_id_y"], axis=1)
 

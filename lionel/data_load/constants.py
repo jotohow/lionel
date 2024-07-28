@@ -5,6 +5,7 @@ DATA = BASE / "data"
 RAW = DATA / "raw"
 PROCESSED = DATA / "processed"
 CLEANED = DATA / "cleaned"
+ANALYSIS = DATA / "analysis"
 
 BASE_URL = (
     "https://raw.githubusercontent.com/vaastav/Fantasy-Premier-League/master/data"

@@ -1,9 +1,5 @@
 import pandas as pd
-from pathlib import Path
 from lionel.data_load.constants import (
-    BASE,
-    DATA,
-    RAW,
     BASE_URL,
     SEASON_MAP,
 )
@@ -31,6 +27,7 @@ NEEDED_COLS = {
 
 def get_fixtures(season):
     df_fixtures = pd.read_csv(f"{BASE_URL}/{SEASON_MAP[season]}/fixtures.csv")
+    validate_fixtures(df_fixtures)
     return df_fixtures
 
 
@@ -41,15 +38,3 @@ def validate_fixtures(df_fixtures):
     for col, dtype in NEEDED_COLS.items():
         assert df_fixtures[col].dtype == dtype, f"Invalid dtype for {col}"
     return None
-
-
-def update_local_fixtures(season):
-    df_fixtures = get_fixtures(season)
-    validate_fixtures(df_fixtures)
-    df_fixtures.to_csv(RAW / f"fixtures_{season}.csv", index=False)
-    return None
-
-
-if __name__ == "__main__":
-    update_local_fixtures(24)
-    update_local_fixtures(23)
