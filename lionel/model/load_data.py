@@ -4,27 +4,6 @@ import datetime as dt
 import lionel.data_load.storage.storage_handler as storage_handler
 
 
-SEASON = 24
-GAMES_WINDOW = 30
-HISTORICAL_COLS = [
-    "assists",
-    "bps",
-    "creativity",
-    "goals_scored",
-    "influence",
-    "minutes",
-    "selected",
-    "threat",
-    "transfers_balance",
-    "value",
-    "team_scored",
-    "team_conceded",
-    "y",
-]
-
-# sh = storage_handler.StorageHandler(local=True)
-
-
 def load_gw_data(storage_handler, next_gw, season):
     df_gw_current = storage_handler.load(f"processed/gw_stats_{season}.csv")
     df_gw_current = df_gw_current[df_gw_current["gameweek"] < next_gw]
@@ -34,25 +13,89 @@ def load_gw_data(storage_handler, next_gw, season):
     return df_gw
 
 
-def filter_unneeded_names(df_gw, season):
-    # Only keep those available at the end of the year
-    latest_gw = df_gw.loc[df_gw["season"] == season, "gameweek"].max()
-    valid_names = (
-        df_gw.loc[
-            (df_gw["gameweek"] == latest_gw) & (df_gw["season"] == season), "name"
+def get_date_from_gw(gw):
+    day0 = dt.date(2024, 1, 1)
+    return day0 + dt.timedelta(days=int(gw))
+
+
+def get_expected_names3(df_gw, season, next_gw):
+    # return a series of names against their team in the last gameweek
+    exp = df_gw.loc[
+        (df_gw["season"] == season) & (df_gw["gameweek"] == next_gw - 1),
+        ["name", "team_name", "position"],
+    ].set_index("name")
+    return exp.to_dict(orient="index")
+
+
+def filter_unneeded_names(df_gw, expected_names):
+    return df_gw[df_gw["name"].isin(expected_names)]
+
+
+def create_forecast_df(expected_names, next_gw, horizon):
+    l_forecast = []
+
+    for gw in range(next_gw, next_gw + horizon):
+        # create one dict for each player in each gw
+        d_ = [
+            {
+                "name": name,
+                "gameweek": gw,
+                "team_name": thing["team_name"],
+                "position": thing["position"],
+            }
+            for name, thing in expected_names.items()
         ]
-        .unique()
-        .tolist()
+        l_forecast.extend(d_)
+    return pd.DataFrame.from_dict(l_forecast)
+
+
+def add_fixtures_to_forecast(df_forecast, df_fixtures):
+    df_forecast = df_forecast.merge(
+        df_fixtures, on=["gameweek", "team_name"], how="left", indicator=True
     )
-    df_gw = df_gw[df_gw["name"].isin(valid_names)]
-    return df_gw
+    assert df_forecast[df_forecast._merge == "both"].notna().all().all()
+    df_forecast = df_forecast.ffill()
+
+    df_no_fixture = df_forecast.loc[
+        df_forecast["_merge"] == "left_only", ["name", "gameweek", "team_name"]
+    ]
+    df_forecast = df_forecast.drop(columns="_merge")
+
+    # For now, only predict the first game of a gameweek if it's a double...
+    df_forecast = df_forecast.drop_duplicates(
+        subset=["name", "gameweek"], keep="first"
+    ).reset_index(drop=True)
+    return df_forecast, df_no_fixture
 
 
-sh = storage_handler.StorageHandler(local=True)
-df_load = load_gw_data(sh, 9, 24)
+def add_dummy_cols(df_filtered, df_forecast):
+    # TODO: args were df_train, df_forecast before... not sure if i messed smth up
+    df_train = pd.get_dummies(
+        df_filtered,  # THIS
+        columns=["team_name", "position", "opponent_team_name"],
+        drop_first=True,
+    )
+    expected_dummy_cols = [
+        col
+        for col in df_train.columns
+        if "team_name" in col or "opponent_team_name" in col or "position" in col
+    ]
+    df_forecast = pd.get_dummies(
+        df_forecast,
+        columns=["team_name", "position", "opponent_team_name"],
+        drop_first=True,
+    )
+    missing_dummy_cols = [
+        col for col in expected_dummy_cols if col not in df_forecast.columns
+    ]
+    extra_dummy_cols = pd.DataFrame(
+        {col: [False] * len(df_forecast) for col in missing_dummy_cols}
+    )
+    df_forecast = pd.concat([df_forecast, extra_dummy_cols], axis=1)
+    return df_train, df_forecast
 
 
-def get_gw_order(df_gw):
+def get_gw_map(df_gw, season):
     gameweek_order = (
         df_gw[["gameweek", "season"]]
         .drop_duplicates()
@@ -64,10 +107,30 @@ def get_gw_order(df_gw):
         .rename(columns={"index": "gameweek_order"})
     )
     gameweek_order["gameweek_order"] = gameweek_order["gameweek_order"] + 1
+
+    # Add missing ones up to end of season
+    last_gw = gameweek_order.tail(1)
+    last_order = last_gw["gameweek_order"].values[0]
+    last_gw = last_gw["gameweek"].values[0]
+
+    diff = 39 - last_gw
+    l = []
+    for i in range(1, diff):
+        d = {
+            "gameweek_order": last_order + i,
+            "gameweek": last_gw + i,
+            "season": season,
+        }
+        l.append(d)
+    df = pd.DataFrame.from_dict(l)
+    gameweek_order = pd.concat([gameweek_order, df])
+    gameweek_order = gameweek_order.set_index(["season", "gameweek"]).to_dict(
+        orient="index"
+    )
     return gameweek_order
 
 
-def filter_gws(df_gw, next_gw, season, games_window=30):
+def filter_gws(df_gw, next_gw, season, games_window=20):
     df_gw = df_gw[
         (  # current season
             (df_gw["gameweek"] < next_gw)
@@ -79,223 +142,106 @@ def filter_gws(df_gw, next_gw, season, games_window=30):
             & (df_gw["season"] == season - 1)
         )
     ]
-    # to change this bit
-    gameweek_order = get_gw_order(df_gw)
-    df_gw = df_gw.merge(gameweek_order, on=["gameweek", "season"])
     return df_gw
 
 
-def get_gw_order_map(df_f, SEASON):
-
-    gw_map = df_f[["gameweek", "season", "gameweek_order"]].drop_duplicates()
-    gw_map = df_f.loc[
-        df_f.season == SEASON, ["gameweek", "gameweek_order"]
-    ].drop_duplicates()
-    gw_map = gw_map.set_index("gameweek").to_dict(orient="dict")["gameweek_order"]
-    for gw in range(max(gw_map.keys()) + 1, 39):
-        gw_map[gw] = gw_map[gw - 1] + 1
-    return gw_map
-
-
-def get_date_from_gw(gw):
-    day0 = dt.date(2024, 1, 1)
-    return day0 + dt.timedelta(days=int(gw))
-
-
-def prepare_training_data(df):
-
-    # Add scored + conceded
-    df["team_scored"] = np.where(df["is_home"], df["team_h_score"], df["team_a_score"])
-    df["team_conceded"] = np.where(
-        df["is_home"], df["team_a_score"], df["team_h_score"]
-    )
-    df["y"] = df["total_points"]
-    df["unique_id"] = df["name"]
-    df["ds"] = pd.to_datetime(
-        df["gameweek_order"].apply(get_date_from_gw)
-    )  # apply after?
-
-    df = df.drop(
-        columns=["name", "game_date", "total_points", "gameweek", "gameweek_order"]
-        + ["season", "element", "ict_index", "team_h_score"]
-        + ["team_a_score", "opponent_team"]
-    )
-    df = pd.get_dummies(
-        df, columns=["opponent_team_name", "team_name", "position"], drop_first=True
-    )
-    return df  ## this should be prepared fully now...
+def add_gameweek_order(df_train, df_forecast, season):
+    gw_map = get_gw_map(df_train, season)
+    df_forecast["season"] = season
+    df_l = [df_train, df_forecast]
+    for i in range(len(df_l)):
+        df_l[i]["gameweek_order"] = (
+            df_l[i]
+            .set_index(["season", "gameweek"])
+            .index.map(lambda x: gw_map[x]["gameweek_order"])
+        )
+        df_l[i]["ds"] = pd.to_datetime(
+            df_l[i]["gameweek_order"].apply(get_date_from_gw)
+        )
+    return df_l
 
 
-def fixture_gw_to_ds(next_gw_order, horizon=1):
-    print(next_gw_order)
-    next_ds = get_date_from_gw(next_gw_order)
-    return {next_gw_order + i: next_ds + dt.timedelta(days=i) for i in range(horizon)}
-
-
-def get_relevant_fixtures(next_gw, season, storage_handler, gw_map, horizon=1):
-
-    # this might cause an issue if there's no game for a team in a
-    # particular week... could just remove those preds in post though
-
-    df_fixtures = storage_handler.load(f"processed/fixtures_{season}.csv")
-    desired_gameweeks = list(range(next_gw, next_gw + horizon))
-    df_fixtures = df_fixtures[df_fixtures["gameweek"].isin(desired_gameweeks)]
-    df_fixtures["gameweek_order"] = df_fixtures["gameweek"].map(gw_map)
-    df_fixtures["ds"] = df_fixtures["gameweek_order"].apply(
-        lambda x: get_date_from_gw(x)
-    )
-
-    df_fixtures = pd.get_dummies(
-        df_fixtures, columns=["team_name", "opponent_team_name"], drop_first=True
-    )  # need to keep team name for merge?
-
-    df_fixtures = df_fixtures.drop(columns=["gameweek", "game_date", "gameweek_order"])
-    df_fixtures["ds"] = pd.to_datetime(df_fixtures["ds"])
-    df_fixtures["merge_team"] = _merge_team_col(df_fixtures)
-    return df_fixtures
-
-
-def _merge_team_col(df):
-    # this doesn't work because one dummy column is dropped
-    df2 = df.copy()
-    df2["team_name_Arsenal"] = np.where(
-        df2[
-            [col for col in df.columns if "team_name" in col and "opponent_" not in col]
-        ].any(axis=1),
-        False,
-        True,
-    )
-    return (
-        df2[
-            [
-                col
-                for col in df2.columns
-                if "team_name" in col and "opponent_" not in col
-            ]
-        ]
-        .idxmax(axis=1)
-        .str.split("_")
-        .str[-1]
-    )
-
-
-def create_left_of_merge(df_tr, horizon):
-    df_te = df_tr.sort_values("ds").groupby("unique_id").tail(1).reset_index(drop=True)
-    first_gw_in_forecast = df_te["ds"].max() + dt.timedelta(days=1)
-
-    df_te["ds"] = first_gw_in_forecast
-    for h in range(1, horizon):
-        gw_df = df_te.copy()
-        gw_df["ds"] = gw_df["ds"] + dt.timedelta(days=h)
-        df_te = pd.concat([df_te, gw_df])
-
-    df_te["merge_team"] = _merge_team_col(df_te)
-    df_te = df_te[
-        ["unique_id", "ds", "merge_team"]
-        + [col for col in df_te.columns if "position_" in col]
-    ]
-    return df_te
-
-
-def create_test_train(next_gw, season=24, games_window=30, horizon=1):
-    df = load_gw_data(sh, next_gw, season)
-    df = filter_unneeded_names(df, next_gw)
-    df_f = filter_gws(df, next_gw, season, games_window)
-    gw_map = get_gw_order_map(df_f, season)
-    df_tr = prepare_training_data(df_f)
-    df_fixtures = get_relevant_fixtures(next_gw, season, sh, gw_map, horizon)
-    df_te = create_left_of_merge(df_tr, horizon)
-    df_te = df_te.merge(df_fixtures, on=["merge_team", "ds"], how="left")
-    df_te = df_te.fillna(False)
-    df_te = df_te.drop(columns=["merge_team"])
-
-    hist_exog_list = [
-        "assists",
-        "bps",
-        "creativity",
-        "goals_scored",
-        "influence",
-        "minutes",
-        "selected",
-        "threat",
-        "transfers_balance",
-        "value",
-        "team_scored",
-        "team_conceded",
-        # "y",
-    ]
-    futr_exog_list = [
-        col for col in df_te.columns if "opponent_team_" in col or "position_" in col
+def filter_relevant_cols(df_train, df_forecast):
+    # TODO: move this elsewhere as it's not working well like this
+    dummy_cols = [
+        col
+        for col in df_train.columns
+        if "team_name" in col or "opponent_team_name" in col or "position" in col
     ] + ["is_home"]
-
-    return {
-        "train": df_tr,
-        "test": df_te,
-        "futr_exog_list": futr_exog_list,
-        "hist_exog_list": hist_exog_list,
-    }
-
-
-# df_tr, df_te = create_test_train(next_gw=9)
-# df_te
-
-# SEASON = 24
-# GAMES_WINDOW = 30
-# NEXT_GW = 2
-# HORIZON = 1
-# df = load_gw_data(sh, SEASON)
-# df_f = filter_gws(df, NEXT_GW, SEASON, GAMES_WINDOW)
-# gw_map = get_gw_order_map(df_f, SEASON)
-# df_tr = prepare_training_data(df_f)
-
-# # merge team col is appearing twice here...
-# df_fixtures = get_relevant_fixtures(NEXT_GW, SEASON, sh, gw_map, HORIZON)
-
-# df_te = create_left_of_merge(df_tr, HORIZON) # this doubled size...
-# # output should stay this size?
+    id_cols = ["unique_id", "ds"]
+    keep_cols_tr = (
+        [
+            "assists",
+            "bps",
+            "creativity",
+            "goals_scored",
+            "influence",
+            "minutes",
+            "selected",
+            "threat",
+            "transfers_balance",
+            "value",
+            "team_scored",
+            "team_conceded",
+            "y",
+        ]
+        + dummy_cols
+        + id_cols
+    )
+    df_train = df_train[keep_cols_tr]
+    df_forecast["unique_id"] = df_forecast["name"]
+    df_forecast = df_forecast[dummy_cols + id_cols]
+    return df_train, df_forecast, dummy_cols, id_cols
 
 
-# # need to split and merge home on fixtures and vice versa
-# df_te = df_te.merge(df_fixtures, on=["merge_team", "ds"], how="left") ## added some rows - why?
+def run(next_gw, season=24, horizon=1, games_window=20):
+    # also need this to export futr_exog_list, hist_exog_list
+    # Load datasets
+    sh = storage_handler.StorageHandler(local=True)
+    df_load = load_gw_data(sh, next_gw, season)
+    df_fixtures = sh.load(f"processed/fixtures_{season}.csv")
 
-# # gotta fill missing vals
-# df_te = df_te.fillna(False)
-# df_te = df_te.drop(columns=["merge_team"])
-# df_te.to_csv("TEST3.csv")
+    # Get expected names and filter
+    expected_names = get_expected_names3(df_load, season, next_gw)
+    df_filtered = filter_unneeded_names(df_load, expected_names.keys())
 
-# # for fixtures, get those within the horizon from current gameweek.
-# # map the gameweek order to them from origin
+    # Create the forecast df
+    df_forecast = create_forecast_df(expected_names, next_gw, horizon)
+    df_forecast, df_no_fixture = add_fixtures_to_forecast(df_forecast, df_fixtures)
 
-# # for players, get the last observation for each player
-# # and just add an observation for each player for each gameweek in the horizon
+    # Add the dummy cols and filter
+    df_train, df_forecast = add_dummy_cols(df_filtered, df_forecast)
+    df_train = filter_gws(df_train, next_gw, season, games_window).reset_index(
+        drop=True
+    )
 
-# #
+    df_train, df_forecast = add_gameweek_order(df_train, df_forecast, season)
 
-# # this gives me the correct number of rows for forecast. Now need to add opponent, home away etc...
+    # assert that there are no missing names in test
+    df_train_names = list(df_train["name"].unique())
+    df_forecast_names = list(df_forecast["name"].unique())
+    assert set(df_forecast_names) == (set(df_train_names))
 
-# # won't account properly for double GWs! maybe something to do - try and get two forecasts out
+    df_train["team_scored"] = np.where(
+        df_train["is_home"], df_train["team_h_score"], df_train["team_a_score"]
+    )
+    df_train["team_conceded"] = np.where(
+        df_train["is_home"], df_train["team_a_score"], df_train["team_h_score"]
+    )
+    df_train["y"] = df_train["total_points"]
+    df_train["unique_id"] = df_train["name"]
+
+    df_train, df_forecast, dummy_cols, id_cols = filter_relevant_cols(
+        df_train, df_forecast
+    )
+    return (df_train, df_forecast, dummy_cols, id_cols)
 
 
-# # df_fixtures.ds.unique()
+if __name__ == "__main__":
+    season = 24
+    next_gw = 25
+    horizon = 1
+    df_train, df_forecast = run(next_gw, season, horizon)
 
-# df_g = df_te.merge(df_fixtures, on=["merge_team", "ds"], how="left")
-# # each player is duplicated home and away?
-# # df_te
-# df_g.to_csv("TEST.csv", index=False)
-
-
-# df_g = df_te[['merge_team', 'unique_id']].drop_duplicates()
-# df_fixtures.join(df_g.set_index('merge_team'), how='cross') # fixtures has duplicates - don't want to do that...
-
-# df_te.shape[0] * df_fixtures.shape[0]
-
-# df_h = df_fixtures.join(df_g.set_index('merge_team'), how='cross')
-
-
-# df_gw_current = sh.load(f"processed/gw_stats_{24}.csv")
-# latest_gw = df_gw_current["gameweek"].max()
-# valid_names = (
-#     df_gw_current.loc[df_gw_current["gameweek"] == latest_gw, "name"].unique().tolist()
-# )
-
-# only keep the names that are still in the training set at the end... just makes it easier
+    print(df_train.head())
+    print(df_forecast.head())
