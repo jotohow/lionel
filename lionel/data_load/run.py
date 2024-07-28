@@ -4,6 +4,7 @@ import lionel.data_load.ingestion.fpl.extract_player_stats as extract_player_sta
 import lionel.data_load.process.process_fixtures as process_fixtures
 import lionel.data_load.process.process_player_stats as process_player_stats
 import lionel.data_load.storage.storage_handler as storage_handler
+import lionel.data_load.process.process_train_data as process_train_data
 
 
 def run_ingestion(storage_handler, season=24):
@@ -46,8 +47,21 @@ def run_processing(storage_handler, season=24):
     )
 
 
+def run_analysis_data(storage_handler, next_gw, season=24, games_window=15):
+    df_train, df_test, dummies, id_cols = process_train_data.run(
+        next_gw, season=season, games_window=games_window
+    )
+    storage_handler.store(
+        df_train, f"analysis/train_{games_window}_{next_gw}_{season}.csv", index=False
+    )
+    storage_handler.store(
+        df_test, f"analysis/test_{games_window}_{next_gw}_{season}.csv", index=False
+    )
+
+
 if __name__ == "__main__":
     sh = storage_handler.StorageHandler(local=True)
     for s in [23, 24]:
         run_ingestion(sh, season=s)
         run_processing(sh, season=s)
+    run_analysis_data(sh, 25)
