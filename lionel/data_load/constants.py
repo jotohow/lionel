@@ -21,7 +21,7 @@ SEASON_MAP = {
 }
 
 TEAM_MAP = {
-    "team": {
+    "team_name": {
         "Man City": "Manchester City",
         "Man Utd": "Manchester Utd",
         "Spurs": "Tottenham",

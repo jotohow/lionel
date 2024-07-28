@@ -47,7 +47,12 @@ NAME_MAP = {
     },
 }
 
-COL_RENAME = {"team": "team_name", "GW": "gameweek", "kickoff_time": "game_date"}
+COL_RENAME = {
+    "team": "team_name",
+    "GW": "gameweek",
+    "kickoff_time": "game_date",
+    "was_home": "is_home",
+}
 
 
 def validate_gw_stats(df_gw):

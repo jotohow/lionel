@@ -2,6 +2,7 @@ import lionel.data_load.ingestion.fpl.extract_fixtures as extract_fixtures
 import lionel.data_load.ingestion.fpl.extract_team_ids as extract_team_ids
 import lionel.data_load.ingestion.fpl.extract_player_stats as extract_player_stats
 import lionel.data_load.process.process_fixtures as process_fixtures
+import lionel.data_load.process.process_player_stats as process_player_stats
 import lionel.data_load.storage.storage_handler as storage_handler
 
 
@@ -25,11 +26,18 @@ def run_ingestion(storage_handler, season=24):
 
 
 def run_processing(storage_handler, season=24):
+
+    df_team_ids = storage_handler.load(f"cleaned/team_ids_{season}.csv")
+
     # Fixtures
     df_fixtures = storage_handler.load(f"raw/fixtures_{season}.csv")
-    df_team_ids = storage_handler.load(f"cleaned/team_ids_{season}.csv")
     df_fixtures = process_fixtures.process_fixtures(df_fixtures, df_team_ids)
     storage_handler.store(df_fixtures, f"processed/fixtures_{season}.csv", index=False)
+
+    # Player stats
+    df_gw_stats = storage_handler.load(f"cleaned/gw_stats_{season}.csv")
+    df_gw_stats = process_player_stats.add_opponent_names(df_gw_stats, df_team_ids)
+    storage_handler.store(df_gw_stats, f"processed/gw_stats_{season}.csv", index=False)
 
     # Gameweek dates
     df_gameweek_dates = process_fixtures.get_gameweek_dates(df_fixtures, season)

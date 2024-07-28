@@ -45,10 +45,10 @@ def fixtures_to_home_away(df_fixtures):
     fixtures_1["is_home"] = True
     fixtures_2["is_home"] = False
     fixtures_1 = fixtures_1.rename(
-        {"home": "team_name", "away": "next_opponent_name"}, axis=1
+        {"home": "team_name", "away": "opponent_team_name"}, axis=1
     )
     fixtures_2 = fixtures_2.rename(
-        {"away": "team_name", "home": "next_opponent_name"}, axis=1
+        {"away": "team_name", "home": "opponent_team_name"}, axis=1
     )
     fixtures_processed = pd.concat([fixtures_1, fixtures_2])
     return fixtures_processed
