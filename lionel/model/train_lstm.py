@@ -56,7 +56,7 @@ DUMMIES = [
 ]
 
 
-def get_lstm(hist_exog_list, futr_exog_list, static_cols, horizon=1):
+def get_lstm(hist_exog_list, futr_exog_list, static_cols, horizon):
     models = [
         LSTMWithReLU(
             h=horizon,
@@ -71,9 +71,9 @@ def get_lstm(hist_exog_list, futr_exog_list, static_cols, horizon=1):
     return nf
 
 
-def train_lstm(df, stat_exog_list, hist_exog_list, futr_exog_list):
+def train_lstm(df, stat_exog_list, hist_exog_list, futr_exog_list, horizon=1):
     static_df = df[["unique_id"] + stat_exog_list].drop_duplicates(subset=["unique_id"])
     stat_exog_list = static_df.columns[1:].tolist()
-    nf = get_lstm(hist_exog_list, futr_exog_list, stat_exog_list)
+    nf = get_lstm(hist_exog_list, futr_exog_list, stat_exog_list, horizon)
     nf.fit(df, static_df)
     return nf

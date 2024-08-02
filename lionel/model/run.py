@@ -28,7 +28,9 @@ def run(storage_handler, next_gw, static=True, season=24, horizon=1, games_windo
         if static
         else train_lstm.DUMMIES
     )
-    nf = train_lstm.train_lstm(df_train, stat_exog_list, hist_exog_list, futr_exog_list)
+    nf = train_lstm.train_lstm(
+        df_train, stat_exog_list, hist_exog_list, futr_exog_list, horizon
+    )
 
     preds = nf.predict(futr_df=df_test)
     storage_handler.store(
@@ -37,5 +39,7 @@ def run(storage_handler, next_gw, static=True, season=24, horizon=1, games_windo
 
 
 if __name__ == "__main__":
+    next_gw = 25
+    horizon = 1
     sh = storage_handler.StorageHandler(local=True)
-    run(sh, 25)
+    run(sh, next_gw, horizon=horizon)

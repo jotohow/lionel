@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 import datetime as dt
-import lionel.data_load.storage.storage_handler as storage_handler
 
 
 def load_gw_data(storage_handler, next_gw, season):
@@ -146,6 +145,7 @@ def filter_gws(df_gw, next_gw, season, games_window=20):
 
 
 def add_gameweek_order(df_train, df_forecast, season):
+    # TODO: Move this loop outside of function
     gw_map = get_gw_map(df_train, season)
     df_forecast["season"] = season
     df_l = [df_train, df_forecast]
@@ -194,10 +194,9 @@ def filter_relevant_cols(df_train, df_forecast):
     return df_train, df_forecast, dummy_cols, id_cols
 
 
-def run(next_gw, season=24, horizon=1, games_window=20):
+def run(sh, next_gw, season=24, horizon=1, games_window=20):
     # also need this to export futr_exog_list, hist_exog_list
     # Load datasets
-    sh = storage_handler.StorageHandler(local=True)
     df_load = load_gw_data(sh, next_gw, season)
     df_fixtures = sh.load(f"processed/fixtures_{season}.csv")
 
@@ -215,6 +214,8 @@ def run(next_gw, season=24, horizon=1, games_window=20):
         drop=True
     )
 
+    ### TODO: Here I need to adjust indexing so that missing and double
+    ### GWs are accounted for
     df_train, df_forecast = add_gameweek_order(df_train, df_forecast, season)
 
     # assert that there are no missing names in test

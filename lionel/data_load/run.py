@@ -49,7 +49,7 @@ def run_processing(storage_handler, season=24):
 
 def run_analysis_data(storage_handler, next_gw, season=24, games_window=15):
     df_train, df_test, dummies, id_cols = process_train_data.run(
-        next_gw, season=season, games_window=games_window
+        storage_handler, next_gw, season=season, games_window=games_window
     )
     storage_handler.store(
         df_train, f"analysis/train_{games_window}_{next_gw}_{season}.csv", index=False
