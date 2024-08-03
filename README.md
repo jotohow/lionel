@@ -9,28 +9,20 @@ lionel is a [Fantasy Premier League]([url](https://fantasy.premierleague.com/)) 
 - LGBM_exog: LightGBM using lagged points tallies and future exogenous variables (those known in advnce: own team, opponent team, position)
 - LSTM: A LSTM model incorporating lagged points, future exogenous variables and historical exogenous variables (e.g. previous goals scored, bonus points)
 
-## Install it from PyPI
-**In prog**
-```bash
-pip install project_name
-```
+
+### Optimisation
+- Uses the [PuLP]([url](https://coin-or.github.io/pulp/)) package for linear programming to maximise forecasted points subject to the budget, team, and position constraints. 
+- Picks a first XV, selects the first XI from that, and chooses a captain who receives double points.
 
 ## Usage
-**In prog**
 ```py
-from project_name import BaseClass
-from project_name import base_function
-
-BaseClass().base_method()
-base_function()
+from lionel.run import run
+team_selection = run(season=24, next_gw=32, gw_horizon=5)
 ```
 
 ```bash
-$ python -m project_name
-#or
-$ project_name
+$ python -m lionel.run 24 32 5
 ```
 
 ## Development
-**In prog**
 Read the [CONTRIBUTING.md](CONTRIBUTING.md) file.
