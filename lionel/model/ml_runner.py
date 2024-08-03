@@ -23,7 +23,7 @@ def forecast(
         lag_transforms={
             1: [
                 ExpandingStd(),
-                ExponentiallyWeightedMean(alpha=0.1),
+                # ExponentiallyWeightedMean(alpha=0.1),
                 ExponentiallyWeightedMean(alpha=0.5),
             ]
         },
@@ -38,7 +38,7 @@ def run(df, horizon=1):
         col
         for col in df.columns
         if col.startswith("opponent_team_name")
-        or col.startswith("team_name")
+        # or col.startswith("team_name")
         or col.startswith("position")
     ]
     train_indices = df[df.game_complete].index
