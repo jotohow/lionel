@@ -1,45 +1,54 @@
-import pandas as pd
-import lionel.data_load.storage.storage_handler as storage_handler
-import lionel.model.train_lstm as train_lstm
+import lionel.model.lstm_runner as lstm_runner
+import lionel.model.ml_runner as ml_runner
 
 
-def run(storage_handler, next_gw, static=True, season=24, horizon=1, games_window=15):
-    df_train = storage_handler.load(
-        f"analysis/train_{games_window}_{next_gw}_{season}.csv"
+def get_horizon(valid_games, next_gw, season, gw_horizon):
+
+    if gw_horizon + next_gw > 38:
+        raise Exception("gw_horizon exceeds season length")
+
+    max_ds = valid_games[
+        (valid_games["gameweek"] == next_gw + gw_horizon)
+        & (valid_games["season"] == season)
+    ].ds.max()
+    min_ds = valid_games[
+        (valid_games["gameweek"] == next_gw) & (valid_games["season"] == season)
+    ].ds.unique()
+    assert min_ds.shape[0] == 1
+    min_ds = min_ds.min()
+    return max_ds - min_ds
+
+
+def get_valid_games_horizon(df, gw_horizon):
+    valid_games = df[df["valid_game"]][["unique_id", "ds", "gameweek", "season"]]
+    next_gw = df[~df.game_complete].gameweek.min()
+    season = df.season.max()
+    horizon = get_horizon(valid_games, next_gw, season, gw_horizon)
+    return valid_games, horizon
+
+
+def run(df, season, next_gw, gw_horizon=1):
+
+    # Create a map of valid games and ds to gameweek
+    valid_games = df[df["valid_game"]][["unique_id", "ds", "gameweek", "season"]]
+    horizon = get_horizon(valid_games, next_gw, season, gw_horizon)
+
+    # Run the models
+    preds_lstm = lstm_runner.run(df, horizon)
+    preds_ml = ml_runner.run(df, horizon)
+    assert (
+        preds_lstm.shape[0] == preds_ml.shape[0]
+    ), "Predictions have different lengths"
+    assert preds_lstm[["ds", "unique_id"]].equals(preds_ml[["ds", "unique_id"]])
+
+    # Collect everything together and clean up
+    preds = preds_ml.merge(preds_lstm, on=["ds", "unique_id"])
+    preds = preds.merge(valid_games, on=["ds", "unique_id"], how="inner")
+    preds = (
+        preds.groupby(["unique_id", "gameweek"])
+        .sum()
+        .reset_index()
+        .drop(columns=["ds", "season"])
     )
-    df_test = storage_handler.load(
-        f"analysis/test_{games_window}_{next_gw}_{season}.csv"
-    )
-    df_train["ds"] = pd.to_datetime(df_train["ds"])
-    df_test["ds"] = pd.to_datetime(df_test["ds"])
 
-    hist_exog_list = [
-        col
-        for col in df_train.columns
-        if col not in train_lstm.ID_COLS and col not in train_lstm.DUMMIES
-    ]
-    stat_exog_list = [
-        col
-        for col in train_lstm.DUMMIES
-        if col.startswith("team_name_") or col.startswith("position_")
-    ]
-    futr_exog_list = (
-        [col for col in train_lstm.DUMMIES if col not in stat_exog_list]
-        if static
-        else train_lstm.DUMMIES
-    )
-    nf = train_lstm.train_lstm(
-        df_train, stat_exog_list, hist_exog_list, futr_exog_list, horizon
-    )
-
-    preds = nf.predict(futr_df=df_test)
-    storage_handler.store(
-        preds, f"analysis/preds_{games_window}_{next_gw}_{season}.csv"
-    )
-
-
-if __name__ == "__main__":
-    next_gw = 25
-    horizon = 1
-    sh = storage_handler.StorageHandler(local=True)
-    run(sh, next_gw, horizon=horizon)
+    return preds

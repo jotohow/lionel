@@ -130,6 +130,9 @@ def get_expected_names3(df_gw, season, next_gw):
     return exp.to_dict(orient="index")
 
 
+# TODO: Aligning future fixtures like this might damage the preds
+# because they're done recursively. Could be better to align just in order and then
+# map games to gameweeks?
 def run(storage_handler, next_gw, season):
 
     # Get fixtures list
@@ -150,15 +153,28 @@ def run(storage_handler, next_gw, season):
         f.merge(df_expected, how="left", on="team_name")
         .sort_values(["team_name", "name", "ds"])
         .reset_index(drop=True)
-        .drop(columns=["position", "gameweek"])
+        .drop(columns=["position"])  # dropped the gw arg here
     )
     df_final = df_expected.merge(
-        df_players, how="left", on=["team_name", "game_date", "season", "name"]
+        df_players.drop(columns=["gameweek"]),  # added the gw arg here
+        how="left",
+        on=["team_name", "game_date", "season", "name"],
     )
     df_final = df_final[
         ((df_final["game_complete"]) & df_final.goals_scored.notna())
         | (~df_final["game_complete"])
     ]
+    df_final["valid_game"] = (~df_final.game_complete) & (
+        df_final.opponent_team_name.notna()
+    ) | (df_final.game_complete)
+    df_final = df_final.ffill()
+    df_final = pd.get_dummies(
+        df_final,
+        columns=["team_name", "opponent_team_name", "position"],
+        drop_first=True,
+    )
+    df_final = df_final.rename(columns={"total_points": "y", "name": "unique_id"})
+
     return df_final
 
 

@@ -52,11 +52,17 @@ def run_analysis_data(storage_handler, next_gw, season=24):
     storage_handler.store(
         df_train, f"analysis/train_{next_gw}_{season}.csv", index=False
     )
+    return df_train
+
+
+def run(storage_handler, season, next_gameweek):
+    for s in [season - 1, season]:
+        run_ingestion(storage_handler, season=s)
+        run_processing(storage_handler, season=s)
+    df_train = run_analysis_data(storage_handler, next_gameweek, season=season)
+    return df_train
 
 
 if __name__ == "__main__":
     sh = storage_handler.StorageHandler(local=True)
-    for s in [23, 24]:
-        run_ingestion(sh, season=s)
-        run_processing(sh, season=s)
-    run_analysis_data(sh, 25, season=24)
+    run(sh, season=24, next_gameweek=27)
