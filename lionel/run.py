@@ -1,26 +1,24 @@
-from scrape.players.process import FPLProcessor
-from scrape.bet.scrape import FutureBetScraper
-from team.team import Team
-from scrape.combine import BetFPLCombiner
+import sys
+from lionel.data_load.storage.storage_handler import StorageHandler
+import lionel.data_load.run
+import lionel.model.run
+import lionel.team.run
 
 
-def run(season, next_gameweek):
+def run(season, next_gw, gw_horizon=5):
+    sh = StorageHandler(local=True)
 
-    # Update FPL stats
-    fpl_processor = FPLProcessor(season, next_gameweek)
-    player_stats = fpl_processor.player_stats
+    # Run data load
+    df_train = lionel.data_load.run.run(sh, season, next_gw)
 
-    # Update betting
-    bet_scraper = FutureBetScraper()
-    bet_scraper.run_scrape()
-    win_odds = bet_scraper.to_df()
+    # Run predictions
+    preds = lionel.model.run.run(df_train, season, next_gw, gw_horizon=gw_horizon)
+    sh.store(preds, f"analysis/preds_{next_gw}_{season}.csv", index=False)
 
-    # Combine FPL and betting odds
-    df_next_game = BetFPLCombiner(
-        next_gameweek, win_odds, player_stats
-    ).prepare_next_gw()
+    # Run team selection
+    df_team = lionel.team.run.run(season, next_gw)
+    sh.store(df_team, f"analysis/team_selection_{next_gw}_{season}.csv")
 
-    # Update team choices
-    team = Team(season, next_gameweek, df_next_game)
-    team.pick_xi()
-    return team
+
+if __name__ == "__main__":
+    run(*[int(x) for x in sys.argv[1:]])

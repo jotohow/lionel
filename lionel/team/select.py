@@ -12,19 +12,24 @@ ROOT = Path(os.path.dirname(os.path.abspath(__file__))).parent
 sys.path.append(os.path.dirname(str(ROOT)))
 
 from lionel.utils import setup_logger
-from lionel.scrape.managers.budgeter import Budgeter
-from lionel.scrape.managers.scrape import get_my_team_info
+
+# from lionel.scrape.managers.budgeter import Budgeter
+# from lionel.scrape.managers.scrape import get_my_team_info
+
+# TODO: Refactor this so that the object is instantiated once
+# and the methods can be called on each prediction variable
 
 logger = setup_logger(__name__)
 
 
 class BaseSelector(ABC):
 
-    def __init__(self, player_df, season):
+    def __init__(self, player_df, season, pred_var="pred_Naive"):
         self.player_df = player_df.fillna(0).reset_index(drop=True)
         self.season = season
         self.first_xi = pd.DataFrame()
         self.players = None
+        self.pred_var = pred_var
 
     @property
     @abstractmethod
@@ -54,8 +59,8 @@ class XISelector(BaseSelector):
         "GK": [1, 1],
     }
 
-    def __init__(self, player_df, season):
-        super().__init__(player_df, season)
+    def __init__(self, player_df, season, pred_var):
+        super().__init__(player_df, season, pred_var)
         self.first_xv = pd.DataFrame()
         self.other_players = pd.DataFrame()
         self.players = self._create_decision_var("player_", self.first_xv)
@@ -83,7 +88,7 @@ class XISelector(BaseSelector):
 
     def _initialise_xi_prob(self):
         prob = LpProblem("First team choices", LpMaximize)
-        points_weighted = self.first_xv.points_weighted.to_list()
+        points_weighted = self.first_xv[self.pred_var].to_list()
         prob += lpSum(
             self.players[i] * points_weighted[i] for i in range(len(self.first_xv))
         )
@@ -157,15 +162,18 @@ class NewXVSelector(BaseSelector):
         self,
         player_df,
         season,
+        pred_var,
         budget=1000,
     ):
-        super().__init__(player_df, season)
+        super().__init__(player_df, season, pred_var)
         self.budget = budget
 
         self.first_xv = pd.DataFrame()
         self.teams = self.player_df.team_name.to_list()
         self.positions = self.player_df.position.to_list()
-        self.points_weighted = self.player_df.points_weighted.to_list()
+        self.points_weighted = self.player_df[
+            self.pred_var
+        ].to_list()  # will this be an issue?
 
         self.players = self._create_decision_var("player_", self.player_df)
         self.captains = self._create_decision_var("captain_", self.player_df)
@@ -187,7 +195,7 @@ class NewXVSelector(BaseSelector):
     def xi_selector(self):
         if self._xi_selector is None:
             self._xi_selector = NewXVSelector.XI_SELECTOR_OBJ(
-                self.first_xv, self.season
+                self.first_xv, self.season, self.pred_var
             )
         return self._xi_selector
 
@@ -220,15 +228,6 @@ class NewXVSelector(BaseSelector):
     def _add_captain_constraints(self, prob):
         for i in range(len(self.player_df)):
             prob += (self.players[i] - self.captains[i]) >= 0
-        return prob
-
-    def _add_xv_constraints(self, prob):
-        prob += sum(self.players) == 15
-        prob = self._add_budget_constraints(prob)
-        prob += sum(self.captains) == 1
-        prob = self._add_position_constraints(prob, self.players, self.player_df)
-        prob = self._add_club_constraints(prob)
-        prob = self._add_captain_constraints(prob)
         return prob
 
     @staticmethod
@@ -267,10 +266,20 @@ class NewXVSelector(BaseSelector):
         self.first_xv = team
         return self.first_xv
 
+    def _add_xv_constraints(self, prob):
+        prob += sum(self.players) == 15
+        prob = self._add_budget_constraints(prob)
+        prob += sum(self.captains) == 1
+        prob = self._add_position_constraints(prob, self.players, self.player_df)
+        prob = self._add_club_constraints(prob)
+        prob = self._add_captain_constraints(prob)
+        return prob
+
     def initialise_xv_prob(self, *args, **kwargs):
         prob = LpProblem("FPL Player Choices", LpMaximize)
         prob += lpSum(
-            (self.players[i] + self.captains[i]) * self.player_df["points_weighted"][i]
+            (self.players[i] + self.captains[i])
+            * self.player_df[self.pred_var][i]  # made a change here
             for i in range(len(self.player_df))
         )
         prob = self._add_xv_constraints(prob)
