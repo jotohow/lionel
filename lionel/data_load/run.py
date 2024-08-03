@@ -8,7 +8,16 @@ import lionel.data_load.process.process_train_data as process_train_data
 
 
 def run_ingestion(storage_handler, season=24):
+    """
+    Run the data ingestion process.
 
+    Args:
+        storage_handler (StorageHandler): The storage handler object.
+        season (int): The season number.
+
+    Returns:
+        None
+    """
     # Player stats
     df_gw_stats = extract_player_stats.get_gw_stats(season)
     storage_handler.store(df_gw_stats, f"raw/gw_stats_{season}.csv", index=False)
@@ -27,7 +36,16 @@ def run_ingestion(storage_handler, season=24):
 
 
 def run_processing(storage_handler, season=24):
+    """
+    Run the data processing process.
 
+    Args:
+        storage_handler (StorageHandler): The storage handler object.
+        season (int): The season number.
+
+    Returns:
+        None
+    """
     df_team_ids = storage_handler.load(f"cleaned/team_ids_{season}.csv")
 
     # Fixtures
@@ -48,6 +66,17 @@ def run_processing(storage_handler, season=24):
 
 
 def run_analysis_data(storage_handler, next_gw, season=24):
+    """
+    Run the analysis data process.
+
+    Args:
+        storage_handler (StorageHandler): The storage handler object.
+        next_gw (int): The next gameweek number.
+        season (int): The season number.
+
+    Returns:
+        df_train (DataFrame): The analysis data.
+    """
     df_train = process_train_data.run(storage_handler, next_gw, season=season)
     storage_handler.store(
         df_train, f"analysis/train_{next_gw}_{season}.csv", index=False
@@ -56,6 +85,17 @@ def run_analysis_data(storage_handler, next_gw, season=24):
 
 
 def run(storage_handler, season, next_gameweek):
+    """
+    Run the entire data pipeline.
+
+    Args:
+        storage_handler (StorageHandler): The storage handler object.
+        season (int): The season number.
+        next_gameweek (int): The next gameweek number.
+
+    Returns:
+        df_train (DataFrame): The analysis data.
+    """
     for s in [season - 1, season]:
         run_ingestion(storage_handler, season=s)
         run_processing(storage_handler, season=s)

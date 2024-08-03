@@ -6,6 +6,16 @@ import lionel.team.run
 
 
 def run(season, next_gw, gw_horizon=5):
+    """
+    Run the process for Lionel.
+
+    Run the data load, model predictions and team selection for the given season and next game week. Store everything (locally by default).
+
+    Args:
+        season (str): The season of the data.
+        next_gw (int): The next game week.
+        gw_horizon (int, optional): The number of game weeks to consider for predictions. Defaults to 5.
+    """
     sh = StorageHandler(local=True)
 
     # Run data load

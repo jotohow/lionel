@@ -3,7 +3,24 @@ import lionel.model.ml_runner as ml_runner
 
 
 def get_horizon(valid_games, next_gw, season, gw_horizon):
+    """
+    Calculate horizon from game week horizon
 
+    Given a horizon in terms of game weeks, convert it to a game index that
+    accounts for missing and double game weeks.
+
+    Args:
+        valid_games (DataFrame): DataFrame containing valid games data.
+        next_gw (int): The next game week.
+        season (str): The season.
+        gw_horizon (int): The horizon for the game week.
+
+    Returns:
+        int: The difference between the maximum and minimum ds values.
+
+    Raises:
+        Exception: If gw_horizon exceeds the length of the season.
+    """
     if gw_horizon + next_gw > 38:
         raise Exception("gw_horizon exceeds season length")
 
@@ -19,15 +36,19 @@ def get_horizon(valid_games, next_gw, season, gw_horizon):
     return max_ds - min_ds
 
 
-def get_valid_games_horizon(df, gw_horizon):
-    valid_games = df[df["valid_game"]][["unique_id", "ds", "gameweek", "season"]]
-    next_gw = df[~df.game_complete].gameweek.min()
-    season = df.season.max()
-    horizon = get_horizon(valid_games, next_gw, season, gw_horizon)
-    return valid_games, horizon
-
-
 def run(df, season, next_gw, gw_horizon=1):
+    """
+    Run the models and generate predictions for the given dataframe.
+
+    Args:
+        df (pandas.DataFrame): The input dataframe containing the data for predictions.
+        season (str): The season for which predictions are being made.
+        next_gw (int): The next gameweek for which predictions are being made.
+        gw_horizon (int, optional): The number of gameweeks to consider for predictions. Defaults to 1.
+
+    Returns:
+        pandas.DataFrame: The predictions dataframe containing the aggregated predictions for each unique_id and gameweek.
+    """
 
     # Create a map of valid games and ds to gameweek
     valid_games = df[df["valid_game"]][["unique_id", "ds", "gameweek", "season"]]

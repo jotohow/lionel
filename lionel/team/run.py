@@ -4,6 +4,17 @@ from lionel.team.prepare_data import prepare_data
 
 
 def get_team_choice(df, season):
+    """
+    Returns a DataFrame containing the team choices for each prediction variable.
+
+    Args:
+        df (pandas.DataFrame): The player DataFrame.
+        season (int): The season number.
+
+    Returns:
+        pandas.DataFrame: The DataFrame containing the team choices for each prediction variable.
+    """
+
     pred_vars = [
         "Naive",
         "LGBMRegressor_no_exog",
@@ -44,6 +55,17 @@ def get_team_choice(df, season):
 
 
 def run(season, next_gw):
+    """
+    Runs the team selection process for a given season and next game week.
+
+    Args:
+        season (str): The season for which the team selection is being done.
+        next_gw (int): The next game week for which the team selection is being done.
+
+    Returns:
+        pandas.DataFrame: The resulting DataFrame containing the team selection.
+
+    """
     sh = storage_handler.StorageHandler(local=True)
     df = prepare_data(sh, season, next_gw)
     df = get_team_choice(df, season)
