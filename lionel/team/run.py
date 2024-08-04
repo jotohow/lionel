@@ -1,5 +1,5 @@
 import lionel.team.select as select
-from lionel.team.prepare_data import prepare_data, prepare_data_for_charts
+from lionel.team.prepare_data import prepare_data
 
 
 def get_team_choice(df, season):
@@ -54,6 +54,7 @@ def get_team_choice(df, season):
     return df_1
 
 
+# TODO: Add in current values
 def run(sh, season, next_gw):
     """
     Runs the team selection process for a given season and next game week.
@@ -73,9 +74,6 @@ def run(sh, season, next_gw):
     df = prepare_data(df_train, df_preds, season, next_gw)
     df = get_team_choice(df, season)
 
-    # Could move this elsewhere
-    df_charts = prepare_data_for_charts(df_train, df_preds)
-    sh.store(df_charts, f"analysis/charts_{next_gw}_{season}.csv", index=False)
     sh.store(df, f"analysis/team_selection_{next_gw}_{season}.csv", index=False)
     return df
 

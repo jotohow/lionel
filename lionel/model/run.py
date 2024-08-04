@@ -1,5 +1,6 @@
 import lionel.model.lstm_runner as lstm_runner
 import lionel.model.ml_runner as ml_runner
+from lionel.model.prepare_data import prepare_data_for_charts
 
 
 def get_horizon(valid_games, next_gw, season, gw_horizon):
@@ -41,7 +42,7 @@ def run(sh, df, season, next_gw, gw_horizon=1):
     Run the models and generate predictions for the given dataframe.
 
     Args:
-        df (pandas.DataFrame): The input dataframe containing the data for predictions.
+        df (pandas.DataFrame): The input train dataframe containing the data for predictions.
         season (str): The season for which predictions are being made.
         next_gw (int): The next gameweek for which predictions are being made.
         gw_horizon (int, optional): The number of gameweeks to consider for predictions. Defaults to 1.
@@ -73,4 +74,8 @@ def run(sh, df, season, next_gw, gw_horizon=1):
     )
     preds["season"] = season
     sh.store(preds, f"analysis/preds_{next_gw}_{season}.csv", index=False)
+
+    # Prepare data for charts
+    df_charts = prepare_data_for_charts(df, preds)
+    sh.store(df_charts, f"analysis/charts_{next_gw}_{season}.csv", index=False)
     return preds

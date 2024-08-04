@@ -13,12 +13,9 @@ sys.path.append(os.path.dirname(str(ROOT)))
 
 from lionel.utils import setup_logger
 
-# from lionel.scrape.managers.budgeter import Budgeter
-# from lionel.scrape.managers.scrape import get_my_team_info
 
 # TODO: Refactor this so that the object is instantiated once
 # and the methods can be called on each prediction variable
-
 logger = setup_logger(__name__)
 
 
@@ -301,20 +298,20 @@ class UpdateXVSelector(NewXVSelector):
         self.budgeter = None
         logger.debug("Initialising update selector object")
 
-    @property
-    def budgeter(self):
-        if self._budgeter is None:
-            try:
-                picks = get_my_team_info()["picks"]
-                self._budgeter = Budgeter(picks)
-            except ValueError:
-                logger.info("Cannot create budgeter object. No login info.")
-                pass
-        return self._budgeter
+    # @property
+    # def budgeter(self):
+    #     if self._budgeter is None:
+    #         try:
+    #             picks = get_my_team_info()["picks"]
+    #             self._budgeter = Budgeter(picks)
+    #         except ValueError:
+    #             logger.info("Cannot create budgeter object. No login info.")
+    #             pass
+    #     return self._budgeter
 
-    @budgeter.setter
-    def budgeter(self, val):
-        self._budgeter = val
+    # @budgeter.setter
+    # def budgeter(self, val):
+    #     self._budgeter = val
 
     @property
     def player_df(self):

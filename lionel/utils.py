@@ -1,5 +1,6 @@
 import requests
 import logging
+import pandas as pd
 
 
 def setup_logger(name):
@@ -24,3 +25,11 @@ def get_response(url):
 
 def get_session(url):
     pass
+
+
+def undo_dummies(df, prefix, default):
+    cols = [col for col in df.columns if col.startswith(prefix)]
+    df[prefix] = pd.from_dummies(df[cols], default_category=default)
+    df[prefix] = df[prefix].str.split("_").str[-1]
+    df = df.drop(columns=cols)
+    return df

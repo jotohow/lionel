@@ -1,5 +1,5 @@
 import pandas as pd
-import lionel.data_load.storage.storage_handler as storage_handler
+import lionel.data_load.storage_handler as storage_handler
 
 
 def add_opponent_names(df_gw_stats, df_team_ids):

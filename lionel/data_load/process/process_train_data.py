@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import datetime as dt
 import itertools
-import lionel.data_load.storage.storage_handler as storage_handler
+import lionel.data_load.storage_handler as storage_handler
 
 
 def load_gw_data(storage_handler, next_gw, season):

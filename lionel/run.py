@@ -1,5 +1,5 @@
 import sys
-from lionel.data_load.storage.storage_handler import StorageHandler
+from lionel.data_load.storage_handler import StorageHandler
 import lionel.data_load.run
 import lionel.model.run
 import lionel.team.run

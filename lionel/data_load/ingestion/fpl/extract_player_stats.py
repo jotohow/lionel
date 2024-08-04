@@ -106,5 +106,14 @@ def clean_gw_stats(df_gw):
     return df_gw
 
 
+def get_clean_player_stats(season):
+    df = pd.read_csv(f"{BASE_URL}/{SEASON_MAP[season]}/cleaned_players.csv")
+    df = df[["first_name", "second_name", "now_cost", "element_type"]]
+    df = df.rename(columns={"now_cost": "value", "element_type": "position"})
+    df["name"] = df["first_name"] + " " + df["second_name"]
+    df = df.drop(columns=["first_name", "second_name"])
+    return df
+
+
 if __name__ == "__main__":
     pass

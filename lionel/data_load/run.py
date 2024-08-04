@@ -3,7 +3,7 @@ import lionel.data_load.ingestion.fpl.extract_team_ids as extract_team_ids
 import lionel.data_load.ingestion.fpl.extract_player_stats as extract_player_stats
 import lionel.data_load.process.process_fixtures as process_fixtures
 import lionel.data_load.process.process_player_stats as process_player_stats
-import lionel.data_load.storage.storage_handler as storage_handler
+import lionel.data_load.storage_handler as storage_handler
 import lionel.data_load.process.process_train_data as process_train_data
 from lionel.utils import setup_logger
 
@@ -26,6 +26,9 @@ def run_ingestion(sh, season=24):
     sh.store(df_gw_stats, f"raw/gw_stats_{season}.csv", index=False)
     df_gw_stats = extract_player_stats.clean_gw_stats(df_gw_stats)
     sh.store(df_gw_stats, f"cleaned/gw_stats_{season}.csv", index=False)
+
+    df_cleaned_stats = extract_player_stats.get_clean_player_stats(season)
+    sh.store(df_cleaned_stats, f"raw/cleaned_players_{season}.csv", index=False)
 
     # Fixtures
     df_fixtures = extract_fixtures.get_fixtures(season)
@@ -104,4 +107,4 @@ def run(sh, season, next_gameweek):
 
 if __name__ == "__main__":
     sh = storage_handler.StorageHandler(local=True)
-    run(sh, season=24, next_gameweek=27)
+    run(sh, season=25, next_gameweek=1)
