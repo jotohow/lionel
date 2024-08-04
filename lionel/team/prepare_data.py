@@ -1,6 +1,4 @@
 import pandas as pd
-import lionel.data_load.storage.storage_handler as storage_handler
-import lionel.data_load.process.process_train_data as load_data
 import numpy as np
 
 # TODO: Need to add the latest prices, positions maybe...
@@ -14,23 +12,15 @@ def _undo_dummies(df, prefix, default):
     return df
 
 
-# def prepare_data(storage_handler, season, next_gw, alpha=0.5):
 def prepare_data(df_train, df_preds, season, next_gw, alpha=0.5):
 
     df_train = df_train[~((df_train.season == season) & (df_train.gameweek >= next_gw))]
-
-    team_cols = [col for col in df_train.columns if col.startswith("team_name_")]
-    position_cols = [col for col in df_train.columns if col.startswith("position_")]
-    df_train["team_name"] = pd.from_dummies(
-        df_train[team_cols], default_category="Arsenal"
-    )
-    df_train["position"] = pd.from_dummies(
-        df_train[position_cols], default_category="DEF"
-    )
-
-    df_train = df_train.drop(team_cols + position_cols, axis=1)
-    for col in ["team_name", "position"]:
-        df_train[col] = df_train[col].str.split("_").str[-1]
+    for prefix, default in [
+        ("team_name", "Arsenal"),
+        ("position", "DEF"),
+        ("opponent_team_name", "Arsenal"),
+    ]:
+        df_train = _undo_dummies(df_train, prefix, default)
 
     df_train = df_train[
         ["unique_id", "season", "gameweek", "team_name", "position", "value"]
@@ -42,10 +32,6 @@ def prepare_data(df_train, df_preds, season, next_gw, alpha=0.5):
         .reset_index()
     )
 
-    # TODO: Update this to use exponential weighted mean
-    # df_predicted = (
-    #     df_preds.groupby("unique_id").mean().reset_index().drop(columns="gameweek")
-    # )
     df_predicted = (
         df_preds.sort_values(by="gameweek", ascending=False)
         .groupby("unique_id")
