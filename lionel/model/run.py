@@ -36,7 +36,7 @@ def get_horizon(valid_games, next_gw, season, gw_horizon):
     return max_ds - min_ds
 
 
-def run(df, season, next_gw, gw_horizon=1):
+def run(sh, df, season, next_gw, gw_horizon=1):
     """
     Run the models and generate predictions for the given dataframe.
 
@@ -71,5 +71,6 @@ def run(df, season, next_gw, gw_horizon=1):
         .reset_index()
         .drop(columns=["ds", "season"])
     )
-
+    preds["season"] = season
+    sh.store(preds, f"analysis/preds_{next_gw}_{season}.csv", index=False)
     return preds

@@ -6,6 +6,10 @@ from lionel.data_load.constants import (
     BASE_URL,
     SEASON_MAP,
 )
+from urllib.error import HTTPError
+from lionel.utils import setup_logger
+
+logger = setup_logger(__name__)
 
 NEEDED_COLS = {
     "GW": ("int64", "int64"),
@@ -20,7 +24,7 @@ NEEDED_COLS = {
     "name": ("object", "object"),
     "opponent_team": ("int64", "int64"),
     "position": ("object", "object"),
-    "season": ("int64", "int64"),
+    # "season": ("int64", "int64"),
     "selected": ("int64", "int64"),
     "team_a_score": ("int64", "int64"),
     "team_h_score": ("int64", "int64"),
@@ -76,10 +80,17 @@ def update_dtypes(df_gw):
 
 
 def get_gw_stats(season):
-    df_gw = pd.read_csv(f"{BASE_URL}/{SEASON_MAP[season]}/gws/merged_gw.csv")
+    try:
+        df_gw = pd.read_csv(f"{BASE_URL}/{SEASON_MAP[season]}/gws/merged_gw.csv")
+        validate_gw_stats(df_gw)
+    except HTTPError as e:
+        if e.code == 404:
+            logger.warning(f"Season {season} not found. Creating empty dataframe.")
+            df_gw = pd.DataFrame(columns=NEEDED_COLS.keys())
+        else:
+            raise e
     df_gw["season"] = season
-    df_gw = df_gw[NEEDED_COLS.keys()]
-    validate_gw_stats(df_gw)
+    df_gw = df_gw[list(NEEDED_COLS.keys()) + ["season"]]
     return df_gw
 
 
@@ -95,25 +106,5 @@ def clean_gw_stats(df_gw):
     return df_gw
 
 
-def update_local_csv(season):
-    df_gw_new = get_gw_stats(season)
-
-    try:
-        df_gw_existing = pd.read_csv(
-            RAW / "gw_stats.csv",
-        )
-        df_gw_existing = update_dtypes(df_gw_existing)
-        df_gw_new = update_gw_stats(df_gw_existing, df_gw_new, season)
-    except FileNotFoundError:
-        pass
-    df_gw_new.to_csv(RAW / "gw_stats.csv", index=False)
-    return df_gw_new
-
-
-def run_update(season):
-    update_local_csv(season)
-    return None
-
-
 if __name__ == "__main__":
-    run_update(24)
+    pass

@@ -23,7 +23,7 @@ def forecast(
         lag_transforms={
             1: [
                 ExpandingStd(),
-                # ExponentiallyWeightedMean(alpha=0.1),
+                ExponentiallyWeightedMean(alpha=0.1),
                 ExponentiallyWeightedMean(alpha=0.5),
             ]
         },
@@ -41,6 +41,7 @@ def run(df, horizon=1):
         # or col.startswith("team_name")
         or col.startswith("position")
     ]
+    print(future_exog_list)
     train_indices = df[df.game_complete].index
     df_train = df.loc[train_indices]
     df_test = df.loc[~df.index.isin(train_indices)]
@@ -52,16 +53,17 @@ def run(df, horizon=1):
     preds_1 = preds_1.rename(columns={"LGBMRegressor": "LGBMRegressor_no_exog"})
 
     # Run with exogenous features
-    df_train_2 = df_train[["ds", "unique_id", "y"] + future_exog_list]
-    df_test_2 = df_test[["ds", "unique_id", "y"] + future_exog_list]
-    preds_2 = forecast(
-        df_train_2,
-        df_test_2,
-        horizon=horizon,
-        futr_exog_list=future_exog_list,
-        models=[lgb.LGBMRegressor()],
-    )
-    preds_2 = preds_2.rename(columns={"LGBMRegressor": "LGBMRegressor_with_exog"})
+    # df_train_2 = df_train[["ds", "unique_id", "y"] + future_exog_list]
+    # df_test_2 = df_test[["ds", "unique_id", "y"] + future_exog_list]
+    # preds_2 = forecast(
+    #     df_train_2,
+    #     df_test_2,
+    #     horizon=horizon,
+    #     futr_exog_list=future_exog_list,
+    #     models=[lgb.LGBMRegressor()],
+    # )
+    # preds_2 = preds_2.rename(columns={"LGBMRegressor": "LGBMRegressor_with_exog"})
 
-    preds = preds_1.merge(preds_2, on=["ds", "unique_id"], how="inner")
+    # preds = preds_1.merge(preds_2, on=["ds", "unique_id"], how="inner")
+    preds = preds_1
     return preds

@@ -1,6 +1,6 @@
 import lionel.team.select as select
 import lionel.data_load.storage.storage_handler as storage_handler
-from lionel.team.prepare_data import prepare_data
+from lionel.team.prepare_data import prepare_data, prepare_data_for_charts
 
 
 def get_team_choice(df, season):
@@ -18,7 +18,7 @@ def get_team_choice(df, season):
     pred_vars = [
         "Naive",
         "LGBMRegressor_no_exog",
-        "LGBMRegressor_with_exog",
+        # "LGBMRegressor_with_exog",
         "LSTMWithReLU",
     ]
     l = []
@@ -51,10 +51,11 @@ def get_team_choice(df, season):
             on="unique_id",
             how="left",
         )
+    df_1["season"] = season
     return df_1
 
 
-def run(season, next_gw):
+def run(sh, season, next_gw):
     """
     Runs the team selection process for a given season and next game week.
 
@@ -66,9 +67,16 @@ def run(season, next_gw):
         pandas.DataFrame: The resulting DataFrame containing the team selection.
 
     """
-    sh = storage_handler.StorageHandler(local=True)
-    df = prepare_data(sh, season, next_gw)
+    # sh = storage_handler.StorageHandler(local=True)
+    df_preds = sh.load(f"analysis/preds_{next_gw}_{season}.csv")
+    df_train = sh.load(f"analysis/train_{next_gw}_{season}.csv")
+
+    df = prepare_data(df_train, df_preds, season, next_gw)
     df = get_team_choice(df, season)
+
+    df_charts = prepare_data_for_charts(df_train, df_preds)
+    sh.store(df_charts, f"analysis/charts_{next_gw}_{season}.csv", index=False)
+    sh.store(df, f"analysis/team_selection_{next_gw}_{season}.csv", index=False)
     return df
 
 

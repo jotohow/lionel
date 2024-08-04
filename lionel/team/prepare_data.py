@@ -1,13 +1,22 @@
 import pandas as pd
 import lionel.data_load.storage.storage_handler as storage_handler
 import lionel.data_load.process.process_train_data as load_data
+import numpy as np
 
-# import lionel.team.select as select
+# TODO: Need to add the latest prices, positions maybe...
 
 
-def prepare_data(storage_handler, season, next_gw, alpha=0.5):
-    df_preds = storage_handler.load(f"analysis/preds_{next_gw}_{season}.csv")
-    df_train = storage_handler.load(f"analysis/train_{next_gw}_{season}.csv")
+def _undo_dummies(df, prefix, default):
+    cols = [col for col in df.columns if col.startswith(prefix)]
+    df[prefix] = pd.from_dummies(df[cols], default_category=default)
+    df[prefix] = df[prefix].str.split("_").str[-1]
+    df = df.drop(columns=cols)
+    return df
+
+
+# def prepare_data(storage_handler, season, next_gw, alpha=0.5):
+def prepare_data(df_train, df_preds, season, next_gw, alpha=0.5):
+
     df_train = df_train[~((df_train.season == season) & (df_train.gameweek >= next_gw))]
 
     team_cols = [col for col in df_train.columns if col.startswith("team_name_")]
@@ -58,6 +67,41 @@ def prepare_data(storage_handler, season, next_gw, alpha=0.5):
     return df_1
 
 
-# NB: This code would achieve it the EWM that I want
-# b = df_preds.sort_values(by='gameweek', ascending=False).groupby('unique_id').ewm(alpha=0.75).mean().reset_index().sort_values(by='level_1')
-# b[b.unique_id=='Bukayo Saka']
+def prepare_data_for_charts(df_train, df_preds):
+    for prefix, default in [
+        ("team_name", "Arsenal"),
+        ("position", "DEF"),
+        ("opponent_team_name", "Arsenal"),
+    ]:
+        df_train = _undo_dummies(df_train, prefix, default)
+
+    df_train = df_train[
+        [
+            "unique_id",
+            "opponent_team_name",
+            "is_home",
+            "season",
+            "gameweek",
+            "team_name",
+            "position",
+            "y",
+        ]
+    ]
+    df_preds = df_preds.rename(
+        columns={
+            "Naive": "y_Naive",
+            "LGBMRegressor_no_exog": "y_LGBMRegressor_no_exog",
+            "LSTMWithReLU": "y_LSTMWithReLU",
+        }
+    )
+    df_full = df_train.merge(
+        df_preds, on=["unique_id", "season", "gameweek"], how="left"
+    )
+    assert df_full.shape[0] == df_train.shape[0]
+    maxes = df_full[df_full.y_Naive.notna()][["season", "gameweek"]].max()
+    df_full = df_full[
+        ~((df_full.season == maxes.season) & (df_full.gameweek > maxes.gameweek))
+    ]
+    df_full.loc[df_full.y_Naive.notna(), "y"] = np.nan
+    df_full = df_full.rename(columns={"unique_id": "name"})
+    return df_full

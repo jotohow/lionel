@@ -123,10 +123,21 @@ def create_fixture_df(storage_handler, next_gw, season):
 
 def get_expected_names3(df_gw, season, next_gw):
     # return a series of names against their team in the last gameweek
-    exp = df_gw.loc[
-        (df_gw["season"] == season) & (df_gw["gameweek"] == next_gw - 1),
-        ["name", "team_name", "position"],
-    ].set_index("name")
+    if next_gw == 1:
+        demoted_teams = ["Burnley", "Luton", "Sheffield Utd"]
+        df_gw = df_gw[~df_gw["team_name"].isin(demoted_teams)]
+        season = season - 1
+        next_gw = 39
+    exp = (
+        df_gw.loc[
+            (df_gw["season"] == season) & (df_gw["gameweek"] == next_gw - 1),
+            ["name", "team_name", "position"],
+        ]
+        .drop_duplicates()
+        .set_index("name")
+    )
+    print(len(exp))
+    # exp.to_csv("TEST.csv")
     return exp.to_dict(orient="index")
 
 
@@ -187,3 +198,14 @@ if __name__ == "__main__":
     sh.store(df, f"analysis/train_{next_gw}_{season}.csv", index=False)
     # print(df_train.head())
     # print(df_forecast.head())
+
+
+# import lionel.data_load.storage.storage_handler as storage_handler
+
+# sh = storage_handler.StorageHandler(local=True)
+# season = 24
+# next_gw = 25
+# gw_horizon = 5
+
+# df = load_gw_data(sh, next_gw, season)
+# expected_names = get_expected_names3(df, season, next_gw)

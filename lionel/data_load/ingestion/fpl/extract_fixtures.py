@@ -3,6 +3,10 @@ from lionel.data_load.constants import (
     BASE_URL,
     SEASON_MAP,
 )
+from lionel.utils import setup_logger
+from pandas.errors import IntCastingNaNError
+
+logger = setup_logger(__name__)
 
 NEEDED_COLS = {
     "code": "int64",
@@ -36,5 +40,25 @@ def validate_fixtures(df_fixtures):
     assert not missing_cols, f"Missing columns in fixtures: {missing_cols}"
 
     for col, dtype in NEEDED_COLS.items():
-        assert df_fixtures[col].dtype == dtype, f"Invalid dtype for {col}"
+        # assert (
+        #     df_fixtures[col].dtype == dtype
+        # ), f"Invalid dtype for {col}. Expected {dtype}, got {df_fixtures[col].dtype}"
+
+        if df_fixtures[col].dtype == dtype:
+            continue
+        else:
+            logger.error(
+                f"Invalid dtype for {col}. Expected {dtype}, got {df_fixtures[col].dtype}."
+                "Attempting to convert..."
+            )
+            try:
+                df_fixtures[col] = df_fixtures[col].astype(dtype)
+            except IntCastingNaNError as e:
+                logger.warning(
+                    f"Error converting {col}: {e}. Shouldn't be problematic."
+                )
+            except Exception as e:
+                logger.error(f"Error converting {col}: {e}")
+                raise e
+
     return None
