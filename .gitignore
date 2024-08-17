@@ -162,3 +162,5 @@ cython_debug/
 #.idea/
 
 /app/src/tests/
+lightning_logs/
+.DS_Store

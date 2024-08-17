@@ -17,7 +17,7 @@ def get_team_choice(df, season):
     pred_vars = [
         "Naive",
         "LGBMRegressor_no_exog",
-        # "LGBMRegressor_with_exog",
+        "LGBMRegressor_with_exog",
         "LSTMWithReLU",
     ]
     l = []

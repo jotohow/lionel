@@ -141,6 +141,50 @@ def get_expected_names3(df_gw, season, next_gw):
     return exp.to_dict(orient="index")
 
 
+def add_team_strengths(sh, df_final, season):
+    df_strengths = sh.load(f"cleaned/team_ids_{season}.csv")[
+        [
+            "team_name",
+            "strength_overall_home",
+            "strength_overall_away",
+            "strength_attack_home",
+            "strength_attack_away",
+            "strength_defence_home",
+            "strength_defence_away",
+        ]
+    ]
+
+    df_home = df_final[df_final["is_home"]]
+    df_away = df_final[~df_final["is_home"]]
+    assert df_home.shape[0] + df_away.shape[0] == df_final.shape[0]
+    df_home = df_home.merge(
+        df_strengths[["team_name", "strength_attack_home", "strength_defence_home"]],
+        how="left",
+        on="team_name",
+    ).rename(
+        columns={
+            "strength_attack_home": "strength_attack",
+            "strength_defence_home": "strength_defence",
+        }
+    )
+    df_away = df_away.merge(
+        df_strengths[["team_name", "strength_attack_away", "strength_defence_away"]],
+        how="left",
+        on="team_name",
+    ).rename(
+        columns={
+            "strength_attack_away": "strength_attack",
+            "strength_defence_away": "strength_defence",
+        }
+    )
+    df_final = (
+        pd.concat([df_home, df_away])
+        .sort_values(["team_name", "ds"])
+        .reset_index(drop=True)
+    )
+    return df_final
+
+
 # TODO: Aligning future fixtures like this might damage the preds
 # because they're done recursively. Could be better to align just in order and then
 # map games to gameweeks?
@@ -179,6 +223,10 @@ def run(storage_handler, next_gw, season):
         df_final.opponent_team_name.notna()
     ) | (df_final.game_complete)
     df_final = df_final.ffill()
+
+    # Add on team_strength stats
+    df_final = add_team_strengths(storage_handler, df_final, season)
+
     df_final = pd.get_dummies(
         df_final,
         columns=["team_name", "opponent_team_name", "position"],
@@ -200,12 +248,56 @@ if __name__ == "__main__":
     # print(df_forecast.head())
 
 
-# import lionel.data_load.storage.storage_handler as storage_handler
+# import lionel.data_load.storage_handler as storage_handler
+
 
 # sh = storage_handler.StorageHandler(local=True)
 # season = 24
 # next_gw = 25
 # gw_horizon = 5
 
-# df = load_gw_data(sh, next_gw, season)
-# expected_names = get_expected_names3(df, season, next_gw)
+
+# f = create_fixture_df(sh, next_gw, season)
+
+# # Get players data
+# # needs to have position for next bit
+# df_players = load_gw_data(sh, next_gw, season)
+# expected_names = get_expected_names3(df_players, season, next_gw)
+# df_expected = (
+#     pd.DataFrame.from_dict(expected_names, orient="index")
+#     .reset_index()
+#     .rename(columns={"index": "name"})
+# )
+
+# # Merge everything together
+# df_expected = (
+#     f.merge(df_expected, how="left", on="team_name")
+#     .sort_values(["team_name", "name", "ds"])
+#     .reset_index(drop=True)
+#     .drop(columns=["position"])  # dropped the gw arg here
+# )
+# df_final = df_expected.merge(
+#     df_players.drop(columns=["gameweek"]),  # added the gw arg here
+#     how="left",
+#     on=["team_name", "game_date", "season", "name"],
+# )
+# df_final = df_final[
+#     ((df_final["game_complete"]) & df_final.goals_scored.notna())
+#     | (~df_final["game_complete"])
+# ]
+# df_final["valid_game"] = (~df_final.game_complete) & (
+#     df_final.opponent_team_name.notna()
+# ) | (df_final.game_complete)
+# df_final = df_final.ffill()
+
+# df_final.shape
+
+# df_home = df_final[df_final["is_home"]]
+# df_away = df_final[~df_final["is_home"]]
+# df_home.shape[0] + df_away.shape[0] == df_final.shape[0]
+
+# df_strengths = sh.load(f"cleaned/team_ids_{season}.csv")[['team_name', 'strength_overall_home', 'strength_overall_away', 'strength_attack_home', 'strength_attack_away', 'strength_defence_home', 'strength_defence_away']]
+# df_home = df_home.merge(df_strengths[['team_name', 'strength_attack_home', 'strength_defence_home']], how='left', on='team_name').rename(columns={'strength_attack_home': 'strength_attack', 'strength_defence_home': 'strength_defence'})
+# df_away = df_away.merge(df_strengths[['team_name', 'strength_attack_away', 'strength_defence_away']], how='left', on='team_name').rename(columns={'strength_attack_away': 'strength_attack', 'strength_defence_away': 'strength_defence'})
+# df_final = pd.concat([df_home, df_away]).sort_values(['team_name', 'ds']).reset_index(drop=True)
+# df_final

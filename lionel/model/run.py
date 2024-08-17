@@ -56,8 +56,8 @@ def run(sh, df, season, next_gw, gw_horizon=1):
     horizon = get_horizon(valid_games, next_gw, season, gw_horizon)
 
     # Run the models
-    preds_lstm = lstm_runner.run(df, horizon)
-    preds_ml = ml_runner.run(df, horizon)
+    preds_lstm = lstm_runner.run(df, horizon=horizon)
+    preds_ml = ml_runner.run(df, horizon=horizon)
     assert (
         preds_lstm.shape[0] == preds_ml.shape[0]
     ), "Predictions have different lengths"
@@ -79,3 +79,11 @@ def run(sh, df, season, next_gw, gw_horizon=1):
     df_charts = prepare_data_for_charts(df, preds)
     sh.store(df_charts, f"analysis/charts_{next_gw}_{season}.csv", index=False)
     return preds
+
+
+# if __name__ == "__main__":
+#     import sys
+#     from lionel.data_load.storage_handler import StorageHandler
+#     sh = StorageHandler(local=True)
+#     run(*[int(x) for x in sys.argv[1:]])
+#     run

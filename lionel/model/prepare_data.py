@@ -29,6 +29,7 @@ def prepare_data_for_charts(df_train, df_preds):
         columns={
             "Naive": "y_Naive",
             "LGBMRegressor_no_exog": "y_LGBMRegressor_no_exog",
+            "LGBMRegressor_with_exog": "y_LGBMRegressor_with_exog",
             "LSTMWithReLU": "y_LSTMWithReLU",
         }
     )

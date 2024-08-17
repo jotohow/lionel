@@ -28,20 +28,32 @@ def forecast(
             ]
         },
     )
+    # weird situation where there's some duplicates...
     fcst.fit(df_train, static_features=[] if futr_exog_list else None)
+    df_needed = fcst.make_future_dataframe(h=horizon)
+    df_needed = df_needed.merge(
+        df_test[["ds", "unique_id"] + futr_exog_list],
+        on=["ds", "unique_id"],
+        how="left",
+    )
+    df_test = df_needed.drop_duplicates(subset=["ds", "unique_id"])
     preds = fcst.predict(h=horizon, X_df=df_test if futr_exog_list else None)
     return preds
 
 
-def run(df, horizon=1):
-    future_exog_list = [
+def run(
+    df,
+    horizon=1,
+    future_exog_vars=["strength_attack", "strength_defence"],
+    future_exog_dummy_prefixes=["position"],
+):
+
+    future_exog_list = future_exog_vars + [
         col
         for col in df.columns
-        if col.startswith("opponent_team_name")
-        # or col.startswith("team_name")
-        or col.startswith("position")
+        if any(col.startswith(prefix) for prefix in future_exog_dummy_prefixes)
     ]
-    print(future_exog_list)
+
     train_indices = df[df.game_complete].index
     df_train = df.loc[train_indices]
     df_test = df.loc[~df.index.isin(train_indices)]
@@ -53,17 +65,21 @@ def run(df, horizon=1):
     preds_1 = preds_1.rename(columns={"LGBMRegressor": "LGBMRegressor_no_exog"})
 
     # Run with exogenous features
-    # df_train_2 = df_train[["ds", "unique_id", "y"] + future_exog_list]
-    # df_test_2 = df_test[["ds", "unique_id", "y"] + future_exog_list]
-    # preds_2 = forecast(
-    #     df_train_2,
-    #     df_test_2,
-    #     horizon=horizon,
-    #     futr_exog_list=future_exog_list,
-    #     models=[lgb.LGBMRegressor()],
-    # )
-    # preds_2 = preds_2.rename(columns={"LGBMRegressor": "LGBMRegressor_with_exog"})
+    df_train_2 = df_train[["ds", "unique_id", "y"] + future_exog_list]
+    df_test_2 = df_test[["ds", "unique_id", "y"] + future_exog_list]
+    preds_2 = forecast(
+        df_train_2,
+        df_test_2,
+        horizon=horizon,
+        futr_exog_list=future_exog_list,
+        # models=[lgb.LGBMRegressor()],
+    )
+    preds_2 = preds_2.rename(columns={"LGBMRegressor": "LGBMRegressor_with_exog"})
 
-    # preds = preds_1.merge(preds_2, on=["ds", "unique_id"], how="inner")
-    preds = preds_1
+    preds = preds_1.merge(
+        preds_2[["ds", "unique_id", "LGBMRegressor_with_exog"]],
+        on=["ds", "unique_id"],
+        how="inner",
+    )
+    # preds = preds_1
     return preds

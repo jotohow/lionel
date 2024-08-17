@@ -33,9 +33,10 @@ def run(df, horizon=1):
     futr_exog_list = [
         col
         for col in df.columns
-        if col.startswith("opponent_team_name")
-        or col.startswith("team_name")
-        or col.startswith("position")
+        if col.startswith("position")
+        # or col.startswith("opponent_team_name")
+        # or col.startswith("team_name")
+        or col in ["strength_attack", "strength_defence"]
     ]
     hist_exog_list = [
         "assists",
