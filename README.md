@@ -15,6 +15,9 @@ lionel is a [Fantasy Premier League](https://fantasy.premierleague.com/) team pi
 - Picks a first XV, selects the first XI from that, and chooses a captain who receives double points.
 
 ## Usage
+
+See notebook with example usage [here](example_selection.ipynb)
+
 ```py
 from lionel.run import run
 team_selection = run(season=24, next_gw=32, gw_horizon=5)
