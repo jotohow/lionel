@@ -13,6 +13,12 @@ dependencies:
   - matplotlib
   - mlforecast
   - lightgbm
+  - pymc3
+  - arviz
+  - bambi
+  - seaborn
+  - numba
+  - aesara
   - pip:
     - pulp
     - python-dotenv
