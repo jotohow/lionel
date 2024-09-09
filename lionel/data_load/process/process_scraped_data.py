@@ -17,7 +17,23 @@ def clean_teams(data, season=25):
         .rename(columns={"index": "team_id_web", "name": "team_name"})
     ).replace(TEAM_MAP)
     df_teams["season"] = season
-    return df_teams
+    df_teams["team_season_id"] = (
+        df_teams.season.astype(str) + df_teams.team_id_web.astype(str)
+    ).astype(int)
+    KEEP_COLS = [
+        "team_season_id",
+        "team_id_web",
+        "team_name",
+        "season",
+        "strength",
+        "strength_overall_home",
+        "strength_overall_away",
+        "strength_attack_home",
+        "strength_attack_away",
+        "strength_defence_home",
+        "strength_defence_away",
+    ]
+    return df_teams[KEEP_COLS]
 
 
 def clean_fixtures(data, season=25):
@@ -41,6 +57,13 @@ def clean_fixtures(data, season=25):
     df_fixtures["gameweek_id"] = (
         df_fixtures.season.astype(str) + df_fixtures.gameweek.astype(str)
     ).astype(int)
+    df_fixtures["team_a_season_id"] = (
+        df_fixtures["season"].astype(str) + df_fixtures["team_a_id"].astype(str)
+    ).astype(int)
+    df_fixtures["team_h_season_id"] = (
+        df_fixtures["season"].astype(str) + df_fixtures["team_h_id"].astype(str)
+    ).astype(int)
+    df_fixtures = df_fixtures.drop(columns=["team_a_id", "team_h_id"])
     return df_fixtures
 
 
@@ -58,13 +81,21 @@ def clean_gameweeks(data, season=25):
     return df_gameweeks
 
 
-def clean_players(data):
+def clean_players(data, season=25):
     df_players = pd.DataFrame.from_dict(data["element_map"], orient="index").rename(
         columns={"id": "player_id_web", "team_id": "team_id_web"}
     )
     position_map = {1: "GK", 2: "DEF", 3: "MID", 4: "FWD"}
     df_players["position"] = df_players["element_type"].map(position_map)
+    df_players["season"] = season
+    df_players["player_season_id"] = (
+        df_players.season.astype(str) + df_players.player_id_web.astype(str)
+    ).astype(int)
     df_players = df_players.drop(columns=["element_type"])
+    df_players["player_full_name"] = (
+        df_players["first_name"] + " " + df_players["second_name"]
+    )
+    df_players = df_players.drop(columns=["first_name", "second_name"])
     return df_players
 
 
@@ -89,9 +120,12 @@ def clean_player_stats(data, season=25):
     df_player_stats["player_stat_id"] = (
         df_player_stats.season.astype(str) + df_player_stats.index.astype(str)
     ).astype(int)
+    df_player_stats["player_season_id"] = (
+        df_player_stats.season.astype(str) + df_player_stats.player_id_web.astype(str)
+    ).astype(int)
     KEEP_COLS = [
         "player_stat_id",
-        "player_id_web",
+        "player_season_id",
         "fixture_id",
         "fixture_season_id",
         "gameweek",

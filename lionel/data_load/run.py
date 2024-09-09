@@ -1,11 +1,21 @@
-import lionel.data_load.ingestion.fpl.extract_fixtures as extract_fixtures
-import lionel.data_load.ingestion.fpl.extract_team_ids as extract_team_ids
-import lionel.data_load.ingestion.fpl.extract_player_stats as extract_player_stats
+import json
+import datetime as dt
+from tqdm import tqdm
+import sys
+from pathlib import Path
+
+import lionel.data_load.ingestion.fpl.scraper_historic.extract_fixtures as extract_fixtures
+import lionel.data_load.ingestion.fpl.scraper_historic.extract_team_ids as extract_team_ids
+import lionel.data_load.ingestion.fpl.scraper_historic.extract_player_stats as extract_player_stats
 import lionel.data_load.process.process_fixtures as process_fixtures
 import lionel.data_load.process.process_player_stats as process_player_stats
-import lionel.data_load.storage_handler as storage_handler
 import lionel.data_load.process.process_train_data as process_train_data
+import lionel.data_load.ingestion.fpl.scraper as scraper
+import lionel.data_load.db.run_pipeline as run_pipeline
+import lionel.data_load.db.init_db as init_db
+from lionel.data_load.constants import RAW, DATA
 from lionel.utils import setup_logger
+
 
 logger = setup_logger(__name__)
 
@@ -86,7 +96,32 @@ def run_analysis_data(sh, next_gw, season=24):
     return df_train
 
 
-def run(sh, season, next_gameweek):
+def run_scrapers(season=25, elements=[]):
+
+    # Scrape general info
+    gis = scraper.GenInfoScraper()
+    scraped_data = gis.scrape()
+
+    # Extract player ids from general info
+    elements = scraped_data["element_map"].keys() if not elements else elements
+    n_players = len(elements)
+    scrapers = [scraper.PlayerScraper(el) for el in elements]
+    scrapers = scrapers + [scraper.FixtureScraper()]
+
+    # Run the player and fixture scrapers
+    scraper_tqdm = tqdm(scrapers)
+    scraper_tqdm.set_description(f"Scraping fixtures and {n_players} players")
+    scraped_data_ = [scraper.scrape() for scraper in scraper_tqdm]
+    for d in scraped_data_:
+        scraped_data.update(d)
+
+    # Dump scraped data in a JSON
+    today = dt.datetime.today().strftime("%Y%m%d")
+    json.dump(scraped_data, open(RAW / f"scraped_data_{today}.json", "w"))
+    return scraped_data
+
+
+def run_historic(sh, season, next_gameweek):
     """
     Run the entire data pipeline.
 
@@ -106,5 +141,20 @@ def run(sh, season, next_gameweek):
 
 
 if __name__ == "__main__":
-    sh = storage_handler.StorageHandler(local=True)
-    run(sh, season=25, next_gameweek=1)
+
+    # Init the database if needed
+    if not Path(DATA / "fpl.db").exists():
+        init_db.main()
+
+    # Run scrapers if needed
+    today = dt.datetime.today().strftime("%Y%m%d")
+    if not Path(RAW / f"scraped_data_{today}.json").exists():
+        run_scrapers()
+
+    # Run the data pipeline
+    # Seems to not have done fixtures and gameweeks...
+    try:
+        season = int(sys.argv[1])
+    except IndexError:
+        season = 25
+    run_pipeline.run(season=season)

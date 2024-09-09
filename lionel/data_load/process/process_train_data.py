@@ -136,7 +136,8 @@ def get_expected_names3(df_gw, season, next_gw):
         .drop_duplicates()
         .set_index("name")
     )
-    print(len(exp))
+    # print("Expected: ", len(exp))
+    assert exp.shape[0] > 0, "No expected names"
     # exp.to_csv("TEST.csv")
     return exp.to_dict(orient="index")
 
@@ -196,6 +197,8 @@ def run(storage_handler, next_gw, season):
     # Get players data
     # needs to have position for next bit
     df_players = load_gw_data(storage_handler, next_gw, season)
+    df_players.to_csv("TEST.csv")
+    assert df_players.shape[0] > 0
     expected_names = get_expected_names3(df_players, season, next_gw)
     df_expected = (
         pd.DataFrame.from_dict(expected_names, orient="index")

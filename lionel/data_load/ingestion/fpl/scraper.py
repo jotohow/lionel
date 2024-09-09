@@ -4,6 +4,9 @@ import json
 import datetime as dt
 from abc import ABC, abstractmethod
 from tenacity import retry, stop_after_attempt, wait_fixed
+from lionel.utils import setup_logger
+
+logger = setup_logger(__name__)
 
 
 class FPLScraperBase(ABC):
@@ -50,6 +53,7 @@ class GenInfoScraper(FPLScraperBase):
         self.scraped_data["gw_deadlines"] = self.get_gw_deadlines()
         self.scraped_data["element_map"] = self.get_element_name_map()
         self.scraped = True
+        logger.info("Scraped general info")
         return self.scraped_data
 
     # TODO: Will need to clean the team names
@@ -108,6 +112,7 @@ class FixtureScraper(FPLScraperBase):
         fixture_data = self.parse_fixtures(d)
         self.scraped = True
         self.scraped_data["fixtures"] = fixture_data
+        logger.info("Scraped Fixtures")
         return self.scraped_data
 
     @staticmethod
@@ -151,6 +156,7 @@ class GameweekScraper(FPLScraperBase):
         stats = self.parse_gameweek_stats()
         self.scraped_data[f"gw_stats_{self.gameweek}"] = stats
         self.scraped = True
+        # logger.info("Scraped stats")
         return self.scraped_data
 
     # TODO: Need to make sure this accounts for multiple gameweeks..
@@ -188,24 +194,25 @@ class PlayerScraper(FPLScraperBase):
         d = self.get_response(self.url)
         stats = d["history"]
         self.scraped_data[f"player_stats_{self.id}"] = stats
+        # logger.info("Scraped Player info")
         return self.scraped_data
 
 
-def run_scrapers(elements=[]):
-    raw = "/Users/toby/Dev/lionel/data/raw/"
-    today = dt.date.today().strftime("%Y%m%d")
-    scrapers = [GenInfoScraper(), FixtureScraper()]
-    scraped_data_ = [scraper.scrape() for scraper in scrapers]
-    scraped_data = {}
-    for d in scraped_data_:
-        scraped_data.update(d)
+# def run_scrapers(elements=[]):
+#     raw = "/Users/toby/Dev/lionel/data/raw/"
+#     today = dt.date.today().strftime("%Y%m%d")
+#     scrapers = [GenInfoScraper(), FixtureScraper()]
+#     scraped_data_ = [scraper.scrape() for scraper in scrapers]
+#     scraped_data = {}
+#     for d in scraped_data_:
+#         scraped_data.update(d)
 
-    if not elements:
-        elements = scraped_data["element_map"].keys()
-    for el in elements:
-        player = PlayerScraper(el)
-        player.scrape()
-        scraped_data.update(player.scraped_data)
+#     if not elements:
+#         elements = scraped_data["element_map"].keys()
+#     for el in elements:
+#         player = PlayerScraper(el)
+#         player.scrape()
+#         scraped_data.update(player.scraped_data)
 
-    json.dump(scraped_data, open(raw + f"scraped_data_{today}.json", "w"))
-    return scraped_data
+#     json.dump(scraped_data, open(raw + f"scraped_data_{today}.json", "w"))
+#     return scraped_data
