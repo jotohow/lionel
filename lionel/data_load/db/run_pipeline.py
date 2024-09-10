@@ -17,6 +17,7 @@ def load_scraped_data(date=None):
 
 def stage_data(data, dbmanager, season=25):
     logger.info("Staging data...")
+
     # Clean each set of data
     df_teams = process.clean_teams(data)
     df_fixtures = process.clean_fixtures(data)
@@ -24,30 +25,19 @@ def stage_data(data, dbmanager, season=25):
     df_players = process.clean_players(data)
     df_player_stats = process.clean_player_stats(data)
 
-    dbmanager.delete_rows("teams_season_staging", season)
-    df_teams.to_sql(
-        "teams_season_staging", con=dbmanager.engine, if_exists="append", index=False
-    )
+    pairs = [
+        (df_teams, "teams_season_staging"),
+        (df_fixtures, "fixtures_staging"),
+        (df_gameweeks, "gameweeks_staging"),
+        (df_players, "player_seasons_staging"),
+        (df_player_stats, "player_stats_staging"),
+    ]
 
-    dbmanager.delete_rows("fixtures_staging", season)
-    df_fixtures.to_sql(
-        "fixtures_staging", con=dbmanager.engine, if_exists="append", index=False
-    )
+    for tuple_ in pairs:
+        df, table = tuple_
+        dbmanager.delete_rows(table, season)
+        df.to_sql(table, con=dbmanager.engine, if_exists="append", index=False)
 
-    dbmanager.delete_rows("gameweeks_staging", season)
-    df_gameweeks.to_sql(
-        "gameweeks_staging", con=dbmanager.engine, if_exists="append", index=False
-    )
-
-    dbmanager.delete_rows("player_seasons_staging", season)
-    df_players.to_sql(
-        "player_seasons_staging", con=dbmanager.engine, if_exists="append", index=False
-    )
-
-    dbmanager.delete_rows("player_stats_staging", season)
-    df_player_stats.to_sql(
-        "player_stats_staging", con=dbmanager.engine, if_exists="append", index=False
-    )
     return True
 
 
@@ -176,7 +166,7 @@ def _move_gameweeks(dbmanager, season=25):
     dbmanager.delete_rows("gameweeks_staging", season)
 
 
-def move_data(dbmanager, season=25):
+def move_data_to_main(dbmanager, season=25):
     logger.info(f"Moving season {season} data from staging to main...")
     _move_teams(dbmanager)
     _move_players(dbmanager)
@@ -189,7 +179,7 @@ def run(season=25):
     dbmanager = DBManager(DATA / "fpl.db")
     data = load_scraped_data()
     stage_data(data, dbmanager)
-    move_data(dbmanager, season=season)
+    move_data_to_main(dbmanager, season=season)
 
     return True
 

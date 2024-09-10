@@ -48,11 +48,13 @@ class PlayerSeason(Base):
     player_id = Column(Integer, ForeignKey("players.player_id"))
     player_id_web = Column(Integer)
     season = Column(Integer, nullable=False)
-
     player_name = Column(String, nullable=False)
     player_full_name = Column(String)
     team_season_id = Column(Integer, ForeignKey("teams_season.team_season_id"))
     position = Column(String)
+    player_stats = relationship(
+        "PlayerStats", back_populates="player_season", lazy="dynamic"
+    )
 
 
 class Player(Base):
@@ -104,6 +106,7 @@ class PlayerStats(Base):
     player_season_id = Column(Integer, ForeignKey("player_seasons.player_season_id"))
     player_id = Column(Integer, ForeignKey("players.player_id"))
     fixture_season_id = Column(Integer, ForeignKey("fixtures.fixture_season_id"))
+    player = relationship("PlayerSeason", back_populates="player_stats")
     fixture_id = Column(Integer)
     gameweek_id = Column(Integer, ForeignKey("gameweeks.gameweek_id"))
     gameweek = Column(Integer)
