@@ -6,6 +6,7 @@ import arviz as az
 import pymc as pm
 import pytensor.tensor as pt
 import xarray as xr
+from pathlib import Path
 
 
 class FPLPointsModel(ModelBuilder):
@@ -19,8 +20,27 @@ class FPLPointsModel(ModelBuilder):
         version (str): The version of the model.
     """
 
-    __model_type__ = "FPLPointsModel"
+    _model_type_ = "FPLPointsModel"
     version = "0.1"
+
+    EXPECTED_COLUMNS = [
+        "player_name",
+        "player_id",
+        "gameweek",
+        "season",
+        "home_team",
+        "away_team",
+        "home_goals",
+        "away_goals",
+        "position",
+        "minutes",
+        "goals_scored",
+        "assists",
+        "no_contribution",
+        "points",
+        "is_home",
+        "player",
+    ]
 
     def build_model(self, X: pd.DataFrame, y: pd.Series, **kwargs):
         """
@@ -48,18 +68,18 @@ class FPLPointsModel(ModelBuilder):
             player_app_idx_ = pm.Data(
                 "player_app_idx_", self.player_app_idx, dims="player_app"
             )
+            minutes = pm.Data("minutes", self.minutes, dims="player_app")
 
-            # Variable points for contributions by position
-            goal_points = pm.Data(
-                "goal_points", np.array([10, 6, 5, 4]), mutable=False, dims="position"
+            # Account for different points for contributions by position
+            goal_points = pm.Data(  # e.g. gk gets 10 points for a goal, fwd gets 4
+                "goal_points", np.array([10, 6, 5, 4]), dims="position"
             )
-            assist_points = 3
-            clean_sheet_points = pm.Data(
+            clean_sheet_points = pm.Data(  # gk/def gets 4 points, and so on
                 "clean_sheet_points",
                 np.array([4, 4, 1, 0]),
-                mutable=False,
                 dims="position",
             )
+            assist_points = 3  # all positions get 3 points for an assist
 
             # Priors from model config
             beta_0_mu_prior = self.model_config.get("beta_intercept_mu_prior", 2)
@@ -136,6 +156,7 @@ class FPLPointsModel(ModelBuilder):
                 dims="player_app",
             )
 
+            # Priors over contribution probabilities
             u = pm.Dirichlet("prior_p", a=np.ones(3), dims="outcome")
             v = pm.Gamma(
                 "dprior_v", alpha=v_alpha_prior, beta=v_beta_prior, dims="outcome"
@@ -146,16 +167,44 @@ class FPLPointsModel(ModelBuilder):
                 dims=("player", "outcome"),
             )
 
-            theta = pm.Dirichlet("theta", a=alpha, dims=("player", "outcome"))
+            # Contribution probabilities - scale by minutes
+            # TODO: Move this adjustment to a function
+            theta_mins = pm.Dirichlet("theta_mins", a=alpha, dims=("player", "outcome"))
+            _ = theta_mins[player_idx_]
+            p_score = pm.Deterministic(
+                "p_score", _[:, 0] * (minutes / 90), dims=("player_app")
+            )
+            p_assist = pm.Deterministic(
+                "p_assist", _[:, 1] * (minutes / 90), dims=("player_app")
+            )
+            p_neither = pm.Deterministic(
+                "p_neither",
+                _[:, 2] * (minutes / 90) + (90 - minutes) / 90,
+                dims=("player_app"),
+            )
+            theta = pm.Deterministic(
+                "theta",
+                pm.math.stack([p_score, p_assist, p_neither], axis=-1),
+                dims=("player_app", "outcome"),
+            )
+
             player_contribution_opportunities = pm.Multinomial(
                 "player_contribution_opportunities",
                 n=team_goals,
-                p=theta[player_idx_],
+                p=theta,
                 observed=self.X[["goals_scored", "assists", "no_contribution"]].values,
                 dims=("player_app", "outcome"),
             )
-            player_goals = player_contribution_opportunities[player_app_idx_, 0]
-            player_assists = player_contribution_opportunities[player_app_idx_, 1]
+            player_goals = pm.Deterministic(
+                "player_goals",
+                player_contribution_opportunities[player_app_idx_, 0] * minutes / 90,
+                dims="player_app",
+            )
+            player_assists = pm.Deterministic(
+                "player_assists",
+                player_contribution_opportunities[player_app_idx_, 1] * minutes / 90,
+                dims="player_app",
+            )
 
             # Random effect to account for yellow cards, bonus points, etc.
             player_re = pm.Normal("re_player", mu=0, sigma=2, dims="player")
@@ -189,6 +238,8 @@ class FPLPointsModel(ModelBuilder):
         Returns:
             None
         """
+
+        # Team/match level indices
         final_match = self.match_idx.max() + 1
         X_teams_new = (
             X[["home_team", "away_team", "home_goals", "away_goals"]]
@@ -199,28 +250,34 @@ class FPLPointsModel(ModelBuilder):
             X_teams_new[["home_team", "away_team"]].apply(tuple, axis=1)
         )
         match_idx_new += final_match
-
-        _ = X_teams_new["home_team"].values  # changed from X to X_teams_new
+        _ = X_teams_new["home_team"].values
         home_teams = np.array([np.where(self.teams == team)[0][0] for team in _])
-        _ = X_teams_new["away_team"].values  # changed from X to X_teams_new
+        _ = X_teams_new["away_team"].values
         away_teams = np.array([np.where(self.teams == team)[0][0] for team in _])
-        is_home = X["is_home"].values
 
+        # Player level indices
+        is_home = X["is_home"].values
         player_app_idx_, _ = pd.factorize(
             X[["home_team", "away_team"]].apply(tuple, axis=1)
         )
         player_idx_ = [np.where(self.players == player)[0][0] for player in X["player"]]
         position_idx = np.array(X["position"].map(self.pos_map))
 
-        x_values = {
+        if X["minutes"].isnull().sum() > 0:
+            minutes_estimate = self.minutes_estimate[player_idx_]
+        else:
+            minutes_estimate = X["minutes"].values
+
+        x_values = {  # new data to be passed into the model
             "home_team": home_teams,
             "away_team": away_teams,
             "is_home": is_home,
             "player_app_idx_": player_app_idx_,
             "player_idx_": player_idx_,
             "positions": position_idx,
+            "minutes": minutes_estimate,
         }
-        new_coords = {
+        new_coords = {  # new dimensions to be added to the model
             "match": match_idx_new,
             "player_app": player_app_idx_,
             "player": X["player"].unique(),
@@ -244,64 +301,48 @@ class FPLPointsModel(ModelBuilder):
         Returns:
             None
         """
-        COLS_NEEDED = [
-            "player_name",
-            "player_id",
-            "home_team",
-            "away_team",
-            "home_goals",
-            "away_goals",
-            "position",  # NEED TO ADD THIS AS A PRIORTY RLY - because point scores are dependent on this
-            "goals_scored",
-            "assists",
-            "no_contribution",
-            "points",
-            "is_home",
-            "player",
-        ]
+        # Filter columns in the input data
         assert all(
-            [col in X.columns for col in COLS_NEEDED]
-        ), f"Missing columns: {set(COLS_NEEDED) - set(X.columns)}"
+            [col in X.columns for col in self.EXPECTED_COLUMNS]
+        ), f"Missing columns: {set(self.EXPECTED_COLUMNS) - set(X.columns)}"
+        X = X[self.EXPECTED_COLUMNS]
 
-        X = X[COLS_NEEDED]
-
-        # IDs
-        ## Add meaningful name to unique ID
+        # Create ID variables for coords + attributes
         X["player"] = X["player_id"].astype(str) + "_" + X["player_name"]
         player_idx, players = pd.factorize(X["player"])
-        player_app_idx, player_apps = pd.factorize(
+        player_app_idx, _ = pd.factorize(
             X[["home_team", "away_team"]].apply(tuple, axis=1)
         )
         position_idx = np.array(X["position"].map(self.pos_map))
+        minutes = X["minutes"].values
+        minutes_estimate = self._get_minutes_estimate(X, players)
 
-        ## Team level
         X_teams = (
             X[["home_team", "away_team", "home_goals", "away_goals"]]
             .drop_duplicates()
             .reset_index(drop=True)
         )
+
         home_idx, teams = pd.factorize(X_teams["home_team"], sort=True)
         away_idx, _ = pd.factorize(X_teams["away_team"], sort=True)
         match_idx, matches = pd.factorize(
             X_teams[["home_team", "away_team"]].apply(tuple, axis=1)
         )
-
         outcomes = ["goals_scored", "assists", "no_contribution"]
 
         # Add the various attributes
         self.X = X
         self.y = y
-
         self.X_teams = X_teams
         self.home_goals = self.X_teams["home_goals"].values
         self.away_goals = self.X_teams["away_goals"].values
-
         self.is_home = self.X["is_home"].values
-
         self.players = players
         self.player_idx = player_idx
         self.player_app_idx = player_app_idx
         self.position_idx = position_idx
+        self.minutes = minutes
+        self.minutes_estimate = minutes_estimate
         self.teams = teams
         self.home_idx = home_idx
         self.away_idx = away_idx
@@ -387,6 +428,7 @@ class FPLPointsModel(ModelBuilder):
             post_pred = pm.sample_posterior_predictive(self.idata, **kwargs)
             if extend_idata:
                 self.idata.extend(post_pred, join="right")
+
         group = (
             "predictions"
             if kwargs.get("predictions", False)
@@ -434,7 +476,56 @@ class FPLPointsModel(ModelBuilder):
 
         return posterior_predictive_samples[self.output_var]
 
+    @staticmethod
+    def _get_minutes_estimate(df, players):
+        assert df.player_id.nunique() == len(players)
+        df_mins = (
+            df.sort_values(["season", "gameweek"], ascending=[False, False])
+            .groupby("player_id")
+            .tail(3)
+        )
+        mins = df_mins.groupby(["player"])["minutes"].mean().reindex(players).values
+        return np.int32(mins)
+
     @property
     def pos_map(self):
         positions = ["GK", "DEF", "MID", "FWD"]
         return {pos: i for i, pos in enumerate(positions)}
+
+    def save(self, fname: str) -> None:
+        """
+        Save the model's inference data to a file.
+
+        Parameters
+        ----------
+        fname : str
+            The name and path of the file to save the inference data with model parameters.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        RuntimeError
+            If the model hasn't been fit yet (no inference data available).
+
+        Examples
+        --------
+
+        """
+        if not (self.idata is not None and "posterior" in self.idata):
+            raise RuntimeError("The model hasn't been fit yet, call .fit() first")
+
+        self.idata = self.set_idata_attrs()
+        file = Path(str(fname))
+        self.idata.to_netcdf(str(file))
+
+    @property
+    def _serializable_model_config(self) -> Dict[str, Union[int, float, Dict]]:
+        """
+        _serializable_model_config is a property that returns a dictionary with all the model parameters that we want to save.
+        as some of the data structures are not json serializable, we need to convert them to json serializable objects.
+        Some models will need them, others can just define them to return the model_config.
+        """
+        return self.model_config
