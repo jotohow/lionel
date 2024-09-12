@@ -5,34 +5,49 @@ import numpy as np
 import arviz as az
 import pymc as pm
 import pytensor.tensor as pt
+import xarray as xr
 
 
 class FPLPointsModel(ModelBuilder):
+    """
+    A hierarchical model for predicting Fantasy Premier League (FPL) points.
+
+    This model is built using the `pymc_experimental` library and extends the `ModelBuilder` class.
+
+    Attributes:
+        __model_type__ (str): The type of the model.
+        version (str): The version of the model.
+    """
+
     __model_type__ = "FPLPointsModel"
     version = "0.1"
 
-    def __init__(self, model_config: dict = None, sampler_config: dict = None):
-        super().__init__(model_config, sampler_config)
-        self.X_teams: Union[pd.DataFrame, np.ndarray] = None
-
     def build_model(self, X: pd.DataFrame, y: pd.Series, **kwargs):
+        """
+        Build the FPL points prediction model.
+
+        Args:
+            X (pd.DataFrame): The input features.
+            y (pd.Series): The target variable.
+
+        Returns:
+            None
+        """
         X_values = X
         y_values = y.values if isinstance(y, pd.Series) else y
         self._generate_and_preprocess_model_data(X_values, y_values)
 
         with pm.Model(coords=self.model_coords) as self.model:
-
-            # Data that will be
+            # Data
             home_team = pm.Data("home_team", self.home_idx, dims="match")
             away_team = pm.Data("away_team", self.away_idx, dims="match")
-
             is_home = pm.Data("is_home", self.is_home, dims="player_app")
+            player_idx_ = pm.Data("player_idx_", self.player_idx, dims="player_app")
             player_app_idx_ = pm.Data(
                 "player_app_idx_", self.player_app_idx, dims="player_app"
             )
-            player_idx_ = pm.Data("player_idx_", self.player_idx, dims="player_app")
 
-            # Extract priors from the model config
+            # Priors from model config
             beta_0_mu_prior = self.model_config.get("beta_intercept_mu_prior", 2)
             beta_0_sigma_prior = self.model_config.get("beta_intercept_sigma_prior", 2)
             beta_home_mu_prior = self.model_config.get("beta_home_mu_prior", 0.0)
@@ -46,7 +61,7 @@ class FPLPointsModel(ModelBuilder):
             v_alpha_prior = self.model_config.get("v_alpha_prior", 1)
             v_beta_prior = self.model_config.get("v_beta_prior", 20)
 
-            # PRIORS SHOULD COME FROM THE MODEL CONFIG
+            # Team level model parameters
             beta_0 = pm.Normal(
                 "beta_intercept", mu=beta_0_mu_prior, sigma=beta_0_sigma_prior
             )
@@ -61,12 +76,6 @@ class FPLPointsModel(ModelBuilder):
             atts = pm.Normal("atts", mu=mu_att, sigma=sd_att, dims="team")
             defs = pm.Normal("defs", mu=mu_def, sigma=sd_def, dims="team")
 
-            u = pm.Dirichlet("prior_p", a=np.ones(3), dims="outcome")
-            v = pm.Gamma(
-                "dprior_v", alpha=v_alpha_prior, beta=v_beta_prior, dims="outcome"
-            )
-
-            # Why do we centre these?
             beta_attack = pm.Deterministic(
                 "beta_attack", atts - pt.mean(atts), dims="team"
             )
@@ -74,7 +83,6 @@ class FPLPointsModel(ModelBuilder):
                 "beta_defence", defs - pt.mean(defs), dims="team"
             )
 
-            # could the indexing be wrong? the preds are just totally wrong...
             mu_home = pm.math.exp(
                 beta_0 + beta_home + beta_attack[home_team] + beta_defence[away_team]
             )
@@ -82,17 +90,17 @@ class FPLPointsModel(ModelBuilder):
                 beta_0 + beta_attack[away_team] + beta_defence[home_team]
             )
 
-            # The issue is somewhere here
             home_goals = pm.Poisson(
                 "home_goals",
                 mu=mu_home,
-                observed=self.home_goals,  # THIS IS THE only diff from above, but think it's fine
+                observed=self.home_goals,
                 dims="match",
             )
             away_goals = pm.Poisson(
                 "away_goals", mu=mu_away, observed=self.away_goals, dims="match"
             )
 
+            # Player level model parameters
             team_goals = pm.Deterministic(
                 "team_goals",
                 pm.math.switch(
@@ -114,6 +122,10 @@ class FPLPointsModel(ModelBuilder):
                 dims="player_app",
             )
 
+            u = pm.Dirichlet("prior_p", a=np.ones(3), dims="outcome")
+            v = pm.Gamma(
+                "dprior_v", alpha=v_alpha_prior, beta=v_beta_prior, dims="outcome"
+            )
             alpha = pm.Deterministic(
                 "alpha",
                 np.repeat((u * v)[np.newaxis, :], len(self.players), axis=0),
@@ -124,14 +136,14 @@ class FPLPointsModel(ModelBuilder):
                 "player_contribution_opportunities",
                 n=team_goals,
                 p=theta[player_idx_],
-                observed=self.X[
-                    ["goals_scored", "assists", "no_contribution"]
-                ].values,  # DEFO WRONG
+                observed=self.X[["goals_scored", "assists", "no_contribution"]].values,
                 dims=("player_app", "outcome"),
             )
-            player_re = pm.Normal("re_player", mu=0, sigma=2, dims="player")
             player_goals = player_contribution_opportunities[player_app_idx_, 0]
             player_assists = player_contribution_opportunities[player_app_idx_, 1]
+
+            # Random effect to account for yellow cards, bonus points, etc.
+            player_re = pm.Normal("re_player", mu=0, sigma=2, dims="player")
 
             mu_points = pm.Deterministic(
                 "mu_points",
@@ -143,43 +155,45 @@ class FPLPointsModel(ModelBuilder):
                 ),
                 dims="player_app",
             )
-            points = pm.Normal(
-                "points", mu=mu_points, observed=self.y, dims="player_app"
+
+            points_pred = pm.Normal(
+                "points_pred", mu=mu_points, observed=self.y, dims="player_app"
             )
 
     def _data_setter(
         self, X: Union[pd.DataFrame, np.ndarray], y: Union[pd.Series, np.ndarray] = None
     ):
+        """
+        Set the data for the model.
 
-        # TODO: Find the bug here that happens when we fit on new data
+        Args:
+            X (Union[pd.DataFrame, np.ndarray]): The input features.
+            y (Union[pd.Series, np.ndarray], optional): The target variable.
 
+        Returns:
+            None
+        """
         final_match = self.match_idx.max() + 1
         X_teams_new = (
             X[["home_team", "away_team", "home_goals", "away_goals"]]
             .drop_duplicates()
             .reset_index(drop=True)
         )
-        match_idx_new = (
-            pd.factorize(X_teams_new[["home_team", "away_team"]].apply(tuple, axis=1))[
-                0
-            ]
-            + final_match
+        match_idx_new, _ = pd.factorize(
+            X_teams_new[["home_team", "away_team"]].apply(tuple, axis=1)
         )
+        match_idx_new += final_match
 
-        # using the string names in X['home_team'].values, map to the index in self.home_idx
-        _ = X["home_team"].values
+        _ = X_teams_new["home_team"].values  # changed from X to X_teams_new
         home_teams = np.array([np.where(self.teams == team)[0][0] for team in _])
-        _ = X["away_team"].values
+        _ = X_teams_new["away_team"].values  # changed from X to X_teams_new
         away_teams = np.array([np.where(self.teams == team)[0][0] for team in _])
         is_home = X["is_home"].values
 
-        # Shouldn't be a problem that these don't rely on the old indices because
-        # this function updates those old indices...
-        players_new = X["player"].unique()
         player_app_idx_, _ = pd.factorize(
             X[["home_team", "away_team"]].apply(tuple, axis=1)
         )
-        player_idx_ = [np.where(self.players == player)[0][0] for player in players_new]
+        player_idx_ = [np.where(self.players == player)[0][0] for player in X["player"]]
 
         x_values = {
             "home_team": home_teams,
@@ -191,7 +205,7 @@ class FPLPointsModel(ModelBuilder):
         new_coords = {
             "match": match_idx_new,
             "player_app": player_app_idx_,
-            "player": players_new,
+            "player": X["player"].unique(),
         }
 
         with self.model:
@@ -199,14 +213,19 @@ class FPLPointsModel(ModelBuilder):
             if y is not None:
                 pm.set_data({"y_data": y.values if isinstance(y, pd.Series) else y})
 
-    # The cols in df_2 should go in here
     def _generate_and_preprocess_model_data(
         self, X: Union[pd.DataFrame, pd.Series], y: Union[pd.Series, np.ndarray]
     ) -> None:
         """
         Process the data and generate the model coordinates.
-        """
 
+        Args:
+            X (Union[pd.DataFrame, pd.Series]): The input features.
+            y (Union[pd.Series, np.ndarray]): The target variable.
+
+        Returns:
+            None
+        """
         COLS_NEEDED = [
             "player_name",
             "player_id",
@@ -319,4 +338,77 @@ class FPLPointsModel(ModelBuilder):
 
     @property
     def output_var(self):
-        return "y"
+        return "points_pred"
+
+    # Mask method from base class - it didn't work when kwarg predictions=True was passed
+    def sample_posterior_predictive(self, X_pred, extend_idata, combined, **kwargs):
+        """
+        Sample from the model's posterior predictive distribution.
+
+        Parameters
+        ----------
+        X_pred : array, shape (n_pred, n_features)
+            The input data used for prediction using prior distribution..
+        extend_idata : Boolean determining whether the predictions should be added to inference data object.
+            Defaults to False.
+        combined: Combine chain and draw dims into sample. Won't work if a dim named sample already exists.
+            Defaults to True.
+        **kwargs: Additional arguments to pass to pymc.sample_posterior_predictive
+
+        Returns
+        -------
+        posterior_predictive_samples : DataArray, shape (n_pred, samples)
+            Posterior predictive samples for each input X_pred
+        """
+        self._data_setter(X_pred)
+
+        with self.model:  # sample with new input data
+            post_pred = pm.sample_posterior_predictive(self.idata, **kwargs)
+            if extend_idata:
+                self.idata.extend(post_pred, join="right")
+        group = (
+            "predictions"
+            if kwargs.get("predictions", False)
+            else "posterior_predictive"
+        )
+        posterior_predictive_samples = az.extract(post_pred, group, combined=combined)
+
+        return posterior_predictive_samples
+
+    def predict_posterior(
+        self,
+        X_pred: np.ndarray | pd.DataFrame | pd.Series,
+        extend_idata: bool = True,
+        combined: bool = True,
+        **kwargs,
+    ) -> xr.DataArray:
+        """
+        Generate posterior predictive samples on unseen data.
+
+        Parameters
+        ----------
+        X_pred : array-like if sklearn is available, otherwise array, shape (n_pred, n_features)
+            The input data used for prediction.
+        extend_idata : Boolean determining whether the predictions should be added to inference data object.
+            Defaults to True.
+        combined: Combine chain and draw dims into sample. Won't work if a dim named sample already exists.
+            Defaults to True.
+        **kwargs: Additional arguments to pass to pymc.sample_posterior_predictive
+
+        Returns
+        -------
+        y_pred : DataArray, shape (n_pred, chains * draws) if combined is True, otherwise (chains, draws, n_pred)
+            Posterior predictive samples for each input X_pred
+        """
+
+        # X_pred = self._validate_data(X_pred) # dropped to allow strings in X_pred
+        posterior_predictive_samples = self.sample_posterior_predictive(
+            X_pred, extend_idata, combined, **kwargs
+        )
+
+        if self.output_var not in posterior_predictive_samples:
+            raise KeyError(
+                f"Output variable {self.output_var} not found in posterior predictive samples."
+            )
+
+        return posterior_predictive_samples[self.output_var]
