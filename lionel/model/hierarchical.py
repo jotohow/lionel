@@ -38,13 +38,27 @@ class FPLPointsModel(ModelBuilder):
         self._generate_and_preprocess_model_data(X_values, y_values)
 
         with pm.Model(coords=self.model_coords) as self.model:
+
             # Data
+            positions = pm.Data("positions", self.position_idx, dims="player_app")
             home_team = pm.Data("home_team", self.home_idx, dims="match")
             away_team = pm.Data("away_team", self.away_idx, dims="match")
             is_home = pm.Data("is_home", self.is_home, dims="player_app")
             player_idx_ = pm.Data("player_idx_", self.player_idx, dims="player_app")
             player_app_idx_ = pm.Data(
                 "player_app_idx_", self.player_app_idx, dims="player_app"
+            )
+
+            # Variable points for contributions by position
+            goal_points = pm.Data(
+                "goal_points", np.array([10, 6, 5, 4]), mutable=False, dims="position"
+            )
+            assist_points = 3
+            clean_sheet_points = pm.Data(
+                "clean_sheet_points",
+                np.array([4, 4, 1, 0]),
+                mutable=False,
+                dims="position",
             )
 
             # Priors from model config
@@ -131,6 +145,7 @@ class FPLPointsModel(ModelBuilder):
                 np.repeat((u * v)[np.newaxis, :], len(self.players), axis=0),
                 dims=("player", "outcome"),
             )
+
             theta = pm.Dirichlet("theta", a=alpha, dims=("player", "outcome"))
             player_contribution_opportunities = pm.Multinomial(
                 "player_contribution_opportunities",
@@ -145,12 +160,13 @@ class FPLPointsModel(ModelBuilder):
             # Random effect to account for yellow cards, bonus points, etc.
             player_re = pm.Normal("re_player", mu=0, sigma=2, dims="player")
 
+            # Points calculation
             mu_points = pm.Deterministic(
                 "mu_points",
                 (
-                    (5 * player_goals)
-                    + (3 * player_assists)
-                    + (1 * clean_sheet)
+                    goal_points[positions] * player_goals
+                    + assist_points * player_assists
+                    + clean_sheet_points[positions] * clean_sheet
                     + player_re[player_idx_]
                 ),
                 dims="player_app",
@@ -194,6 +210,7 @@ class FPLPointsModel(ModelBuilder):
             X[["home_team", "away_team"]].apply(tuple, axis=1)
         )
         player_idx_ = [np.where(self.players == player)[0][0] for player in X["player"]]
+        position_idx = np.array(X["position"].map(self.pos_map))
 
         x_values = {
             "home_team": home_teams,
@@ -201,6 +218,7 @@ class FPLPointsModel(ModelBuilder):
             "is_home": is_home,
             "player_app_idx_": player_app_idx_,
             "player_idx_": player_idx_,
+            "positions": position_idx,
         }
         new_coords = {
             "match": match_idx_new,
@@ -233,7 +251,7 @@ class FPLPointsModel(ModelBuilder):
             "away_team",
             "home_goals",
             "away_goals",
-            # 'position',  # NEED TO ADD THIS AS A PRIORTY RLY - because point scores are dependent on this
+            "position",  # NEED TO ADD THIS AS A PRIORTY RLY - because point scores are dependent on this
             "goals_scored",
             "assists",
             "no_contribution",
@@ -254,6 +272,7 @@ class FPLPointsModel(ModelBuilder):
         player_app_idx, player_apps = pd.factorize(
             X[["home_team", "away_team"]].apply(tuple, axis=1)
         )
+        position_idx = np.array(X["position"].map(self.pos_map))
 
         ## Team level
         X_teams = (
@@ -282,6 +301,7 @@ class FPLPointsModel(ModelBuilder):
         self.players = players
         self.player_idx = player_idx
         self.player_app_idx = player_app_idx
+        self.position_idx = position_idx
         self.teams = teams
         self.home_idx = home_idx
         self.away_idx = away_idx
@@ -293,6 +313,7 @@ class FPLPointsModel(ModelBuilder):
             "team": teams,
             "match": match_idx,
             "outcome": outcomes,
+            "position": ["GK", "DEF", "MID", "FWD"],
         }
 
     @staticmethod
@@ -412,3 +433,8 @@ class FPLPointsModel(ModelBuilder):
             )
 
         return posterior_predictive_samples[self.output_var]
+
+    @property
+    def pos_map(self):
+        positions = ["GK", "DEF", "MID", "FWD"]
+        return {pos: i for i, pos in enumerate(positions)}
