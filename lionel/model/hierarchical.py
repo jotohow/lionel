@@ -92,8 +92,6 @@ class FPLPointsModel(ModelBuilder):
             mu_att_sigma_prior = self.model_config.get("mu_att_sigma_prior", 1e-1)
             mu_def_mu_prior = self.model_config.get("mu_def_mu_prior", 0)
             mu_def_sigma_prior = self.model_config.get("mu_def_sigma_prior", 1e-1)
-            v_alpha_prior = self.model_config.get("v_alpha_prior", 1)
-            v_beta_prior = self.model_config.get("v_beta_prior", 20)
 
             # Team level model parameters
             beta_0 = pm.Normal(
@@ -156,58 +154,54 @@ class FPLPointsModel(ModelBuilder):
                 dims="player_app",
             )
 
-            # Priors over contribution probabilities
-            u = pm.Dirichlet("prior_p", a=np.ones(3), dims="outcome")
-            v = pm.Gamma(
-                "dprior_v", alpha=v_alpha_prior, beta=v_beta_prior, dims="outcome"
+            # Contribution probabilities - scale by minutes
+            score_alpha_prior = self.model_config.get("score_alpha_prior", 1)
+            score_beta_prior = self.model_config.get("score_beta_prior", 0.5)
+            assist_alpha_prior = self.model_config.get("assist_alpha_prior", 1)
+            assist_beta_prior = self.model_config.get("assist_beta_prior", 0.5)
+            neither_alpha_prior = self.model_config.get("neither_alpha_prior", 4)
+            neither_beta_prior = self.model_config.get("neither_beta_prior", 3)
+            prior_score = pm.Gamma(
+                "prior_score", alpha=score_alpha_prior, beta=score_beta_prior
             )
-            alpha = pm.Deterministic(
-                "alpha",
-                np.repeat((u * v)[np.newaxis, :], len(self.players), axis=0),
+            prior_assist = pm.Gamma(
+                "prior_assist", alpha=assist_alpha_prior, beta=assist_beta_prior
+            )
+            prior_neither = pm.Gamma(
+                "prior_neither", alpha=neither_alpha_prior, beta=neither_beta_prior
+            )  # most likely
+            theta = pm.Dirichlet(
+                "theta",
+                a=[prior_score, prior_assist, prior_neither],
                 dims=("player", "outcome"),
             )
+            _ = theta[player_idx_]
+            p_score = _[:, 0] * (minutes / 90)
+            p_assist = _[:, 1] * (minutes / 90)
+            p_neither = _[:, 2] * (minutes / 90) + (90 - minutes) / 90
+            theta_scaled = pm.math.stack([p_score, p_assist, p_neither], axis=-1)
 
-            # Contribution probabilities - scale by minutes
-            # TODO: Move this adjustment to a function
-            theta_mins = pm.Dirichlet("theta_mins", a=alpha, dims=("player", "outcome"))
-            _ = theta_mins[player_idx_]
-            p_score = pm.Deterministic(
-                "p_score", _[:, 0] * (minutes / 90), dims=("player_app")
-            )
-            p_assist = pm.Deterministic(
-                "p_assist", _[:, 1] * (minutes / 90), dims=("player_app")
-            )
-            p_neither = pm.Deterministic(
-                "p_neither",
-                _[:, 2] * (minutes / 90) + (90 - minutes) / 90,
-                dims=("player_app"),
-            )
-            theta = pm.Deterministic(
-                "theta",
-                pm.math.stack([p_score, p_assist, p_neither], axis=-1),
-                dims=("player_app", "outcome"),
-            )
-
-            player_contribution_opportunities = pm.Multinomial(
+            # Player contribution opportunities conditional on team goals
+            pco = pm.Multinomial(
                 "player_contribution_opportunities",
                 n=team_goals,
-                p=theta,
+                p=theta_scaled,
                 observed=self.X[["goals_scored", "assists", "no_contribution"]].values,
                 dims=("player_app", "outcome"),
             )
-            player_goals = pm.Deterministic(
-                "player_goals",
-                player_contribution_opportunities[player_app_idx_, 0] * minutes / 90,
-                dims="player_app",
-            )
-            player_assists = pm.Deterministic(
-                "player_assists",
-                player_contribution_opportunities[player_app_idx_, 1] * minutes / 90,
-                dims="player_app",
-            )
+            player_goals = pco[player_app_idx_, 0] * minutes / 90
+            player_assists = pco[player_app_idx_, 1] * minutes / 90
 
             # Random effect to account for yellow cards, bonus points, etc.
-            player_re = pm.Normal("re_player", mu=0, sigma=2, dims="player")
+            # maybe condition on position?
+            player_re_mu_prior = pm.Normal("player_re_mu_prior", sigma=2)
+            player_re_sigma_prior = pm.HalfNormal("player_re_sigma_prior", sigma=2)
+            player_re = pm.Normal(
+                "re_player",
+                mu=player_re_mu_prior,
+                sigma=player_re_sigma_prior,
+                dims="player",
+            )
 
             # Points calculation
             mu_points = pm.Deterministic(
@@ -221,8 +215,16 @@ class FPLPointsModel(ModelBuilder):
                 dims="player_app",
             )
 
+            # Noted that using played level sd for points prediction gave unworkable
+            # results - chains didn't converge within a reasonable number of iterations
+            # - although it was useful for reducing variance for players who don't play
+            sd_points = pm.HalfNormal("sd_points", sigma=2)
             points_pred = pm.Normal(
-                "points_pred", mu=mu_points, observed=self.y, dims="player_app"
+                "points_pred",
+                mu=mu_points,
+                sigma=sd_points,
+                observed=self.y,
+                dims="player_app",
             )
 
     def _data_setter(
@@ -242,12 +244,13 @@ class FPLPointsModel(ModelBuilder):
         # Team/match level indices
         final_match = self.match_idx.max() + 1
         X_teams_new = (
-            X[["home_team", "away_team", "home_goals", "away_goals"]]
+            X[["home_team", "away_team", "home_goals", "away_goals", "season"]]
             .drop_duplicates()
             .reset_index(drop=True)
         )
+
         match_idx_new, _ = pd.factorize(
-            X_teams_new[["home_team", "away_team"]].apply(tuple, axis=1)
+            X_teams_new[["home_team", "away_team", "season"]].apply(tuple, axis=1)
         )
         match_idx_new += final_match
         _ = X_teams_new["home_team"].values
@@ -258,11 +261,12 @@ class FPLPointsModel(ModelBuilder):
         # Player level indices
         is_home = X["is_home"].values
         player_app_idx_, _ = pd.factorize(
-            X[["home_team", "away_team"]].apply(tuple, axis=1)
+            X[["home_team", "away_team", "season"]].apply(tuple, axis=1)
         )
         player_idx_ = [np.where(self.players == player)[0][0] for player in X["player"]]
         position_idx = np.array(X["position"].map(self.pos_map))
 
+        # TODO: Allow some players to be estimated and others not
         if X["minutes"].isnull().sum() > 0:
             minutes_estimate = self.minutes_estimate[player_idx_]
         else:
@@ -306,19 +310,27 @@ class FPLPointsModel(ModelBuilder):
             [col in X.columns for col in self.EXPECTED_COLUMNS]
         ), f"Missing columns: {set(self.EXPECTED_COLUMNS) - set(X.columns)}"
         X = X[self.EXPECTED_COLUMNS]
+        assert (
+            X.player_id.nunique() == X.player.nunique()
+        ), "Player names differ across the same ID - check for name changes"
+
+        ## TODO: Log problematic ones
+        # df_check = X[['player_id', 'player']].drop_duplicates()
+        # df_check['n'] = df_check.groupby('player_id').transform('count')
+        # df_check[df_check.n>1].sort_values('player_id')
 
         # Create ID variables for coords + attributes
         X["player"] = X["player_id"].astype(str) + "_" + X["player_name"]
         player_idx, players = pd.factorize(X["player"])
         player_app_idx, _ = pd.factorize(
-            X[["home_team", "away_team"]].apply(tuple, axis=1)
+            X[["home_team", "away_team", "season"]].apply(tuple, axis=1)
         )
         position_idx = np.array(X["position"].map(self.pos_map))
         minutes = X["minutes"].values
-        minutes_estimate = self._get_minutes_estimate(X, players)
+        minutes_estimate = self.get_minutes_estimate(X, players)
 
         X_teams = (
-            X[["home_team", "away_team", "home_goals", "away_goals"]]
+            X[["home_team", "away_team", "home_goals", "away_goals", "season"]]
             .drop_duplicates()
             .reset_index(drop=True)
         )
@@ -326,7 +338,7 @@ class FPLPointsModel(ModelBuilder):
         home_idx, teams = pd.factorize(X_teams["home_team"], sort=True)
         away_idx, _ = pd.factorize(X_teams["away_team"], sort=True)
         match_idx, matches = pd.factorize(
-            X_teams[["home_team", "away_team"]].apply(tuple, axis=1)
+            X_teams[["home_team", "away_team", "season"]].apply(tuple, axis=1)
         )
         outcomes = ["goals_scored", "assists", "no_contribution"]
 
@@ -377,8 +389,12 @@ class FPLPointsModel(ModelBuilder):
             "mu_att_sigma_prior": 1e-1,
             "mu_def_mu_prior": 0,
             "mu_def_sigma_prior": 1e-1,
-            "v_alpha_prior": 1,
-            "v_beta_prior": 20,
+            "score_alpha_prior": 1,
+            "score_beta_prior": 0.5,
+            "assist_alpha_prior": 1,
+            "assist_beta_prior": 0.5,
+            "neither_alpha_prior": 4,
+            "neither_beta_prior": 3,
         }
         return model_config
 
@@ -476,11 +492,14 @@ class FPLPointsModel(ModelBuilder):
 
         return posterior_predictive_samples[self.output_var]
 
-    @staticmethod
-    def _get_minutes_estimate(df, players):
+    # TODO: Need to account for unseen players... nope -they won't
+    # be used - i'm not going to promoted teams BEFORE they get
+    # added to FPL data
+    @classmethod
+    def get_minutes_estimate(cls, df, players):
         assert df.player_id.nunique() == len(players)
         df_mins = (
-            df.sort_values(["season", "gameweek"], ascending=[False, False])
+            df.sort_values(["season", "gameweek"], ascending=[True, True])
             .groupby("player_id")
             .tail(3)
         )
