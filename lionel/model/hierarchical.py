@@ -154,28 +154,39 @@ class FPLPointsModel(ModelBuilder):
                 dims="player_app",
             )
 
-            # Contribution probabilities - scale by minutes
             score_alpha_prior = self.model_config.get("score_alpha_prior", 1)
             score_beta_prior = self.model_config.get("score_beta_prior", 0.5)
             assist_alpha_prior = self.model_config.get("assist_alpha_prior", 1)
             assist_beta_prior = self.model_config.get("assist_beta_prior", 0.5)
             neither_alpha_prior = self.model_config.get("neither_alpha_prior", 4)
             neither_beta_prior = self.model_config.get("neither_beta_prior", 3)
-            prior_score = pm.Gamma(
-                "prior_score", alpha=score_alpha_prior, beta=score_beta_prior
+
+            alpha_score = pm.Gamma(
+                "alpha_score",
+                alpha=score_alpha_prior,
+                beta=score_beta_prior,
+                dims="position",
             )
-            prior_assist = pm.Gamma(
-                "prior_assist", alpha=assist_alpha_prior, beta=assist_beta_prior
+            alpha_assist = pm.Gamma(
+                "alpha_assist",
+                alpha=assist_alpha_prior,
+                beta=assist_beta_prior,
+                dims="position",
             )
-            prior_neither = pm.Gamma(
-                "prior_neither", alpha=neither_alpha_prior, beta=neither_beta_prior
-            )  # most likely
+            alpha_neither = pm.Gamma(  # most likely
+                "alpha_neither",
+                alpha=neither_alpha_prior,
+                beta=neither_beta_prior,
+                dims="position",
+            )
+
             theta = pm.Dirichlet(
                 "theta",
-                a=[prior_score, prior_assist, prior_neither],
-                dims=("player", "outcome"),
+                a=pm.math.stack([alpha_score, alpha_assist, alpha_neither], axis=-1),
+                dims=("player", "position", "outcome"),
             )
-            _ = theta[player_idx_]
+
+            _ = theta[player_idx_, positions, :]
             p_score = _[:, 0] * (minutes / 90)
             p_assist = _[:, 1] * (minutes / 90)
             p_neither = _[:, 2] * (minutes / 90) + (90 - minutes) / 90
@@ -193,7 +204,6 @@ class FPLPointsModel(ModelBuilder):
             player_assists = pco[player_app_idx_, 1] * minutes / 90
 
             # Random effect to account for yellow cards, bonus points, etc.
-            # maybe condition on position?
             player_re_mu_prior = pm.Normal("player_re_mu_prior", sigma=2)
             player_re_sigma_prior = pm.HalfNormal("player_re_sigma_prior", sigma=2)
             player_re = pm.Normal(
@@ -217,12 +227,10 @@ class FPLPointsModel(ModelBuilder):
 
             # Noted that using played level sd for points prediction gave unworkable
             # results - chains didn't converge within a reasonable number of iterations
-            # - although it was useful for reducing variance for players who don't play
-            sd_points = pm.HalfNormal("sd_points", sigma=2)
             points_pred = pm.Normal(
                 "points_pred",
                 mu=mu_points,
-                sigma=sd_points,
+                sigma=1,
                 observed=self.y,
                 dims="player_app",
             )
@@ -492,9 +500,6 @@ class FPLPointsModel(ModelBuilder):
 
         return posterior_predictive_samples[self.output_var]
 
-    # TODO: Need to account for unseen players... nope -they won't
-    # be used - i'm not going to promoted teams BEFORE they get
-    # added to FPL data
     @classmethod
     def get_minutes_estimate(cls, df, players):
         assert df.player_id.nunique() == len(players)
