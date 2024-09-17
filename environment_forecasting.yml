@@ -25,3 +25,4 @@ dependencies:
     - pandas
     - numpy
     - requests
+    - git+https://github.com/pymc-devs/pymc-experimental.git 

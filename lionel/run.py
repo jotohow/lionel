@@ -1,31 +1,33 @@
 import sys
-from lionel.data_load.storage_handler import StorageHandler
+from lionel.data_load.db.connector import DBManager
+from lionel.model.hierarchical import FPLPointsModel
+from lionel.data_load.constants import DATA
 import lionel.data_load.run
 import lionel.model.run
 import lionel.team.run
 
 
-def run(season, next_gw, gw_horizon=5):
-    """
-    Run the process for Lionel.
+def run(season, next_gw):
 
-    Run the data load, model predictions and team selection for the given season and next game week. Store everything (locally by default).
+    # Run the dataload
+    _ = lionel.data_load.run.run(season)
 
-    Args:
-        season (str): The season of the data.
-        next_gw (int): The next game week.
-        gw_horizon (int, optional): The number of game weeks to consider for predictions. Defaults to 5.
-    """
-    sh = StorageHandler(local=True)
+    # Load model
+    fplm = FPLPointsModel.load(DATA / "analysis/hm_02.nc")
 
-    # Run data load
-    df_train = lionel.data_load.run.run(sh, season, next_gw)
+    # Make selections
+    dbm = DBManager(DATA / "fpl.db")
+    df_selection = lionel.team.run.run(season, next_gw, dbm, fplm)
 
-    # Run predictions
-    preds = lionel.model.run.run(sh, df_train, season, next_gw, gw_horizon)
-
-    # Run team selection
-    df_team = lionel.team.run.run(sh, season, next_gw)
+    # Send it back to DB
+    table = dbm.tables["selections"]
+    dele = table.delete().where(
+        table.c.season == season and table.c.gameweek == next_gw
+    )
+    with dbm.engine.connect() as conn:
+        conn.execute(dele)
+        conn.commit()
+    df_selection.to_sql("selections", dbm.engine, if_exists="append", index=False)
 
 
 if __name__ == "__main__":

@@ -140,8 +140,7 @@ def run_historic(sh, season, next_gameweek):
     return df_train
 
 
-if __name__ == "__main__":
-
+def run(season):
     # Init the database if needed
     if not Path(DATA / "fpl.db").exists():
         init_db.main()
@@ -151,10 +150,13 @@ if __name__ == "__main__":
     if not Path(RAW / f"scraped_data_{today}.json").exists():
         run_scrapers()
 
-    # Run the data pipeline
-    # Seems to not have done fixtures and gameweeks...
+    run_pipeline.run(season=season)
+
+
+if __name__ == "__main__":
+
     try:
         season = int(sys.argv[1])
     except IndexError:
         season = 25
-    run_pipeline.run(season=season)
+    run(season)
