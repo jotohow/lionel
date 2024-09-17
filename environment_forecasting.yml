@@ -13,9 +13,16 @@ dependencies:
   - matplotlib
   - mlforecast
   - lightgbm
+  - pymc3
+  - arviz
+  - bambi
+  - seaborn
+  - numba
+  - aesara
   - pip:
     - pulp
     - python-dotenv
     - pandas
     - numpy
     - requests
+    - git+https://github.com/pymc-devs/pymc-experimental.git 

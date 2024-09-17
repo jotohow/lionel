@@ -3,6 +3,12 @@ import numpy as np
 import datetime as dt
 import itertools
 import lionel.data_load.storage_handler as storage_handler
+from lionel.data_load.db.connector import DBManager
+from lionel.model.hierarchical import FPLPointsModel
+from lionel.data_load.db.connector import DBManager
+from lionel.data_load.constants import DATA
+from typing import Dict, List, Optional, Tuple, Union
+from sqlalchemy.orm import sessionmaker
 
 
 def load_gw_data(storage_handler, next_gw, season):
@@ -136,7 +142,8 @@ def get_expected_names3(df_gw, season, next_gw):
         .drop_duplicates()
         .set_index("name")
     )
-    print(len(exp))
+    # print("Expected: ", len(exp))
+    assert exp.shape[0] > 0, "No expected names"
     # exp.to_csv("TEST.csv")
     return exp.to_dict(orient="index")
 
@@ -196,6 +203,8 @@ def run(storage_handler, next_gw, season):
     # Get players data
     # needs to have position for next bit
     df_players = load_gw_data(storage_handler, next_gw, season)
+    df_players.to_csv("TEST.csv")
+    assert df_players.shape[0] > 0
     expected_names = get_expected_names3(df_players, season, next_gw)
     df_expected = (
         pd.DataFrame.from_dict(expected_names, orient="index")
@@ -237,6 +246,186 @@ def run(storage_handler, next_gw, season):
     return df_final
 
 
+def get_train(dbm: DBManager, season: int, next_gw: int) -> pd.DataFrame:
+    dbm = DBManager(DATA / "fpl.db")
+    Session = sessionmaker(bind=dbm.engine)
+
+    with Session() as session:
+        query = (
+            session.query(
+                dbm.tables["player_stats"],
+                dbm.tables["player_seasons"].columns["player_name", "position"],
+                dbm.tables["fixtures"].columns["team_a_season_id", "team_h_season_id"],
+                dbm.tables["teams_season"].columns["team_name"].label("team_name_a"),
+                dbm.tables["fixtures"].columns["team_a_score"],
+            )
+            .join(
+                dbm.tables["player_seasons"],
+                dbm.tables["player_stats"].c.player_season_id
+                == dbm.tables["player_seasons"].c.player_season_id,
+            )
+            .join(
+                dbm.tables["fixtures"],
+                dbm.tables["player_stats"].c.fixture_season_id
+                == dbm.tables["fixtures"].c.fixture_season_id,
+            )
+            .join(
+                dbm.tables["teams_season"],
+                dbm.tables["fixtures"].c.team_a_season_id
+                == dbm.tables["teams_season"].c.team_season_id,
+            )
+            .all()
+        )
+        q2 = (
+            session.query(
+                dbm.tables["player_stats"].c.player_stat_id,
+                dbm.tables["fixtures"].columns["team_h_season_id"],
+                dbm.tables["teams_season"].columns["team_name"].label("team_name_h"),
+                dbm.tables["fixtures"].columns["team_h_score"],
+            )
+            .join(
+                dbm.tables["fixtures"],
+                dbm.tables["player_stats"].c.fixture_season_id
+                == dbm.tables["fixtures"].c.fixture_season_id,
+            )
+            .join(
+                dbm.tables["teams_season"],
+                dbm.tables["fixtures"].c.team_h_season_id
+                == dbm.tables["teams_season"].c.team_season_id,
+            )
+            .all()
+        )
+
+    df_2 = pd.DataFrame(query)
+    df_3 = pd.DataFrame(q2)
+    df = pd.concat([df_2, df_3], axis=1)
+    df = df.rename(
+        columns={
+            "was_home": "is_home",
+            "team_name_h": "home_team",
+            "team_name_a": "away_team",
+            "team_h_score": "home_goals",
+            "team_a_score": "away_goals",
+            "total_points": "points",
+        }
+    )
+
+    # If player name changes - replace it with the most recent
+    df["player_name"] = (
+        df.sort_values(["season", "gameweek"], ascending=[True, True])
+        .groupby("player_id")["player_name"]
+        .transform("first")
+    )
+    df["player"] = df["player_id"].astype(str) + "_" + df["player_name"]
+    df["no_contribution"] = np.where(
+        df.is_home,
+        df.home_goals - df.assists - df.goals_scored,
+        df.away_goals - df.assists - df.goals_scored,
+    )
+    df = df[FPLPointsModel.EXPECTED_COLUMNS + ["value"]].reset_index(drop=True)
+
+    return df
+
+
+def get_pred_dataset(dbm, df, season, next_gw):
+    df_fix = pd.read_sql("fixtures", dbm.engine)
+    df_fix = df_fix[(df_fix["season"] == season) & (df_fix["gameweek"] >= next_gw)]
+
+    df_teams = pd.read_sql("teams_season", dbm.engine)
+    df_teams["season"] = df_teams["team_season_id"].astype(str).str[2].astype(int)
+
+    df_fix = df_fix.merge(
+        df_teams[["team_season_id", "team_name"]],
+        left_on="team_a_season_id",
+        right_on="team_season_id",
+        suffixes=("_a", "_b"),
+        how="left",
+    ).rename(columns={"team_name": "away_team"})
+    df_fix = df_fix.merge(
+        df_teams[["team_season_id", "team_name"]],
+        left_on="team_h_season_id",
+        right_on="team_season_id",
+        suffixes=("_a", "_b"),
+        how="left",
+    ).rename(columns={"team_name": "home_team"})
+
+    df_fix = df_fix[["season", "gameweek", "home_team", "away_team"]]
+
+    df_recent = df[
+        (
+            (df["gameweek"] >= next_gw - 3) & (df["season"] == season)
+            | (df["gameweek"] >= 38 - (3 - next_gw)) & (df["season"] == season - 1)
+        )
+    ]
+
+    df_recent["minutes"] = (
+        df_recent.groupby("player")["minutes"].transform("mean").values
+    )
+    df_recent = (
+        df_recent.sort_values(by=["season", "gameweek"]).groupby("player").tail(1)
+    )
+
+    df_recent = df_recent.rename(
+        columns={
+            "team_name_a": "away_team",
+            "team_name_h": "home_team",
+            "team_a_score": "away_goals",
+            "team_h_score": "home_goals",
+            "was_home": "is_home",
+            "total_points": "points",
+        }
+    )
+    df_recent[
+        [
+            "no_contribution",
+            "home_goals",
+            "away_goals",
+            "goals_scored",
+            "assists",
+            "points",
+        ]
+    ] = np.nan
+    df_recent = df_recent[FPLPointsModel.EXPECTED_COLUMNS + ["value"]]
+    df_recent["team_name"] = np.where(
+        df_recent["is_home"], df_recent["home_team"], df_recent["away_team"]
+    )
+    df_recent = df_recent.drop(columns=["home_team", "away_team", "gameweek", "season"])
+
+    df_fix_h = df_fix.merge(
+        df_recent, left_on="home_team", right_on="team_name", how="inner"
+    )
+    df_fix_a = df_fix.merge(
+        df_recent, left_on="away_team", right_on="team_name", how="inner"
+    )
+    df_pred = pd.concat([df_fix_h, df_fix_a], axis=0)
+    df_pred["is_home"] = np.where(
+        df_pred["home_team"] == df_pred["team_name"], True, False
+    )
+    df_pred = df_pred[FPLPointsModel.EXPECTED_COLUMNS + ["value"]].reset_index(
+        drop=True
+    )
+
+    return df_pred
+
+
+def build_selection_data(df_pred, next_gw, fplm):
+    points_pred = fplm.predict(df_pred, predictions=True)
+    df_pred["points_pred"] = points_pred
+    df_pred = df_pred.loc[df_pred.gameweek <= next_gw + 5]
+    df_pred["team_name"] = np.where(
+        df_pred.is_home, df_pred.home_team, df_pred.away_team
+    )
+    df_pred = (
+        df_pred.groupby(["player", "team_name", "position", "value"])
+        .agg(
+            mean_points_pred=("points_pred", "mean"),
+            next_points_pred=("points_pred", "first"),
+        )
+        .reset_index()
+    )
+    return df_pred
+
+
 if __name__ == "__main__":
     sh = storage_handler.StorageHandler(local=True)
     season = 24
@@ -246,58 +435,3 @@ if __name__ == "__main__":
     sh.store(df, f"analysis/train_{next_gw}_{season}.csv", index=False)
     # print(df_train.head())
     # print(df_forecast.head())
-
-
-# import lionel.data_load.storage_handler as storage_handler
-
-
-# sh = storage_handler.StorageHandler(local=True)
-# season = 24
-# next_gw = 25
-# gw_horizon = 5
-
-
-# f = create_fixture_df(sh, next_gw, season)
-
-# # Get players data
-# # needs to have position for next bit
-# df_players = load_gw_data(sh, next_gw, season)
-# expected_names = get_expected_names3(df_players, season, next_gw)
-# df_expected = (
-#     pd.DataFrame.from_dict(expected_names, orient="index")
-#     .reset_index()
-#     .rename(columns={"index": "name"})
-# )
-
-# # Merge everything together
-# df_expected = (
-#     f.merge(df_expected, how="left", on="team_name")
-#     .sort_values(["team_name", "name", "ds"])
-#     .reset_index(drop=True)
-#     .drop(columns=["position"])  # dropped the gw arg here
-# )
-# df_final = df_expected.merge(
-#     df_players.drop(columns=["gameweek"]),  # added the gw arg here
-#     how="left",
-#     on=["team_name", "game_date", "season", "name"],
-# )
-# df_final = df_final[
-#     ((df_final["game_complete"]) & df_final.goals_scored.notna())
-#     | (~df_final["game_complete"])
-# ]
-# df_final["valid_game"] = (~df_final.game_complete) & (
-#     df_final.opponent_team_name.notna()
-# ) | (df_final.game_complete)
-# df_final = df_final.ffill()
-
-# df_final.shape
-
-# df_home = df_final[df_final["is_home"]]
-# df_away = df_final[~df_final["is_home"]]
-# df_home.shape[0] + df_away.shape[0] == df_final.shape[0]
-
-# df_strengths = sh.load(f"cleaned/team_ids_{season}.csv")[['team_name', 'strength_overall_home', 'strength_overall_away', 'strength_attack_home', 'strength_attack_away', 'strength_defence_home', 'strength_defence_away']]
-# df_home = df_home.merge(df_strengths[['team_name', 'strength_attack_home', 'strength_defence_home']], how='left', on='team_name').rename(columns={'strength_attack_home': 'strength_attack', 'strength_defence_home': 'strength_defence'})
-# df_away = df_away.merge(df_strengths[['team_name', 'strength_attack_away', 'strength_defence_away']], how='left', on='team_name').rename(columns={'strength_attack_away': 'strength_attack', 'strength_defence_away': 'strength_defence'})
-# df_final = pd.concat([df_home, df_away]).sort_values(['team_name', 'ds']).reset_index(drop=True)
-# df_final
