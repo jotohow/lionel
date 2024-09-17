@@ -91,10 +91,35 @@ def clean_players(data, season=25):
     df_players["player_season_id"] = (
         df_players.season.astype(str) + df_players.player_id_web.astype(str)
     ).astype(int)
+
+    # Some player names to adjust here - Solanke being the obvious one
+
     df_players = df_players.drop(columns=["element_type"])
     df_players["player_full_name"] = (
         df_players["first_name"] + " " + df_players["second_name"]
     )
+
+    df_players = df_players.replace(
+        {
+            "player_full_name": {"Dominic Solanke-Mitchell": "Dominic Solanke"},
+            "player_name": {
+                "Philip": "Billing",
+                "J.Ramsey": "Ramsey",
+                "Cook": "L.Cook",
+                "H.Traorè": "Hamed Traorè",
+                "Kozłowski": "Kozlowski",
+                "Sánchez": "Sanchez",
+                "Andrey Santos": "Andrey",
+                "Vinicius": "Vinícius",
+                "N.Phillips": "Phillips",
+                "M.Salah": "Salah",
+                "N.Willians": "Williams",
+                "P.M.Sarr": "Sarr",
+                "J.Gomes": "João Gomes",
+            },
+        }
+    )
+
     df_players = df_players.drop(columns=["first_name", "second_name"])
     return df_players
 

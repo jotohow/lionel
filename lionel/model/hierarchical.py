@@ -1,5 +1,5 @@
 from pymc_experimental.model_builder import ModelBuilder
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union, Any
 import pandas as pd
 import numpy as np
 import arviz as az
@@ -7,6 +7,7 @@ import pymc as pm
 import pytensor.tensor as pt
 import xarray as xr
 from pathlib import Path
+from pymc.util import RandomState
 
 
 class FPLPointsModel(ModelBuilder):
@@ -154,13 +155,13 @@ class FPLPointsModel(ModelBuilder):
                 dims="player_app",
             )
 
+            # Hyper-priors for player contribution probabilities
             score_alpha_prior = self.model_config.get("score_alpha_prior", 1)
             score_beta_prior = self.model_config.get("score_beta_prior", 0.5)
             assist_alpha_prior = self.model_config.get("assist_alpha_prior", 1)
             assist_beta_prior = self.model_config.get("assist_beta_prior", 0.5)
             neither_alpha_prior = self.model_config.get("neither_alpha_prior", 4)
             neither_beta_prior = self.model_config.get("neither_beta_prior", 3)
-
             alpha_score = pm.Gamma(
                 "alpha_score",
                 alpha=score_alpha_prior,
@@ -186,6 +187,7 @@ class FPLPointsModel(ModelBuilder):
                 dims=("player", "position", "outcome"),
             )
 
+            # Scale probabilities by minutes played
             _ = theta[player_idx_, positions, :]
             p_score = _[:, 0] * (minutes / 90)
             p_assist = _[:, 1] * (minutes / 90)
@@ -200,6 +202,8 @@ class FPLPointsModel(ModelBuilder):
                 observed=self.X[["goals_scored", "assists", "no_contribution"]].values,
                 dims=("player_app", "outcome"),
             )
+            # should this just be * minutes? no because n is number of goals
+            # in a game, so it should be scaled by minutes played in that game
             player_goals = pco[player_app_idx_, 0] * minutes / 90
             player_assists = pco[player_app_idx_, 1] * minutes / 90
 
@@ -278,7 +282,9 @@ class FPLPointsModel(ModelBuilder):
         if X["minutes"].isnull().sum() > 0:
             minutes_estimate = self.minutes_estimate[player_idx_]
         else:
-            minutes_estimate = X["minutes"].values
+            minutes_estimate = np.int32(X["minutes"].values)
+
+        self.X_pred = X
 
         x_values = {  # new data to be passed into the model
             "home_team": home_teams,
@@ -453,14 +459,15 @@ class FPLPointsModel(ModelBuilder):
             if extend_idata:
                 self.idata.extend(post_pred, join="right")
 
+        # NB: PyMC Marketing already implements this - maybe switch to use that
+        # for stability and to avoid code duplication
         group = (
             "predictions"
             if kwargs.get("predictions", False)
             else "posterior_predictive"
         )
-        posterior_predictive_samples = az.extract(post_pred, group, combined=combined)
 
-        return posterior_predictive_samples
+        return az.extract(post_pred, group, combined=combined)
 
     def predict_posterior(
         self,
@@ -498,7 +505,9 @@ class FPLPointsModel(ModelBuilder):
                 f"Output variable {self.output_var} not found in posterior predictive samples."
             )
 
-        return posterior_predictive_samples[self.output_var]
+        return posterior_predictive_samples[
+            [self.output_var, "home_goals", "away_goals"]
+        ]
 
     @classmethod
     def get_minutes_estimate(cls, df, players):
@@ -553,3 +562,33 @@ class FPLPointsModel(ModelBuilder):
         Some models will need them, others can just define them to return the model_config.
         """
         return self.model_config
+
+    # Mask base class - ensure that y is passed.
+    def fit(
+        self,
+        X: pd.DataFrame,
+        y: pd.Series | np.ndarray,
+        progressbar: bool = True,
+        predictor_names: list[str] | None = None,
+        random_seed: RandomState | None = None,
+        **kwargs: Any,
+    ) -> az.InferenceData:
+        super().fit(X, y, progressbar, predictor_names, random_seed, **kwargs)
+
+
+class VisBuilder:
+
+    def __init__(self, model: FPLPointsModel):
+        self.model = model
+
+    def plot_team_strengths(self, idata, team_names, n_teams=10):
+        pass
+
+    def get_scoreline_predictions(self, idata, team_names, n_teams=10):
+        pass
+
+    def plot_player_strengths(self, idata, player_names):
+        pass
+
+    def get_top_players(self):
+        pass
