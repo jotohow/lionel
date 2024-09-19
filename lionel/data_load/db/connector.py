@@ -3,6 +3,7 @@ from sqlalchemy import (
     create_engine,
     text,
 )
+from lionel.data_load.constants import DATA
 
 
 """
@@ -17,7 +18,7 @@ from sqlalchemy import (
 
 
 class DBManager:
-    def __init__(self, db_path, metadata=None):
+    def __init__(self, db_path=DATA / "fpl.db", metadata=None):
         self.engine = create_engine(f"sqlite:///{db_path}", echo=False)
         self.metadata = metadata
         self.tables = self.metadata.tables

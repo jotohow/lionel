@@ -6,19 +6,24 @@ import datetime as dt
 import pandas as pd
 from pulp import LpVariable, LpProblem, lpSum, LpMaximize
 from abc import abstractmethod, ABC
-
-# Add root to path when module is run as a script
-ROOT = Path(os.path.dirname(os.path.abspath(__file__))).parent
-sys.path.append(os.path.dirname(str(ROOT)))
-
 from lionel.utils import setup_logger
 
-
-# TODO: Refactor this so that the object is instantiated once
-# and the methods can be called on each prediction variable
 logger = setup_logger(__name__)
 
+"""
+# Required variables:
+team_name
+element - unique player identifier - could change this?
+position (as string)
+value
+prediction variable
 
+# is that it? doesn't seem like a lot...
+"""
+
+
+# TODO: Refactor this to have a build and fit structure similar to the hierarchical model
+# that made a bit more sense...
 class BaseSelector(ABC):
 
     def __init__(self, player_df, season, pred_var="pred_Naive"):
@@ -27,6 +32,10 @@ class BaseSelector(ABC):
         self.first_xi = pd.DataFrame()
         self.players = None
         self.pred_var = pred_var
+
+        expected_vars = ["player", "team_name", "position", "value", self.pred_var]
+        assert all([col in self.player_df.columns.to_list() for col in expected_vars])
+        assert self.player_df.player.nunique() == len(self.player_df)
 
     @property
     @abstractmethod
@@ -58,7 +67,7 @@ class XISelector(BaseSelector):
 
     def __init__(self, player_df, season, pred_var):
         super().__init__(player_df, season, pred_var)
-        self.first_xv = pd.DataFrame()
+        self.first_xv = pd.DataFrame()  # confusing to have this defined here...
         self.other_players = pd.DataFrame()
         self.players = self._create_decision_var("player_", self.first_xv)
         logger.debug("Initialising XI selector object")
@@ -168,9 +177,7 @@ class NewXVSelector(BaseSelector):
         self.first_xv = pd.DataFrame()
         self.teams = self.player_df.team_name.to_list()
         self.positions = self.player_df.position.to_list()
-        self.points_weighted = self.player_df[
-            self.pred_var
-        ].to_list()  # will this be an issue?
+        self.points_weighted = self.player_df[self.pred_var].to_list()
 
         self.players = self._create_decision_var("player_", self.player_df)
         self.captains = self._create_decision_var("captain_", self.player_df)
@@ -275,8 +282,8 @@ class NewXVSelector(BaseSelector):
     def initialise_xv_prob(self, *args, **kwargs):
         prob = LpProblem("FPL Player Choices", LpMaximize)
         prob += lpSum(
-            (self.players[i] + self.captains[i]) # captain will be worth double
-            * self.player_df[self.pred_var][i] 
+            (self.players[i] + self.captains[i])  # captain will be worth double
+            * self.player_df[self.pred_var][i]
             for i in range(len(self.player_df))
         )
         prob = self._add_xv_constraints(prob)
