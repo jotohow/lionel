@@ -2,7 +2,8 @@ import pandas as pd
 import numpy as np
 import datetime as dt
 import itertools
-import lionel.data_load.storage_handler as storage_handler
+
+# import lionel.data_load.storage_handler as storage_handler
 from lionel.data_load.db.connector import DBManager
 from lionel.model.hierarchical import FPLPointsModel
 from lionel.data_load.db.connector import DBManager
@@ -408,30 +409,12 @@ def get_pred_dataset(dbm, df, season, next_gw):
     return df_pred
 
 
-def build_selection_data(df_pred, next_gw, fplm):
-    points_pred = fplm.predict(df_pred, predictions=True)
-    df_pred["points_pred"] = points_pred
-    df_pred = df_pred.loc[df_pred.gameweek <= next_gw + 5]
-    df_pred["team_name"] = np.where(
-        df_pred.is_home, df_pred.home_team, df_pred.away_team
-    )
-    df_pred = (
-        df_pred.groupby(["player", "team_name", "position", "value"])
-        .agg(
-            mean_points_pred=("points_pred", "mean"),
-            next_points_pred=("points_pred", "first"),
-        )
-        .reset_index()
-    )
-    return df_pred
-
-
-if __name__ == "__main__":
-    sh = storage_handler.StorageHandler(local=True)
-    season = 24
-    next_gw = 27
-    # horizon = 1
-    df = run(sh, next_gw, season)
-    sh.store(df, f"analysis/train_{next_gw}_{season}.csv", index=False)
-    # print(df_train.head())
-    # print(df_forecast.head())
+# if __name__ == "__main__":
+# sh = storage_handler.StorageHandler(local=True)
+# season = 24
+# next_gw = 27
+# # horizon = 1
+# df = run(sh, next_gw, season)
+# sh.store(df, f"analysis/train_{next_gw}_{season}.csv", index=False)
+# print(df_train.head())
+# print(df_forecast.head())

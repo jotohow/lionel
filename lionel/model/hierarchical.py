@@ -1,4 +1,4 @@
-from pymc_experimental.model_builder import ModelBuilder
+from pymc_marketing.model_builder import ModelBuilder
 from typing import Dict, List, Optional, Tuple, Union, Any
 import pandas as pd
 import numpy as np
@@ -383,8 +383,8 @@ class FPLPointsModel(ModelBuilder):
             "position": ["GK", "DEF", "MID", "FWD"],
         }
 
-    @staticmethod
-    def get_default_model_config() -> Dict:
+    @property
+    def default_model_config(self) -> Dict:
         """
         Returns a class default config dict for model builder if no model_config is provided on class initialization.
         The model config dict is generally used to specify the prior values we want to build the model with.
@@ -412,8 +412,8 @@ class FPLPointsModel(ModelBuilder):
         }
         return model_config
 
-    @staticmethod
-    def get_default_sampler_config() -> Dict:
+    @property
+    def default_sampler_config(self) -> Dict:
         """
         Returns a class default sampler dict for model builder if no sampler_config is provided on class initialization.
         The sampler config dict is used to send parameters to the sampler .
@@ -575,20 +575,63 @@ class FPLPointsModel(ModelBuilder):
     ) -> az.InferenceData:
         super().fit(X, y, progressbar, predictor_names, random_seed, **kwargs)
 
+    def summarise_players(self):
+        df_theta = az.summary(self.idata, var_names=["theta"])
+        df_theta = df_theta["mean"].reset_index()
 
-class VisBuilder:
+        # get the player name - withi
+        df_theta["type"] = df_theta["index"].str.extract(r"\[(.*?)\]")
+        df_theta["player"] = df_theta["type"].str.extract(r"(.*?)\,")
+        df_theta[["player_id", "player_name"]] = df_theta["player"].str.split(
+            "_", expand=True
+        )
 
-    def __init__(self, model: FPLPointsModel):
-        self.model = model
+        df_m = self.X[["player", "position", "home_team", "away_team", "is_home"]]
+        df_m["team_name"] = np.where(df_m.is_home, df_m.home_team, df_m.away_team)
+        df_m = df_m[["player", "team_name", "position"]].drop_duplicates()
+        df_theta = df_theta.merge(df_m, on="player", how="left")
 
-    def plot_team_strengths(self, idata, team_names, n_teams=10):
-        pass
+        df_theta[["_", "outcome"]] = df_theta.type.str.split(",", expand=True)[[1, 2]]
+        df_theta._ = df_theta._.str.strip(" ")
+        df_theta = df_theta.loc[df_theta._ == df_theta.position]
+        df_theta = df_theta[
+            ["mean", "player_name", "player", "position", "outcome", "team_name"]
+        ]
+        df_theta = df_theta.pivot(
+            index=["player_name", "player", "position", "team_name"],
+            columns="outcome",
+            values="mean",
+        ).reset_index()
+        df_theta.columns = [col.strip(" ") for col in df_theta.columns]
+        # WOULD ALSO BE GOOD TO HAVE TEAMS HERE...
+        df_theta["mean_minutes"] = (
+            (self.X.groupby("player").minutes.sum() / 38)
+            .reindex(df_theta.player)
+            .values
+        )
+        return df_theta[
+            [
+                "player_name",
+                "position",
+                "team_name",
+                "goals_scored",
+                "assists",
+                "mean_minutes",
+            ]
+        ]
 
-    def get_scoreline_predictions(self, idata, team_names, n_teams=10):
-        pass
+    def summarise_teams(self):
+        df_beta = az.summary(self.idata, var_names=["beta_attack", "beta_defence"])
+        df_beta = df_beta["mean"].reset_index()
 
-    def plot_player_strengths(self, idata, player_names):
-        pass
+        # add regex to select the part of the string encased in []
+        df_beta["team_name"] = df_beta["index"].str.extract(r"\[(.*?)\]")
+        # add regex to select the part of the string before the []
+        df_beta["type"] = df_beta["index"].str.extract(r"(.*?)\[")
+        df_beta["type"] = df_beta["type"].str.replace("beta_", "")
+        df_beta = df_beta.pivot(
+            index="team_name", columns="type", values="mean"
+        ).reset_index()
 
-    def get_top_players(self):
-        pass
+        df_beta[["attack", "defence"]] = np.exp(df_beta[["attack", "defence"]]) - 1
+        return df_beta

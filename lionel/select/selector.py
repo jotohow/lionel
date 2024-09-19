@@ -275,8 +275,8 @@ class NewXVSelector(BaseSelector):
     def initialise_xv_prob(self, *args, **kwargs):
         prob = LpProblem("FPL Player Choices", LpMaximize)
         prob += lpSum(
-            (self.players[i] + self.captains[i])
-            * self.player_df[self.pred_var][i]  # made a change here
+            (self.players[i] + self.captains[i]) # captain will be worth double
+            * self.player_df[self.pred_var][i] 
             for i in range(len(self.player_df))
         )
         prob = self._add_xv_constraints(prob)
