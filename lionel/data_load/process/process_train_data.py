@@ -323,7 +323,9 @@ def get_train(dbm: DBManager, season: int, next_gw: int) -> pd.DataFrame:
         df.home_goals - df.assists - df.goals_scored,
         df.away_goals - df.assists - df.goals_scored,
     )
-    df = df[FPLPointsModel.EXPECTED_COLUMNS + ["value"]].reset_index(drop=True)
+    df = df[FPLPointsModel.EXPECTED_COLUMNS + ["points", "value"]].reset_index(
+        drop=True
+    )
 
     return df
 
@@ -386,7 +388,7 @@ def get_pred_dataset(dbm, df, season, next_gw):
             "points",
         ]
     ] = np.nan
-    df_recent = df_recent[FPLPointsModel.EXPECTED_COLUMNS + ["value"]]
+    df_recent = df_recent[FPLPointsModel.EXPECTED_COLUMNS + ["points", "value"]]
     df_recent["team_name"] = np.where(
         df_recent["is_home"], df_recent["home_team"], df_recent["away_team"]
     )
@@ -402,9 +404,9 @@ def get_pred_dataset(dbm, df, season, next_gw):
     df_pred["is_home"] = np.where(
         df_pred["home_team"] == df_pred["team_name"], True, False
     )
-    df_pred = df_pred[FPLPointsModel.EXPECTED_COLUMNS + ["value"]].reset_index(
-        drop=True
-    )
+    df_pred = df_pred[
+        FPLPointsModel.EXPECTED_COLUMNS + ["points", "value"]
+    ].reset_index(drop=True)
 
     return df_pred
 

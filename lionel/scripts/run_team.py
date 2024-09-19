@@ -1,4 +1,4 @@
-import lionel.select.selector as selector
+import lionel.selector as selector
 import lionel.data_load.process.process_train_data as process_train_data
 import lionel.model.prepare_data as prepare_data
 

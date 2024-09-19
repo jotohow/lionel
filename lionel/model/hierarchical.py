@@ -24,9 +24,11 @@ class FPLPointsModel(ModelBuilder):
     _model_type_ = "FPLPointsModel"
     version = "0.1"
 
+    # NOTE: no_contribution now implemented in model - tbc if that breaks anything
     EXPECTED_COLUMNS = [
-        "player_name",
-        "player_id",
+        "player",
+        # "player_name",
+        # "player_id",
         "gameweek",
         "season",
         "home_team",
@@ -37,10 +39,9 @@ class FPLPointsModel(ModelBuilder):
         "minutes",
         "goals_scored",
         "assists",
-        "no_contribution",
-        "points",
+        # "no_contribution",
+        # "points",
         "is_home",
-        "player",
     ]
 
     def build_model(self, X: pd.DataFrame, y: pd.Series, **kwargs):
@@ -324,17 +325,9 @@ class FPLPointsModel(ModelBuilder):
             [col in X.columns for col in self.EXPECTED_COLUMNS]
         ), f"Missing columns: {set(self.EXPECTED_COLUMNS) - set(X.columns)}"
         X = X[self.EXPECTED_COLUMNS]
-        assert (
-            X.player_id.nunique() == X.player.nunique()
-        ), "Player names differ across the same ID - check for name changes"
+        X["no_contribution"] = self._get_no_contribution(X)
 
-        ## TODO: Log problematic ones
-        # df_check = X[['player_id', 'player']].drop_duplicates()
-        # df_check['n'] = df_check.groupby('player_id').transform('count')
-        # df_check[df_check.n>1].sort_values('player_id')
-
-        # Create ID variables for coords + attributes
-        X["player"] = X["player_id"].astype(str) + "_" + X["player_name"]
+        # How can I assert that player is a unique identifier? - I don't think I can because team and position can both change
         player_idx, players = pd.factorize(X["player"])
         player_app_idx, _ = pd.factorize(
             X[["home_team", "away_team", "season"]].apply(tuple, axis=1)
@@ -432,43 +425,6 @@ class FPLPointsModel(ModelBuilder):
     def output_var(self):
         return "points_pred"
 
-    # Mask method from base class - it didn't work when kwarg predictions=True was passed
-    def sample_posterior_predictive(self, X_pred, extend_idata, combined, **kwargs):
-        """
-        Sample from the model's posterior predictive distribution.
-
-        Parameters
-        ----------
-        X_pred : array, shape (n_pred, n_features)
-            The input data used for prediction using prior distribution..
-        extend_idata : Boolean determining whether the predictions should be added to inference data object.
-            Defaults to False.
-        combined: Combine chain and draw dims into sample. Won't work if a dim named sample already exists.
-            Defaults to True.
-        **kwargs: Additional arguments to pass to pymc.sample_posterior_predictive
-
-        Returns
-        -------
-        posterior_predictive_samples : DataArray, shape (n_pred, samples)
-            Posterior predictive samples for each input X_pred
-        """
-        self._data_setter(X_pred)
-
-        with self.model:  # sample with new input data
-            post_pred = pm.sample_posterior_predictive(self.idata, **kwargs)
-            if extend_idata:
-                self.idata.extend(post_pred, join="right")
-
-        # NB: PyMC Marketing already implements this - maybe switch to use that
-        # for stability and to avoid code duplication
-        group = (
-            "predictions"
-            if kwargs.get("predictions", False)
-            else "posterior_predictive"
-        )
-
-        return az.extract(post_pred, group, combined=combined)
-
     def predict_posterior(
         self,
         X_pred: np.ndarray | pd.DataFrame | pd.Series,
@@ -509,12 +465,13 @@ class FPLPointsModel(ModelBuilder):
             [self.output_var, "home_goals", "away_goals"]
         ]
 
+    # NOTE: changed this from player_id to player
     @classmethod
     def get_minutes_estimate(cls, df, players):
-        assert df.player_id.nunique() == len(players)
+        assert df.player.nunique() == len(players)
         df_mins = (
             df.sort_values(["season", "gameweek"], ascending=[True, True])
-            .groupby("player_id")
+            .groupby("player")
             .tail(3)
         )
         mins = df_mins.groupby(["player"])["minutes"].mean().reindex(players).values
@@ -524,6 +481,14 @@ class FPLPointsModel(ModelBuilder):
     def pos_map(self):
         positions = ["GK", "DEF", "MID", "FWD"]
         return {pos: i for i, pos in enumerate(positions)}
+
+    @classmethod
+    def _get_no_contribution(cls, X):
+        return np.where(
+            X.is_home,
+            X.home_goals - X.goals_scored - X.assists,
+            X.away_goals - X.goals_scored - X.assists,
+        )
 
     def save(self, fname: str) -> None:
         """
@@ -582,6 +547,8 @@ class FPLPointsModel(ModelBuilder):
         # get the player name - withi
         df_theta["type"] = df_theta["index"].str.extract(r"\[(.*?)\]")
         df_theta["player"] = df_theta["type"].str.extract(r"(.*?)\,")
+
+        # TODO: Change: this is too tightly coupled to variable input names...
         df_theta[["player_id", "player_name"]] = df_theta["player"].str.split(
             "_", expand=True
         )
