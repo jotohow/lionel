@@ -2,22 +2,21 @@ import sys
 from lionel.data_load.db.connector import DBManager
 from lionel.model.hierarchical import FPLPointsModel
 from lionel.data_load.constants import DATA
-import lionel.data_load.run
-import lionel.model.run
-import lionel.team.run
+import lionel.scripts.run_data_load as run_data_load
+import lionel.scripts.run_team as run_team
 
 
 def run(season, next_gw):
 
     # Run the dataload
-    _ = lionel.data_load.run.run(season)
+    _ = run_data_load.run(season)
 
     # Load model
     fplm = FPLPointsModel.load(DATA / "analysis/hm_02.nc")
 
     # Make selections
     dbm = DBManager(DATA / "fpl.db")
-    df_selection = lionel.team.run.run(season, next_gw, dbm, fplm)
+    df_selection = run_team.run(season, next_gw, dbm, fplm)
 
     # Send it back to DB
     table = dbm.tables["selections"]

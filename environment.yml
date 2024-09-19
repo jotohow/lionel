@@ -1,15 +1,23 @@
-name: lionel-backend
+name: lionel
 channels:
   - conda-forge
   - defaults
 dependencies:
+  - python=3.11
+  - numpy
+  - pandas
   - pip
   - plotly
   - ipykernel
   - pytest
+  - pytorch
+  - pymc>=5
+  - arviz
+  - seaborn
+  - pymc-marketing>=0.9.0
+  - sqlalchemy
   - pip:
     - pulp
     - python-dotenv
-    - pandas
-    - numpy
     - requests
+    - git+https://github.com/jth500/scrapl.git
