@@ -1,0 +1,866 @@
+player_id_web,web_name,team_id_web,position,season,player_season_id,player_full_name
+1,Balogun,1,FWD,24,241,Folarin Balogun
+2,Cédric,1,DEF,24,242,Cédric Alves Soares
+3,M.Elneny,1,MID,24,243,Mohamed Elneny
+4,Fábio Vieira,1,MID,24,244,Fábio Ferreira Vieira
+5,Gabriel,1,DEF,24,245,Gabriel dos Santos Magalhães
+6,Havertz,1,MID,24,246,Kai Havertz
+8,G.Jesus,1,FWD,24,248,Gabriel Fernando de Jesus
+9,Jorginho,1,MID,24,249,Jorge Luiz Frello Filho
+10,Kiwior,1,DEF,24,2410,Jakub Kiwior
+11,Marquinhos,1,MID,24,2411,Marcus Oliveira Alencar
+12,Martinelli,1,MID,24,2412,Gabriel Martinelli Silva
+13,Nketiah,1,FWD,24,2413,Eddie Nketiah
+14,Ødegaard,1,MID,24,2414,Martin Ødegaard
+15,Thomas,1,MID,24,2415,Thomas Partey
+16,Pepe,1,MID,24,2416,Nicolas Pépé
+17,Ramsdale,1,GK,24,2417,Aaron Ramsdale
+18,Rúnarsson,1,GK,24,2418,Rúnar Alex Rúnarsson
+19,Saka,1,MID,24,2419,Bukayo Saka
+20,Saliba,1,DEF,24,2420,William Saliba
+22,Smith Rowe,1,MID,24,2422,Emile Smith Rowe
+24,Tierney,1,DEF,24,2424,Kieran Tierney
+25,Tomiyasu,1,DEF,24,2425,Takehiro Tomiyasu
+26,Trossard,1,MID,24,2426,Leandro Trossard
+29,White,1,DEF,24,2429,Benjamin White
+30,Xhaka,1,MID,24,2430,Granit Xhaka
+31,Zinchenko,1,DEF,24,2431,Oleksandr Zinchenko
+113,Raya,1,GK,24,24113,David Raya Martin
+540,Rice,1,MID,24,24540,Declan Rice
+578,Nelson,1,MID,24,24578,Reiss Nelson
+585,J.Timber,1,DEF,24,24585,Jurriën Timber
+646,Hein,1,GK,24,24646,Karl Hein
+735,Sagoe,1,MID,24,24735,Charles Sagoe
+736,Walters,1,DEF,24,24736,Reuell Walters
+737,Ibrahim,1,MID,24,24737,Bradley Ibrahim
+764,Lewis-Skelly,1,MID,24,24764,Myles Lewis-Skelly
+772,Nwaneri,1,MID,24,24772,Ethan Nwaneri
+815,Bandeira,1,MID,24,24815,Mauro Bandeira
+817,Sweet,1,DEF,24,24817,James Sweet
+32,Alex Moreno,2,DEF,24,2432,Alexandre Moreno Lopera
+34,Bailey,2,MID,24,2434,Leon Bailey
+35,Buendia,2,MID,24,2435,Emiliano Buendía Stati
+36,Cash,2,DEF,24,2436,Matty Cash
+37,Chambers,2,DEF,24,2437,Calum Chambers
+38,Coutinho,2,MID,24,2438,Philippe Coutinho Correia
+39,Davis,2,FWD,24,2439,Keinan Davis
+40,Dendoncker,2,MID,24,2440,Leander Dendoncker
+41,Diego Carlos,2,DEF,24,2441,Diego Carlos Santos Silva
+42,Digne,2,DEF,24,2442,Lucas Digne
+43,Douglas Luiz,2,MID,24,2443,Douglas Luiz Soares de Paulo
+44,Duran,2,FWD,24,2444,Jhon Durán
+45,Hause,2,DEF,24,2445,Kortney Hause
+46,Iroegbunam,2,MID,24,2446,Tim Iroegbunam
+47,Kamara,2,MID,24,2447,Boubacar Kamara
+48,Konsa,2,DEF,24,2448,Ezri Konsa Ngoyo
+49,Martinez,2,GK,24,2449,Emiliano Martínez Romero
+50,McGinn,2,MID,24,2450,John McGinn
+51,Mings,2,DEF,24,2451,Tyrone Mings
+53,Olsen,2,GK,24,2453,Robin Olsen
+54,Philogene,2,MID,24,2454,Jaden Philogene-Bidace
+55,J.Ramsey,2,MID,24,2455,Jacob Ramsey
+56,Sanson,2,MID,24,2456,Morgan Sanson
+57,Sinisalo,2,GK,24,2457,Viljami Sinisalo
+58,Tielemans,2,MID,24,2458,Youri Tielemans
+59,Bertrand Traoré,2,MID,24,2459,Bertrand Traoré
+60,Watkins,2,FWD,24,2460,Ollie Watkins
+61,Wesley,2,FWD,24,2461,Wesley Moraes Ferreira da Silva
+584,Pau,2,DEF,24,24584,Pau Torres
+599,Diaby,2,MID,24,24599,Moussa Diaby
+618,Kellyman,2,MID,24,24618,Omari Kellyman
+670,Marschall,2,GK,24,24670,Filip Marschall
+672,Zaniolo,2,MID,24,24672,Nicolò Zaniolo
+686,Zych,2,GK,24,24686,Oliwier Zych
+699,Lenglet,2,DEF,24,24699,Clément Lenglet
+765,Proctor,2,GK,24,24765,Sam Proctor
+767,O'Reilly,2,MID,24,24767,Tommi O'Reilly
+778,Wright,2,GK,24,24778,James Wright
+793,Kesler-Hayden,2,DEF,24,24793,Kaine Kesler-Hayden
+803,Rogers,2,MID,24,24803,Morgan Rogers
+818,Gauci,2,GK,24,24818,Joe Gauci
+854,Munroe,2,DEF,24,24854,Finley Munroe
+865,Young,2,MID,24,24865,Kadan Young
+866,Emery,2,GK,24,24866,Lander Emery
+62,Anthony,3,MID,24,2462,Jaidon Anthony
+63,Billing,3,MID,24,2463,Philip Billing
+64,Brooks,3,MID,24,2464,David Brooks
+65,Christie,3,MID,24,2465,Ryan Christie
+66,L.Cook,3,MID,24,2466,Lewis Cook
+67,Siriki,3,MID,24,2467,Siriki Dembélé
+68,Fredericks,3,DEF,24,2468,Ryan Fredericks
+69,Hill,3,DEF,24,2469,James Hill
+70,Kelly,3,DEF,24,2470,Lloyd Kelly
+71,Kilkenny,3,MID,24,2471,Gavin Kilkenny
+72,Kluivert,3,MID,24,2472,Justin Kluivert
+73,Lowe,3,MID,24,2473,Jamal Lowe
+74,Marcondes,3,MID,24,2474,Emiliano Marcondes
+75,Mepham,3,DEF,24,2475,Chris Mepham
+76,Moore,3,FWD,24,2476,Kieffer Moore
+77,Neto,3,GK,24,2477,Norberto Murara Neto
+78,O.Dango,3,MID,24,2478,Dango Ouattara
+79,Pearson,3,MID,24,2479,Ben Pearson
+80,Randolph,3,GK,24,2480,Darren Randolph
+81,Rothwell,3,MID,24,2481,Joe Rothwell
+82,Semenyo,3,FWD,24,2482,Antoine Semenyo
+83,Senesi,3,DEF,24,2483,Marcos Senesi
+84,Smith,3,DEF,24,2484,Adam Smith
+85,Solanke,3,FWD,24,2485,Dominic Solanke
+86,Tavernier,3,MID,24,2486,Marcus Tavernier
+87,Hamed Traorè,3,MID,24,2487,Hamed Traorè
+88,Travers,3,GK,24,2488,Mark Travers
+89,Zabarnyi,3,DEF,24,2489,Illia Zabarnyi
+595,Kerkez,3,DEF,24,24595,Milos Kerkez
+607,Radu,3,GK,24,24607,Ionuț Radu
+619,Greenwood,3,DEF,24,24619,Ben Greenwood
+643,Aarons,3,DEF,24,24643,Max Aarons
+644,Scott,3,MID,24,24644,Alex Scott
+673,Adams,3,MID,24,24673,Tyler Adams
+705,Sinisterra,3,MID,24,24705,Luis Sinisterra
+799,Faivre,3,MID,24,24799,Romain Faivre
+802,Kinsey,3,DEF,24,24802,Max Kinsey
+804,Enes Ünal,3,FWD,24,24804,Enes Ünal
+811,Sadi,3,MID,24,24811,Dominic Sadi
+849,Dacosta Gonzalez,3,MID,24,24849,Michael Dacosta Gonzalez
+855,McKenna,3,GK,24,24855,Callan McKenna
+90,Ajer,4,DEF,24,2490,Kristoffer Ajer
+91,Balcombe,4,GK,24,2491,Ellery Balcombe
+92,Baptiste,4,MID,24,2492,Shandon Baptiste
+93,Bech,4,DEF,24,2493,Mads Bech Sørensen
+94,Bidstrup,4,MID,24,2494,Mads Bidstrup
+95,Canós,4,MID,24,2495,Sergi Canós Tenés
+96,Collins,4,DEF,24,2496,Nathan Collins
+97,Cox,4,GK,24,2497,Matthew Cox
+98,Damsgaard,4,MID,24,2498,Mikkel Damsgaard
+99,Dasilva,4,MID,24,2499,Josh Dasilva
+100,Dervişoğlu,4,FWD,24,24100,Halil Dervişoğlu
+101,Flekken,4,GK,24,24101,Mark Flekken
+102,Goode,4,DEF,24,24102,Charlie Goode
+103,Henry,4,DEF,24,24103,Rico Henry
+104,Hickey,4,DEF,24,24104,Aaron Hickey
+105,Janelt,4,MID,24,24105,Vitaly Janelt
+106,Jensen,4,MID,24,24106,Mathias Jensen
+107,Lewis-Potter,4,MID,24,24107,Keane Lewis-Potter
+108,Mbeumo,4,MID,24,24108,Bryan Mbeumo
+109,Mee,4,DEF,24,24109,Ben Mee
+110,Nørgaard,4,MID,24,24110,Christian Nørgaard
+111,Onyeka,4,MID,24,24111,Frank Onyeka
+112,Pinnock,4,DEF,24,24112,Ethan Pinnock
+114,Roerslev,4,DEF,24,24114,Mads Roerslev Rasmussen
+115,Schade,4,MID,24,24115,Kevin Schade
+116,Strakosha,4,GK,24,24116,Thomas Strakosha
+117,Toney,4,FWD,24,24117,Ivan Toney
+118,Trevitt,4,MID,24,24118,Ryan Trevitt
+119,Wissa,4,FWD,24,24119,Yoane Wissa
+120,Yarmoliuk,4,MID,24,24120,Yegor Yarmoliuk
+121,Zanka,4,DEF,24,24121,Mathias Jorgensen
+258,Maupay,4,FWD,24,24258,Neal Maupay
+508,Reguilón,4,DEF,24,24508,Sergio Reguilón
+620,Olakigbe,4,MID,24,24620,Michael Olakigbe
+684,Brierley,4,MID,24,24684,Ethan Brierley
+701,Ghoddos,4,MID,24,24701,Saman Ghoddos
+725,Kim Ji-Soo,4,DEF,24,24725,Ji-Soo Kim
+733,Adedokun,4,DEF,24,24733,Valintino Adedokun
+744,Peart-Harris,4,MID,24,24744,Myles Peart-Harris
+752,Angelini,4,GK,24,24752,Vincent Angelini
+789,Valdimarsson,4,GK,24,24789,Hákon Valdimarsson
+797,Fredrick,4,DEF,24,24797,Benjamin Fredrick
+834,Arthur,4,DEF,24,24834,Benjamin Arthur
+864,Konak,4,MID,24,24864,Yunus Konak
+122,Adingra,5,MID,24,24122,Simon Adingra
+123,Alzate,5,MID,24,24123,Steven Alzate
+124,Ayari,5,MID,24,24124,Yasin Ayari
+125,Buonanotte,5,MID,24,24125,Facundo Buonanotte
+127,Connolly,5,FWD,24,24127,Aaron Connolly
+128,Dahoud,5,MID,24,24128,Mahmoud Dahoud
+129,Dunk,5,DEF,24,24129,Lewis Dunk
+130,Enciso,5,MID,24,24130,Julio Enciso
+131,Estupiñan,5,DEF,24,24131,Pervis Estupiñán
+132,Ferguson,5,FWD,24,24132,Evan Ferguson
+133,Gilmour,5,MID,24,24133,Billy Gilmour
+134,Gross,5,MID,24,24134,Pascal Groß
+135,João Pedro,5,FWD,24,24135,João Pedro Junqueira de Jesus
+136,Karbownik,5,DEF,24,24136,Michał Karbownik
+137,Kozłowski,5,MID,24,24137,Kacper Kozłowski
+138,Lallana,5,MID,24,24138,Adam Lallana
+139,Lamptey,5,DEF,24,24139,Tariq Lamptey
+140,March,5,MID,24,24140,Solly March
+141,McGill,5,GK,24,24141,Tom McGill
+142,Milner,5,MID,24,24142,James Milner
+143,Mitoma,5,MID,24,24143,Kaoru Mitoma
+144,Moder,5,MID,24,24144,Jakub Moder
+146,Sarmiento,5,MID,24,24146,Jeremy Sarmiento Morante
+147,Scherpen,5,GK,24,24147,Kjell Scherpen
+148,Steele,5,GK,24,24148,Jason Steele
+149,Undav,5,FWD,24,24149,Deniz Undav
+150,Van Hecke,5,DEF,24,24150,Jan Paul van Hecke
+151,Veltman,5,DEF,24,24151,Joël Veltman
+152,Verbruggen,5,GK,24,24152,Bart Verbruggen
+153,Webster,5,DEF,24,24153,Adam Webster
+154,Welbeck,5,FWD,24,24154,Danny Welbeck
+155,Zeqiri,5,FWD,24,24155,Andi Zeqiri
+606,Igor,5,DEF,24,24606,Igor Julio dos Santos de Paulo
+621,Hinshelwood,5,MID,24,24621,Jack Hinshelwood
+690,Baleba,5,MID,24,24690,Carlos Baleba
+700,Ansu Fati,5,MID,24,24700,Anssumane Fati Vieira
+741,O’Mahony,5,FWD,24,24741,Mark O’Mahony
+742,Baker-Boaitey,5,MID,24,24742,Benicio Baker-Boaitey
+746,Jackson,5,DEF,24,24746,Ben Jackson
+747,Duffus,5,MID,24,24747,Joshua Duffus
+753,Kavanagh,5,DEF,24,24753,Leigh Kavanagh
+755,Barrington,5,MID,24,24755,Luca Barrington
+786,Peupion,5,MID,24,24786,Cameron Peupion
+816,Barco,5,DEF,24,24816,Valentín Barco
+843,Chouchane,5,MID,24,24843,Samy Chouchane
+845,Offiah,5,DEF,24,24845,Odeluga Offiah
+861,Atom,5,DEF,24,24861,Noël Atom
+156,Agyei,6,MID,24,24156,Enock Agyei
+157,Al-Dakhil,6,DEF,24,24157,Ameen Al-Dakhil
+158,Bastien,6,MID,24,24158,Samuel Bastien
+159,Benson,6,MID,24,24159,Manuel Benson Hedilazio
+160,Beyer,6,DEF,24,24160,Jordan Beyer
+161,Brownhill,6,MID,24,24161,Josh Brownhill
+162,Churlinov,6,MID,24,24162,Darko Churlinov
+163,Cork,6,MID,24,24163,Jack Cork
+164,Costelloe,6,MID,24,24164,Dara Costelloe
+165,Cullen,6,MID,24,24165,Josh Cullen
+166,Egan-Riley,6,DEF,24,24166,CJ Egan-Riley
+167,Ekdal,6,DEF,24,24167,Hjalmar Ekdal
+168,Foster,6,FWD,24,24168,Lyle Foster
+169,Franchi,6,GK,24,24169,Denis Franchi
+170,Gudmundsson,6,MID,24,24170,Jóhann Berg Gudmundsson
+171,McNally,6,DEF,24,24171,Luke McNally
+172,Muric,6,GK,24,24172,Arijanet Muric
+173,O'Shea,6,DEF,24,24173,Dara O'Shea
+174,Obafemi,6,FWD,24,24174,Michael Obafemi
+175,Peacock-Farrell,6,GK,24,24175,Bailey Peacock-Farrell
+176,Roberts,6,DEF,24,24176,Connor Roberts
+177,Rodriguez,6,FWD,24,24177,Jay Rodriguez
+178,Taylor,6,DEF,24,24178,Charlie Taylor
+179,Thomas,6,DEF,24,24179,Bobby Thomas
+180,Twine,6,MID,24,24180,Scott Twine
+181,Vigouroux,6,GK,24,24181,Lawrence Vigouroux
+182,Vitinho,6,DEF,24,24182,Victor da Silva
+183,Weghorst,6,FWD,24,24183,Wout Weghorst
+184,Zaroury,6,MID,24,24184,Anass Zaroury
+200,D.D.Fofana,6,FWD,24,24200,David Datro Fofana
+475,Berge,6,MID,24,24475,Sander Berge
+594,Amdouni,6,FWD,24,24594,Zeki Amdouni
+596,Trafford,6,GK,24,24596,James Trafford
+600,Redmond,6,MID,24,24600,Nathan Redmond
+605,Koleosho,6,MID,24,24605,Luca Koleosho
+608,Bruun Larsen,6,MID,24,24608,Jacob Bruun Larsen
+622,Dodgson,6,DEF,24,24622,Owen Dodgson
+660,Odobert,6,MID,24,24660,Wilson Odobert
+674,Delcroix,6,DEF,24,24674,Hannes Delcroix
+675,A.Ramsey,6,MID,24,24675,Aaron Ramsey
+694,Massengo,6,MID,24,24694,Han-Noah Massengo
+706,M.Trésor,6,MID,24,24706,Mike Trésor
+805,Assignon,6,DEF,24,24805,Lorenz Assignon
+806,Estève,6,DEF,24,24806,Maxime Esteve
+126,Caicedo,7,MID,24,24126,Moisés Caicedo Corozo
+145,Sanchez,7,GK,24,24145,Robert Sánchez
+185,Ampadu,7,DEF,24,24185,Ethan Ampadu
+186,Andrey,7,MID,24,24186,Andrey Nascimento dos Santos
+187,Arrizabalaga,7,GK,24,24187,Kepa Arrizabalaga
+188,Aubameyang,7,FWD,24,24188,Pierre-Emerick Aubameyang
+189,Azpilicueta,7,DEF,24,24189,César Azpilicueta
+190,Baba,7,DEF,24,24190,Abdul Rahman Baba
+191,B.Badiashile,7,DEF,24,24191,Benoît Badiashile
+192,Bettinelli,7,GK,24,24192,Marcus Bettinelli
+194,Chalobah,7,DEF,24,24194,Trevoh Chalobah
+195,Chilwell,7,DEF,24,24195,Ben Chilwell
+196,Chukwuemeka,7,MID,24,24196,Carney Chukwuemeka
+197,Colwill,7,DEF,24,24197,Levi Colwill
+198,Cucurella,7,DEF,24,24198,Marc Cucurella Saseta
+199,Enzo,7,MID,24,24199,Enzo Fernández
+201,W.Fofana,7,DEF,24,24201,Wesley Fofana
+202,Gallagher,7,MID,24,24202,Conor Gallagher
+203,Gusto,7,DEF,24,24203,Malo Gusto
+206,James,7,DEF,24,24206,Reece James
+207,Lukaku,7,FWD,24,24207,Romelu Lukaku Bolingoli
+208,Madueke,7,MID,24,24208,Noni Madueke
+210,Mudryk,7,MID,24,24210,Mykhailo Mudryk
+211,N.Jackson,7,FWD,24,24211,Nicolas Jackson
+212,Nkunku,7,FWD,24,24212,Christopher Nkunku
+213,Pulisic,7,MID,24,24213,Christian Pulisic
+214,M.Sarr,7,DEF,24,24214,Malang Sarr
+215,Slonina,7,GK,24,24215,Gabriel Słonina
+216,Sterling,7,MID,24,24216,Raheem Sterling
+217,T.Silva,7,DEF,24,24217,Thiago Emiliano da Silva
+218,Ziyech,7,MID,24,24218,Hakim Ziyech
+362,Palmer,7,MID,24,24362,Cole Palmer
+589,Ângelo,7,MID,24,24589,Ângelo Gabriel Borges Damaceno
+609,Maatsen,7,MID,24,24609,Ian Maatsen
+611,Disasi,7,DEF,24,24611,Axel Disasi
+613,Ugochukwu,7,MID,24,24613,Lesley Ugochukwu
+623,Burstow,7,FWD,24,24623,Mason Burstow
+659,Bergström,7,GK,24,24659,Lucas Bergström
+667,Lavia,7,MID,24,24667,Roméo Lavia
+671,Humphreys,7,DEF,24,24671,Bashir Humphreys
+677,Deivid,7,FWD,24,24677,Deivid Washington de Souza Eugênio
+680,Beach,7,GK,24,24680,Eddie Beach
+681,Diego Moreira,7,MID,24,24681,Diego Manuel Jadon da Silva Moreira
+687,Petrović,7,GK,24,24687,Đorđe Petrović
+716,Gilchrist,7,DEF,24,24716,Alfie Gilchrist
+717,Stutter,7,FWD,24,24717,Ronnie Stutter
+718,Matos,7,MID,24,24718,Alex Matos
+723,Brooking,7,DEF,24,24723,Josh Brooking
+758,Castledine,7,MID,24,24758,Leo Castledine
+791,Casadei,7,MID,24,24791,Cesare Casadei
+819,Samuels-Smith,7,DEF,24,24819,Ishé Samuels-Smith
+820,Harrison,7,MID,24,24820,Ollie Harrison
+830,Tauriainen,7,MID,24,24830,Jimi Tauriainen
+838,Acheampong,7,DEF,24,24838,Josh Acheampong
+847,Sharman-Lowe,7,GK,24,24847,Teddy Sharman-Lowe
+851,George,7,FWD,24,24851,Tyrique George
+852,Dyer,7,MID,24,24852,Kiano Dyer
+858,Curd,7,GK,24,24858,Ted Curd
+859,Sturge,7,DEF,24,24859,Zak Sturge
+7,Holding,8,DEF,24,247,Rob Holding
+219,Ahamada,8,MID,24,24219,Naouirou Ahamada
+220,Andersen,8,DEF,24,24220,Joachim Andersen
+221,J.Ayew,8,MID,24,24221,Jordan Ayew
+222,Clyne,8,DEF,24,24222,Nathaniel Clyne
+223,C.Doucouré,8,MID,24,24223,Cheick Doucouré
+224,Ebiowei,8,MID,24,24224,Malcolm Ebiowei
+225,Edouard,8,FWD,24,24225,Odsonne Edouard
+226,Eze,8,MID,24,24226,Eberechi Eze
+227,Guaita,8,GK,24,24227,Vicente Guaita
+228,Guéhi,8,DEF,24,24228,Marc Guéhi
+229,Hughes,8,MID,24,24229,Will Hughes
+230,Johnstone,8,GK,24,24230,Sam Johnstone
+231,Lerma,8,MID,24,24231,Jefferson Lerma Solís
+232,Mateta,8,FWD,24,24232,Jean-Philippe Mateta
+233,Matthews,8,GK,24,24233,Remi Matthews
+234,Mitchell,8,DEF,24,24234,Tyrick Mitchell
+235,O'Brien,8,DEF,24,24235,Jake O'Brien
+236,Olise,8,MID,24,24236,Michael Olise
+237,Plange,8,FWD,24,24237,Luke Plange
+238,C.Richards,8,DEF,24,24238,Chris Richards
+239,Riedewald,8,MID,24,24239,Jairo Riedewald
+240,Schlupp,8,MID,24,24240,Jeffrey Schlupp
+241,Tomkins,8,DEF,24,24241,James Tomkins
+242,Ward,8,DEF,24,24242,Joel Ward
+243,Whitworth,8,GK,24,24243,Joe Whitworth
+385,Henderson,8,GK,24,24385,Dean Henderson
+615,Matheus França,8,MID,24,24615,Matheus França de Oliveira
+657,Rak-Sakyi,8,MID,24,24657,Jesurun Rak-Sakyi
+658,Gordon,8,FWD,24,24658,John-Kymani Gordon
+720,Ola-Adebomi,8,FWD,24,24720,Ademola Ola-Adebomi
+721,Ozoh,8,MID,24,24721,David Ozoh
+724,Raymond,8,MID,24,24724,Jadan Raymond
+763,Adaramola,8,DEF,24,24763,Tayo Adaramola
+792,Muñoz,8,DEF,24,24792,Daniel Muñoz
+807,Wharton,8,MID,24,24807,Adam Wharton
+821,Umeh-Chibueze,8,FWD,24,24821,Franco Umeh-Chibueze
+825,Rodney,8,MID,24,24825,Kaden Rodney
+842,Mathurin,8,MID,24,24842,Roshaun Mathurin
+244,André Gomes,9,MID,24,24244,André Tavares Gomes
+245,Branthwaite,9,DEF,24,24245,Jarrad Branthwaite
+246,Calvert-Lewin,9,FWD,24,24246,Dominic Calvert-Lewin
+247,Coleman,9,DEF,24,24247,Seamus Coleman
+248,Dele,9,MID,24,24248,Dele Alli
+249,A.Doucoure,9,MID,24,24249,Abdoulaye Doucouré
+250,Garner,9,MID,24,24250,James Garner
+251,Gbamin,9,MID,24,24251,Jean-Philippe Gbamin
+252,Godfrey,9,DEF,24,24252,Ben Godfrey
+253,Gray,9,MID,24,24253,Demarai Gray
+254,Gana,9,MID,24,24254,Idrissa Gueye
+257,Keane,9,DEF,24,24257,Michael Keane
+259,McNeil,9,MID,24,24259,Dwight McNeil
+260,Mykolenko,9,DEF,24,24260,Vitalii Mykolenko
+261,Onana,9,MID,24,24261,Amadou Onana
+262,Patterson,9,DEF,24,24262,Nathan Patterson
+263,Pickford,9,GK,24,24263,Jordan Pickford
+264,Simms,9,FWD,24,24264,Ellis Simms
+265,Tarkowski,9,DEF,24,24265,James Tarkowski
+266,J.Virginia,9,GK,24,24266,João Neves Virgínia
+579,Lonergan,9,GK,24,24579,Andy Lonergan
+588,Young,9,DEF,24,24588,Ashley Young
+601,Danjuma,9,MID,24,24601,Arnaut Danjuma Groeneveld
+624,Dobbin,9,MID,24,24624,Lewis Dobbin
+645,Y. Chermiti,9,FWD,24,24645,Youssef Ramalho Chermiti
+649,Cannon,9,FWD,24,24649,Thomas Cannon
+650,Onyango,9,MID,24,24650,Tyler Onyango
+661,Harrison,9,MID,24,24661,Jack Harrison
+691,Beto,9,FWD,24,24691,Norberto Bercique Gomes Betuncal
+719,Hunt,9,MID,24,24719,Mackenzie Hunt
+760,Metcalfe,9,MID,24,24760,Jenson Metcalfe
+761,Campbell,9,DEF,24,24761,Elijah Campbell
+841,Warrington,9,MID,24,24841,Lewis Warrington
+863,Crellin,9,GK,24,24863,Billy Crellin
+193,Broja,10,FWD,24,24193,Armando Broja
+256,Iwobi,10,MID,24,24256,Alex Iwobi
+267,Andreas,10,MID,24,24267,Andreas Hoelgebaum Pereira
+268,Cairney,10,MID,24,24268,Tom Cairney
+269,I.Cavaleiro,10,MID,24,24269,Ivan Neves Abreu Cavaleiro
+270,De Cordova-Reid,10,MID,24,24270,Bobby De Cordova-Reid
+271,Diop,10,DEF,24,24271,Issa Diop
+272,Francois,10,MID,24,24272,Tyrese Francois
+273,Knockaert,10,MID,24,24273,Anthony Knockaert
+274,Kongolo,10,DEF,24,24274,Terence Kongolo
+275,Leno,10,GK,24,24275,Bernd Leno
+276,Lukić,10,MID,24,24276,Saša Lukić
+277,Mbabu,10,DEF,24,24277,Kevin Mbabu
+278,Mitrović,10,FWD,24,24278,Aleksandar Mitrović
+279,Muniz,10,FWD,24,24279,Rodrigo Muniz Carvalho
+280,J.Palhinha,10,MID,24,24280,João Palhinha Gonçalves
+281,Ream,10,DEF,24,24281,Tim Ream
+282,Reed,10,MID,24,24282,Harrison Reed
+283,Robinson,10,DEF,24,24283,Antonee Robinson
+284,Rodák,10,GK,24,24284,Marek Rodák
+285,Tete,10,DEF,24,24285,Kenny Tete
+286,Tosin,10,DEF,24,24286,Tosin Adarabioyo
+287,Vinícius,10,FWD,24,24287,Carlos Vinícius Alves Morais
+288,Wilson,10,MID,24,24288,Harry Wilson
+558,Raúl,10,FWD,24,24558,Raúl Jiménez
+591,Willian,10,MID,24,24591,Willian Borges da Silva
+610,Bassey,10,DEF,24,24610,Calvin Bassey
+625,De Fougerolles,10,DEF,24,24625,Luc De Fougerolles
+651,Stansfield,10,FWD,24,24651,Jay Stansfield
+652,Dibley-Dias,10,MID,24,24652,Matthew Dibley-Dias
+662,Adama,10,MID,24,24662,Adama Traoré
+683,Harris,10,MID,24,24683,Luke Harris
+688,Castagne,10,DEF,24,24688,Timothy Castagne
+692,Benda,10,GK,24,24692,Steven Benda
+707,Ballo-Touré,10,DEF,24,24707,Fodé Ballo-Touré
+732,Tanton,10,DEF,24,24732,Devan Tanton
+796,Sekularac,10,MID,24,24796,Kristian Sekularac
+810,King,10,MID,24,24810,Joshua King
+289,Adrián,11,GK,24,24289,Adrián San Miguel del Castillo
+290,Alexander-Arnold,11,DEF,24,24290,Trent Alexander-Arnold
+291,A.Becker,11,GK,24,24291,Alisson Ramses Becker
+292,Bajcetic,11,MID,24,24292,Stefan Bajcetic
+293,Darwin,11,FWD,24,24293,Darwin Núñez Ribeiro
+294,Diogo J.,11,MID,24,24294,Diogo Teixeira da Silva
+295,Elliott,11,MID,24,24295,Harvey Elliott
+296,Fabinho,11,MID,24,24296,Fabio Henrique Tavares
+297,Gakpo,11,FWD,24,24297,Cody Gakpo
+298,Gomez,11,DEF,24,24298,Joe Gomez
+299,Henderson,11,MID,24,24299,Jordan Henderson
+300,Jones,11,MID,24,24300,Curtis Jones
+301,Kelleher,11,GK,24,24301,Caoimhin Kelleher
+302,Konaté,11,DEF,24,24302,Ibrahima Konaté
+303,Luis Díaz,11,MID,24,24303,Luis Díaz
+304,Mac Allister,11,MID,24,24304,Alexis Mac Allister
+305,Matip,11,DEF,24,24305,Joel Matip
+306,Phillips,11,DEF,24,24306,Nathaniel Phillips
+307,Robertson,11,DEF,24,24307,Andrew Robertson
+308,Salah,11,MID,24,24308,Mohamed Salah
+309,Szoboszlai,11,MID,24,24309,Dominik Szoboszlai
+310,Thiago,11,MID,24,24310,Thiago Alcántara do Nascimento
+311,Tsimikas,11,DEF,24,24311,Konstantinos Tsimikas
+312,Van den Berg,11,DEF,24,24312,Sepp van den Berg
+313,Virgil,11,DEF,24,24313,Virgil van Dijk
+626,Quansah,11,DEF,24,24626,Jarell Quansah
+627,Clark,11,MID,24,24627,Bobby Clark
+628,Doak,11,MID,24,24628,Ben Doak
+629,McConnell,11,MID,24,24629,James McConnell
+668,Endo,11,MID,24,24668,Wataru Endo
+708,Gravenberch,11,MID,24,24708,Ryan Gravenberch
+726,Chambers,11,DEF,24,24726,Luke Chambers
+728,Scanlon,11,DEF,24,24728,Callum Scanlon
+743,Nyoni,11,MID,24,24743,Treymaurice Nyoni
+756,Pitaluga,11,GK,24,24756,Marcelo de Araújo Pitaluga Filho
+757,Bradley,11,DEF,24,24757,Conor Bradley
+782,Beck,11,DEF,24,24782,Owen Beck
+783,Gordon,11,MID,24,24783,Kaide Gordon
+812,Koumas,11,FWD,24,24812,Lewis Koumas
+813,Mrozek,11,GK,24,24813,Fabian Mrozek
+824,Danns,11,FWD,24,24824,Jayden Danns
+837,Nallo,11,DEF,24,24837,Amara Nallo
+21,Sambi,12,MID,24,2421,Albert Sambi Lokonga
+52,Nakamba,12,MID,24,2452,Marvelous Nakamba
+314,Adebayo,12,FWD,24,24314,Elijah Adebayo
+315,Andersen,12,DEF,24,24315,Mads Juel Andersen
+316,Bell,12,DEF,24,24316,Amari'i Bell
+317,Berry,12,MID,24,24317,Luke Berry
+318,Burke,12,DEF,24,24318,Reece Burke
+319,Campbell,12,MID,24,24319,Allan Campbell
+320,Clark,12,MID,24,24320,Jordan Clark
+321,Doughty,12,DEF,24,24321,Alfie Doughty
+322,Freeman,12,MID,24,24322,Luke Freeman
+323,Macey,12,GK,24,24323,Matt Macey
+324,McAtee,12,FWD,24,24324,John McAtee
+325,Mendes,12,MID,24,24325,Carlos Mendes Gomes
+326,Morris,12,FWD,24,24326,Carlton Morris
+327,Muskwe,12,FWD,24,24327,Admiral Muskwe
+328,Ogbene,12,FWD,24,24328,Chiedozie Ogbene
+329,Onyedinma,12,MID,24,24329,Fred Onyedinma
+330,Osho,12,DEF,24,24330,Gabriel Osho
+331,Pepple,12,FWD,24,24331,Aribim Pepple
+332,Pereira,12,MID,24,24332,Dion Pereira
+333,Potts,12,DEF,24,24333,Dan Potts
+334,Rea,12,MID,24,24334,Glen Rea
+335,Shea,12,GK,24,24335,James Shea
+336,Taylor,12,FWD,24,24336,Joe Taylor
+337,Thorpe,12,MID,24,24337,Elliot Thorpe
+338,Walton,12,GK,24,24338,Jack Walton
+339,Watson,12,MID,24,24339,Louie Watson
+340,Woodrow,12,FWD,24,24340,Cauley Woodrow
+393,Mengi,12,DEF,24,24393,Teden Mengi
+553,Giles,12,DEF,24,24553,Ryan Giles
+575,Lockyer,12,DEF,24,24575,Tom Lockyer
+582,Mpanzu,12,MID,24,24582,Pelly Ruddock Mpanzu
+586,Chong,12,MID,24,24586,Tahith Chong
+602,Kaboré,12,DEF,24,24602,Issa Kaboré
+614,Kaminski,12,GK,24,24614,Thomas Kaminski
+630,Barkley,12,MID,24,24630,Ross Barkley
+631,Brown,12,FWD,24,24631,Jacob Brown
+648,Francis-Clarke,12,DEF,24,24648,Aidan Francis-Clarke
+665,Krul,12,GK,24,24665,Tim Krul
+682,Johnson,12,DEF,24,24682,Joseph Johnson
+727,Townsend,12,MID,24,24727,Andros Townsend
+729,Luker,12,MID,24,24729,Jayden Luker
+734,Nelson,12,MID,24,24734,Zack Nelson
+798,Hashioka,12,DEF,24,24798,Daiki Hashioka
+831,Piesold,12,MID,24,24831,Axel Piesold
+839,Martins,12,MID,24,24839,Dominic Dos Santos Martins
+844,Chigozie,12,DEF,24,24844,Christian Chigozie
+848,Harris,12,FWD,24,24848,Taylan Harris
+341,Akanji,13,DEF,24,24341,Manuel Akanji
+342,Aké,13,DEF,24,24342,Nathan Aké
+343,J.Alvarez,13,FWD,24,24343,Julián Álvarez
+344,Bernardo,13,MID,24,24344,Bernardo Veiga de Carvalho e Silva
+345,Bobb,13,MID,24,24345,Oscar Bobb
+346,Cancelo,13,DEF,24,24346,João Cancelo
+347,Carson,13,GK,24,24347,Scott Carson
+348,Charles,13,MID,24,24348,Shea Charles
+349,De Bruyne,13,MID,24,24349,Kevin De Bruyne
+350,Rúben,13,DEF,24,24350,Rúben Gato Alves Dias
+352,Ederson M.,13,GK,24,24352,Ederson Santana de Moraes
+353,Foden,13,MID,24,24353,Phil Foden
+354,Grealish,13,MID,24,24354,Jack Grealish
+355,Haaland,13,FWD,24,24355,Erling Haaland
+356,Kovačić,13,MID,24,24356,Mateo Kovačić
+357,Laporte,13,DEF,24,24357,Aymeric Laporte
+358,R.Lewis,13,DEF,24,24358,Rico Lewis
+359,Mahrez,13,MID,24,24359,Riyad Mahrez
+361,Ortega Moreno,13,GK,24,24361,Stefan Ortega Moreno
+363,Perrone,13,MID,24,24363,Máximo Perrone
+365,Rodrigo,13,MID,24,24365,Rodrigo Hernandez
+366,Sergio Gómez,13,DEF,24,24366,Sergio Gómez
+367,Steffen,13,GK,24,24367,Zack Steffen
+368,Stones,13,DEF,24,24368,John Stones
+369,Walker,13,DEF,24,24369,Kyle Walker
+566,Matheus N.,13,MID,24,24566,Matheus Luiz Nunes
+616,Gvardiol,13,DEF,24,24616,Joško Gvardiol
+678,Doku,13,MID,24,24678,Jérémy Doku
+762,Susoho,13,MID,24,24762,Mahamadou Susoho
+771,Hamilton,13,MID,24,24771,Micah Hamilton
+814,Wright,13,MID,24,24814,Jacob Wright
+209,Mount,14,MID,24,24209,Mason Mount
+370,Alex Telles,14,DEF,24,24370,Alex Telles
+371,Amad,14,MID,24,24371,Amad Diallo
+372,Antony,14,MID,24,24372,Antony Matheus dos Santos
+373,B.Fernandes,14,MID,24,24373,Bruno Borges Fernandes
+374,B.Williams,14,DEF,24,24374,Brandon Williams
+375,Bailly,14,DEF,24,24375,Eric Bailly
+376,Casemiro,14,MID,24,24376,Carlos Henrique Casimiro
+377,Dalot,14,DEF,24,24377,Diogo Dalot Teixeira
+379,Eriksen,14,MID,24,24379,Christian Eriksen
+380,Fernandez,14,DEF,24,24380,Álvaro Fernández Carreras
+381,Fred,14,MID,24,24381,Frederico Rodrigues de Paula Santos
+382,Garnacho,14,MID,24,24382,Alejandro Garnacho
+383,Hannibal,14,MID,24,24383,Hannibal Mejbri
+384,Heaton,14,GK,24,24384,Tom Heaton
+386,Lindelof,14,DEF,24,24386,Victor Lindelöf
+387,Maguire,14,DEF,24,24387,Harry Maguire
+388,Mainoo,14,MID,24,24388,Kobbie Mainoo
+389,Malacia,14,DEF,24,24389,Tyrell Malacia
+390,Martial,14,FWD,24,24390,Anthony Martial
+391,Martinez,14,DEF,24,24391,Lisandro Martínez
+392,McTominay,14,MID,24,24392,Scott McTominay
+394,Pellistri,14,MID,24,24394,Facundo Pellistri Rebollo
+395,R.Varane,14,DEF,24,24395,Raphaël Varane
+396,Rashford,14,MID,24,24396,Marcus Rashford
+397,Sancho,14,MID,24,24397,Jadon Sancho
+398,Shaw,14,DEF,24,24398,Luke Shaw
+399,Shoretire,14,FWD,24,24399,Shola Shoretire
+400,Van de Beek,14,MID,24,24400,Donny van de Beek
+401,Wan-Bissaka,14,DEF,24,24401,Aaron Wan-Bissaka
+597,Onana,14,GK,24,24597,André Onana
+617,Højlund,14,FWD,24,24617,Rasmus Højlund
+632,Forson,14,MID,24,24632,Omari Forson
+669,Vítek,14,GK,24,24669,Radek Vítek
+685,Gore,14,MID,24,24685,Daniel Gore
+695,Altay,14,GK,24,24695,Altay Bayindir
+703,Evans,14,DEF,24,24703,Jonny Evans
+709,Amrabat,14,MID,24,24709,Sofyan Amrabat
+748,Hugill,14,FWD,24,24748,Joe Hugill
+766,Kambwala,14,DEF,24,24766,Willy Kambwala
+768,Bennett,14,DEF,24,24768,Rhys Bennett
+826,Collyer,14,MID,24,24826,Toby Collyer
+833,Ogunneye,14,DEF,24,24833,Habeeb Ogunneye
+835,Mee,14,GK,24,24835,Dermot Mee
+846,Amass,14,DEF,24,24846,Harry Amass
+850,Wheatley,14,FWD,24,24850,Ethan Wheatley
+856,Jackson,14,DEF,24,24856,Louis Jackson
+204,Hall,15,DEF,24,24204,Lewis Hall
+402,Almirón,15,MID,24,24402,Miguel Almirón Rejala
+403,Anderson,15,MID,24,24403,Elliot Anderson
+404,Ashby,15,DEF,24,24404,Harrison Ashby
+405,Botman,15,DEF,24,24405,Sven Botman
+406,Bruno G.,15,MID,24,24406,Bruno Guimarães Rodriguez Moura
+407,Burn,15,DEF,24,24407,Dan Burn
+408,Darlow,15,GK,24,24408,Karl Darlow
+409,Dubravka,15,GK,24,24409,Martin Dubravka
+410,Fraser,15,MID,24,24410,Ryan Fraser
+411,Gillespie,15,GK,24,24411,Mark Gillespie
+412,Gordon,15,MID,24,24412,Anthony Gordon
+413,Hayden,15,MID,24,24413,Isaac Hayden
+414,Hendrick,15,MID,24,24414,Jeff Hendrick
+415,Isak,15,FWD,24,24415,Alexander Isak
+416,Joelinton,15,MID,24,24416,Joelinton Cássio Apolinário de Lira
+417,Krafth,15,DEF,24,24417,Emil Krafth
+418,Kuol,15,MID,24,24418,Garang Kuol
+419,Lascelles,15,DEF,24,24419,Jamaal Lascelles
+420,J.Lewis,15,DEF,24,24420,Jamal Lewis
+421,Longstaff,15,MID,24,24421,Sean Longstaff
+422,Manquillo,15,DEF,24,24422,Javier Manquillo Gaitán
+423,J.Murphy,15,MID,24,24423,Jacob Murphy
+424,Pope,15,GK,24,24424,Nick Pope
+425,Ritchie,15,MID,24,24425,Matt Ritchie
+426,Saint-Maximin,15,MID,24,24426,Allan Saint-Maximin
+427,Schär,15,DEF,24,24427,Fabian Schär
+428,Targett,15,DEF,24,24428,Matt Targett
+429,Tonali,15,MID,24,24429,Sandro Tonali
+430,Trippier,15,DEF,24,24430,Kieran Trippier
+431,Watts,15,DEF,24,24431,Kell Watts
+432,Willock,15,MID,24,24432,Joe Willock
+433,Wilson,15,FWD,24,24433,Callum Wilson
+580,Karius,15,GK,24,24580,Loris Karius
+581,Dummett,15,DEF,24,24581,Paul Dummett
+603,Barnes,15,MID,24,24603,Harvey Barnes
+633,Livramento,15,DEF,24,24633,Tino Livramento
+634,A.Murphy,15,DEF,24,24634,Alex Murphy
+635,Miley,15,MID,24,24635,Lewis Miley
+738,Diallo,15,MID,24,24738,Amadou Diallo
+739,Parkinson,15,FWD,24,24739,Ben Parkinson
+745,Ndiweni,15,FWD,24,24745,Michael Ndiweni
+794,White,15,MID,24,24794,Joe White
+795,Hernes,15,MID,24,24795,Travis Hernes
+23,Tavares,16,DEF,24,2423,Nuno Varela Tavares
+28,Turner,16,GK,24,2428,Matt Turner
+205,Hudson-Odoi,16,MID,24,24205,Callum Hudson-Odoi
+378,Elanga,16,MID,24,24378,Anthony Elanga
+434,B.Aguilera,16,MID,24,24434,Brandon Aguilera Zamora
+435,Arter,16,MID,24,24435,Harry Arter
+436,Aurier,16,DEF,24,24436,Serge Aurier
+437,Awoniyi,16,FWD,24,24437,Taiwo Awoniyi
+438,Biancone,16,DEF,24,24438,Giulian Biancone
+439,Boly,16,DEF,24,24439,Willy Boly
+440,Bowler,16,MID,24,24440,Josh Bowler
+441,Cook,16,DEF,24,24441,Steve Cook
+442,Danilo,16,MID,24,24442,Danilo dos Santos de Oliveira
+443,Dennis,16,FWD,24,24443,Emmanuel Dennis
+444,Dräger,16,DEF,24,24444,Mohamed Dräger
+445,Felipe,16,DEF,24,24445,Felipe Augusto de Almeida Monteiro
+446,Freuler,16,MID,24,24446,Remo Freuler
+447,Gibbs-White,16,MID,24,24447,Morgan Gibbs-White
+448,Hennessey,16,GK,24,24448,Wayne Hennessey
+449,Horvath,16,GK,24,24449,Ethan Horvath
+451,Kouyaté,16,MID,24,24451,Cheikhou Kouyaté
+452,Laryea,16,DEF,24,24452,Richie Laryea
+453,Mangala,16,MID,24,24453,Orel Mangala
+454,Mbe Soh,16,DEF,24,24454,Loïc Mbe Soh
+455,McKenna,16,DEF,24,24455,Scott McKenna
+456,Mighten,16,MID,24,24456,Alex Mighten
+457,Niakhaté,16,DEF,24,24457,Moussa Niakhaté
+458,O'Brien,16,MID,24,24458,Lewis O'Brien
+459,Ojeda,16,MID,24,24459,Braian Ojeda Rodríguez
+460,Panzo,16,DEF,24,24460,Jonathan Panzo
+461,O.Richards,16,DEF,24,24461,Omar Richards
+462,G.Scarpa,16,MID,24,24462,Gustavo Henrique Furtado Scarpa
+463,J.Shelvey,16,MID,24,24463,Jonjo Shelvey
+464,Surridge,16,FWD,24,24464,Sam Surridge
+465,Toffolo,16,DEF,24,24465,Harry Toffolo
+466,Ui-jo,16,FWD,24,24466,Hwang Ui-jo
+467,Williams,16,DEF,24,24467,Neco Williams
+468,Wood,16,FWD,24,24468,Chris Wood
+469,Worrall,16,DEF,24,24469,Joe Worrall
+470,Yates,16,MID,24,24470,Ryan Yates
+604,Aina,16,DEF,24,24604,Olu Aina
+636,G.Shelvey,16,GK,24,24636,George Shelvey
+637,Powell,16,DEF,24,24637,Josh Powell
+679,G.Montiel,16,DEF,24,24679,Gonzalo Montiel
+696,Murillo,16,DEF,24,24696,Murillo Santiago Costa dos Santos
+710,Odysseas,16,GK,24,24710,Odysseas Vlachodimos
+711,Omobamidele,16,DEF,24,24711,Andrew Omobamidele
+712,Dominguez,16,MID,24,24712,Nicolás Domínguez
+713,Sangaré,16,MID,24,24713,Ibrahim Sangaré
+714,Origi,16,FWD,24,24714,Divock Origi
+779,McDonnell,16,MID,24,24779,Jamie McDonnell
+780,Osong,16,FWD,24,24780,Detlef Esapa Osong
+781,Gardner,16,FWD,24,24781,Joe Gardner
+801,Reyna,16,MID,24,24801,Giovanni Reyna
+808,Sels,16,GK,24,24808,Matz Sels
+809,Ribeiro,16,FWD,24,24809,Rodrigo Duarte Ribeiro
+27,Trusty,17,DEF,24,2427,Auston Trusty
+33,Archer,17,FWD,24,2433,Cameron Archer
+255,Holgate,17,DEF,24,24255,Mason Holgate
+360,McAtee,17,MID,24,24360,James McAtee
+471,Ahmedhodžić,17,DEF,24,24471,Anel Ahmedhodžić
+472,Amissah,17,GK,24,24472,Jordan Amissah
+473,Baldock,17,DEF,24,24473,George Baldock
+474,Basham,17,DEF,24,24474,Chris Basham
+476,Bogle,17,DEF,24,24476,Jayden Bogle
+477,Brewster,17,FWD,24,24477,Rhian Brewster
+478,Coulibaly,17,MID,24,24478,Ismaila Coulibaly
+479,A.Davies,17,GK,24,24479,Adam Davies
+480,Egan,17,DEF,24,24480,John Egan
+481,Fleck,17,MID,24,24481,John Fleck
+482,Foderingham,17,GK,24,24482,Wes Foderingham
+483,Jebbison,17,FWD,24,24483,Daniel Jebbison
+484,Lowe,17,DEF,24,24484,Max Lowe
+485,McBurnie,17,FWD,24,24485,Oliver McBurnie
+486,Ndiaye,17,FWD,24,24486,Iliman Ndiaye
+487,Norrington-Davies,17,DEF,24,24487,Rhys Norrington-Davies
+488,Norwood,17,MID,24,24488,Oliver Norwood
+489,Osborn,17,MID,24,24489,Ben Osborn
+490,Osula,17,FWD,24,24490,William Osula
+576,Robinson,17,DEF,24,24576,Jack Robinson
+587,Slimane,17,MID,24,24587,Anis Slimane
+592,Larouci,17,DEF,24,24592,Yasser Larouci
+593,T.Bénie,17,FWD,24,24593,Bénie Traoré
+638,Vini Souza,17,MID,24,24638,Vini de Souza Costa
+653,Seriki,17,DEF,24,24653,Femi Seriki
+654,Marsh,17,FWD,24,24654,Louie Marsh
+655,Brooks,17,MID,24,24655,Andre Brooks
+656,Hackford,17,FWD,24,24656,Antwoine Hackford
+663,Hamer,17,MID,24,24663,Gustavo Hamer
+666,T.Davies,17,MID,24,24666,Tom Davies
+693,Thomas,17,DEF,24,24693,Luke Thomas
+730,Oné,17,MID,24,24730,Ryan Oné
+731,Buyabu,17,DEF,24,24731,Jili Buyabu
+759,Peck,17,MID,24,24759,Sydie Peck
+775,Brereton Díaz,17,MID,24,24775,Ben Brereton
+790,Grbić,17,GK,24,24790,Ivo Grbic
+822,Blacker,17,FWD,24,24822,Billy Blacker
+823,Arblaster,17,MID,24,24823,Oliver Arblaster
+827,Sasnauskas,17,DEF,24,24827,Dovydas Sasnauskas
+828,Curtis,17,DEF,24,24828,Sam Curtis
+857,Hampson,17,MID,24,24857,Owen Hampson
+450,Johnson,18,MID,24,24450,Brennan Johnson
+491,Austin,18,GK,24,24491,Brandon Austin
+492,Bentancur,18,MID,24,24492,Rodrigo Bentancur
+493,Bissouma,18,MID,24,24493,Yves Bissouma
+494,Bryan,18,MID,24,24494,Bryan Gil Salvatierra
+495,Davies,18,DEF,24,24495,Ben Davies
+496,Dier,18,DEF,24,24496,Eric Dier
+497,E.Royal,18,DEF,24,24497,Emerson Leite de Souza Junior
+498,Forster,18,GK,24,24498,Fraser Forster
+499,Højbjerg,18,MID,24,24499,Pierre-Emile Højbjerg
+500,Kane,18,FWD,24,24500,Harry Kane
+501,Kulusevski,18,MID,24,24501,Dejan Kulusevski
+502,Lloris,18,GK,24,24502,Hugo Lloris
+503,Lo Celso,18,MID,24,24503,Giovani Lo Celso
+504,Maddison,18,MID,24,24504,James Maddison
+505,Ndombele,18,MID,24,24505,Tanguy Ndombélé Alvaro
+506,Pedro Porro,18,DEF,24,24506,Pedro Porro
+507,Perišić,18,DEF,24,24507,Ivan Perišić
+509,Richarlison,18,MID,24,24509,Richarlison de Andrade
+510,Rodon,18,DEF,24,24510,Joe Rodon
+511,Romero,18,DEF,24,24511,Cristian Romero
+512,Sánchez,18,DEF,24,24512,Davinson Sánchez
+513,Sarr,18,MID,24,24513,Pape Matar Sarr
+514,Sessegnon,18,DEF,24,24514,Ryan Sessegnon
+515,Skipp,18,MID,24,24515,Oliver Skipp
+516,Son,18,MID,24,24516,Son Heung-min
+517,Spence,18,DEF,24,24517,Djed Spence
+518,Tanganga,18,DEF,24,24518,Japhet Tanganga
+519,Udogie,18,DEF,24,24519,Destiny Udogie
+520,Vicario,18,GK,24,24520,Guglielmo Vicario
+521,Whiteman,18,GK,24,24521,Alfie Whiteman
+583,Solomon,18,MID,24,24583,Manor Solomon
+639,Van de Ven,18,DEF,24,24639,Micky van de Ven
+640,Scarlett,18,FWD,24,24640,Dane Scarlett
+641,Veliz,18,FWD,24,24641,Alejo Véliz
+702,Phillips,18,DEF,24,24702,Ashley Phillips
+722,Donley,18,FWD,24,24722,Jamie Donley
+740,Dorrington,18,DEF,24,24740,Alfie Dorrington
+754,Yago Santiago,18,MID,24,24754,Yago de Santiago Alonso
+776,Werner,18,FWD,24,24776,Timo Werner
+777,Drăgușin,18,DEF,24,24777,Radu Dragusin
+860,Moore,18,MID,24,24860,Mikey Moore
+862,Hall,18,MID,24,24862,Tyrese Hall
+364,Phillips,19,MID,24,24364,Kalvin Phillips
+522,N.Aguerd,19,DEF,24,24522,Nayef Aguerd
+523,Antonio,19,FWD,24,24523,Michail Antonio
+524,Areola,19,GK,24,24524,Alphonse Areola
+525,Benrahma,19,MID,24,24525,Saïd Benrahma
+526,Bowen,19,MID,24,24526,Jarrod Bowen
+527,Cornet,19,MID,24,24527,Maxwel Cornet
+528,Coufal,19,DEF,24,24528,Vladimír Coufal
+529,Coventry,19,MID,24,24529,Conor Coventry
+530,Cresswell,19,DEF,24,24530,Aaron Cresswell
+531,Downes,19,MID,24,24531,Flynn Downes
+532,Emerson,19,DEF,24,24532,Emerson Palmieri dos Santos
+533,Fabianski,19,GK,24,24533,Lukasz Fabianski
+534,P.Fornals,19,MID,24,24534,Pablo Fornals Malla
+535,Ings,19,FWD,24,24535,Danny Ings
+536,Johnson,19,DEF,24,24536,Ben Johnson
+537,Kehrer,19,DEF,24,24537,Thilo Kehrer
+538,Mubama,19,FWD,24,24538,Divin Mubama
+539,L.Paquetá,19,MID,24,24539,Lucas Tolentino Coelho de Lima
+541,Scamacca,19,FWD,24,24541,Gianluca Scamacca
+542,Souček,19,MID,24,24542,Tomáš Souček
+543,Vlašić,19,MID,24,24543,Nikola Vlašić
+544,Zouma,19,DEF,24,24544,Kurt Zouma
+577,Ogbonna,19,DEF,24,24577,Angelo Ogbonna
+642,Álvarez,19,MID,24,24642,Edson Álvarez Velázquez
+647,Anang,19,GK,24,24647,Joseph Anang
+664,Ward-Prowse,19,MID,24,24664,James Ward-Prowse
+676,Mavropanos,19,DEF,24,24676,Konstantinos Mavropanos
+689,Kudus,19,MID,24,24689,Mohammed Kudus
+773,Orford,19,MID,24,24773,Lewis Orford
+774,Casey,19,DEF,24,24774,Kaelan Casey
+784,Scarles,19,DEF,24,24784,Oliver Scarles
+785,Marshall,19,FWD,24,24785,Callum Marshall
+829,Earthy,19,MID,24,24829,George Earthy
+351,Doyle,20,MID,24,24351,Tommy Doyle
+545,Aït-Nouri,20,DEF,24,24545,Rayan Aït-Nouri
+546,Bentley,20,GK,24,24546,Daniel Bentley
+547,Bolla,20,DEF,24,24547,Bendegúz Bolla
+548,H.Bueno,20,DEF,24,24548,Hugo Bueno López
+549,Chiquinho,20,MID,24,24549,Francisco Jorge Tomás Oliveira
+550,Cundle,20,MID,24,24550,Luke Cundle
+551,Dawson,20,DEF,24,24551,Craig Dawson
+552,Fábio Silva,20,FWD,24,24552,Fábio Silva
+554,Guedes,20,MID,24,24554,Gonçalo Manuel Ganchinho Guedes
+555,Hodge,20,MID,24,24555,Joe Hodge
+556,Hoever,20,DEF,24,24556,Ki-Jana Hoever
+557,Hee Chan,20,MID,24,24557,Hwang Hee-chan
+559,João Gomes,20,MID,24,24559,João Victor Gomes da Silva
+560,J.Otto,20,DEF,24,24560,Jonathan Castro Otto
+561,Jordão,20,MID,24,24561,Bruno Cavaco Jordão
+562,Kalajdžić,20,FWD,24,24562,Sasa Kalajdzic
+563,Kilman,20,DEF,24,24563,Max Kilman
+564,King,20,GK,24,24564,Tom King
+565,Mario Jr.,20,MID,24,24565,Mario Lemina
+567,Neto,20,MID,24,24567,Pedro Lomba Neto
+568,Podence,20,MID,24,24568,Daniel Castelo Podence
+569,José Sá,20,GK,24,24569,José Malheiro de Sá
+570,Sarabia,20,MID,24,24570,Pablo Sarabia
+571,Šarkić,20,GK,24,24571,Matija Šarkić
+572,N.Semedo,20,DEF,24,24572,Nélson Cabral Semedo
+573,Toti,20,DEF,24,24573,Toti António Gomes
+574,Boubacar Traore,20,MID,24,24574,Boubacar Traoré
+590,Cunha,20,FWD,24,24590,Matheus Santos Carneiro Da Cunha
+598,Doherty,20,DEF,24,24598,Matt Doherty
+697,S.Bueno,20,DEF,24,24697,Santiago Bueno
+698,González,20,MID,24,24698,Enso González
+704,Fraser,20,FWD,24,24704,Nathan Fraser
+715,Bellegarde,20,MID,24,24715,Jean-Ricner Bellegarde
+749,Whittingham,20,MID,24,24749,Matthew Whittingham
+750,Chirewa,20,MID,24,24750,Tawanda Chirewa
+751,Hubner,20,DEF,24,24751,Justin Hubner
+769,Hesketh,20,MID,24,24769,Owen Hesketh
+770,Barnett,20,MID,24,24770,Ty Barnett
+787,Griffiths,20,MID,24,24787,Harvey Griffiths
+788,Mosquera,20,DEF,24,24788,Yerson Mosquera
+800,N.Lemina,20,MID,24,24800,Noha Lemina
+832,Okoduwa,20,DEF,24,24832,Wesley Okoduwa
+836,Chiwome,20,FWD,24,24836,Leon Chiwome
+840,Holman,20,FWD,24,24840,Fletcher Holman
+853,Ojinnaka,20,MID,24,24853,Temple Ojinnaka
