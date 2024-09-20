@@ -1,5 +1,5 @@
-from lionel.data_load.constants import DATA, RAW
-from lionel.data_load.db.connector import DBManager
+from lionel.constants import DATA, RAW
+from lionel.db.connector import DBManager
 import pandas as pd
 import numpy as np
 

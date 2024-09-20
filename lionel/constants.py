@@ -1,15 +1,11 @@
 from pathlib import Path
 
-BASE = Path(__file__).parents[2]
+BASE = Path(__file__).parents[1]
 DATA = BASE / "data"
 RAW = DATA / "raw"
 PROCESSED = DATA / "processed"
 CLEANED = DATA / "cleaned"
 ANALYSIS = DATA / "analysis"
-
-BASE_URL = (
-    "https://raw.githubusercontent.com/vaastav/Fantasy-Premier-League/master/data"
-)
 
 SEASON_MAP = {
     25: "2024-25",
@@ -29,3 +25,5 @@ TEAM_MAP = {
         "Nott'm Forest": "Nottingham",
     }
 }
+
+PLAYER_NAME_MAP = {}

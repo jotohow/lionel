@@ -2,10 +2,10 @@ import sqlalchemy as sa
 from sqlalchemy import create_engine
 import time
 
-import lionel.data_load.db.schema as schema
-from lionel.data_load.constants import DATA, RAW
-from lionel.data_load.db.add_24_data import add_24_data
-from lionel.data_load.db.connector import DBManager
+import lionel.db.schema as schema
+from lionel.constants import DATA, RAW
+from lionel.scripts.add_24_data import add_24_data
+from lionel.db.connector import DBManager
 from lionel.utils import setup_logger
 
 logger = setup_logger(__name__)

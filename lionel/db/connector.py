@@ -3,7 +3,7 @@ from sqlalchemy import (
     create_engine,
     text,
 )
-from lionel.data_load.constants import DATA
+from lionel.constants import DATA
 
 
 """

@@ -1,7 +1,7 @@
 import sys
 import lionel.selector as selector
-import lionel.data_load.process.process_train_data as process_train_data
-import lionel.model.prepare_data as prepare_data
+import lionel.scripts.process_train_data as process_train_data
+import lionel.scripts.prepare_data as prepare_data
 
 
 def run(season, next_gw, dbm, fplm):
@@ -33,9 +33,9 @@ def run(season, next_gw, dbm, fplm):
 
 
 if __name__ == "__main__":
-    from lionel.data_load.db.connector import DBManager
+    from lionel.db.connector import DBManager
     from lionel.model.hierarchical import FPLPointsModel
-    from lionel.data_load.constants import ANALYSIS
+    from lionel.constants import ANALYSIS
 
     dbm = DBManager()
     fplm = FPLPointsModel.load(ANALYSIS / "hm_02.nc")

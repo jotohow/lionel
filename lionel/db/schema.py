@@ -9,7 +9,7 @@ from sqlalchemy import (
     create_engine,
 )
 from sqlalchemy.orm import relationship, backref, sessionmaker, declarative_base
-from lionel.data_load.constants import DATA
+from lionel.constants import DATA
 
 Base = declarative_base()
 

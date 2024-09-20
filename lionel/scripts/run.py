@@ -1,8 +1,8 @@
 import sys
 
-from lionel.data_load.db.connector import DBManager
+from lionel.db.connector import DBManager
 from lionel.model.hierarchical import FPLPointsModel
-from lionel.data_load.constants import DATA
+from lionel.constants import DATA
 
 import lionel.scripts.run_data_load as run_data_load
 import lionel.scripts.run_team as run_team

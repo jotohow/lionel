@@ -4,10 +4,10 @@ import datetime as dt
 import itertools
 
 # import lionel.data_load.storage_handler as storage_handler
-from lionel.data_load.db.connector import DBManager
+from lionel.db.connector import DBManager
 from lionel.model.hierarchical import FPLPointsModel
-from lionel.data_load.db.connector import DBManager
-from lionel.data_load.constants import DATA
+from lionel.db.connector import DBManager
+from lionel.constants import DATA
 from typing import Dict, List, Optional, Tuple, Union
 from sqlalchemy.orm import sessionmaker
 

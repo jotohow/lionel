@@ -1,8 +1,8 @@
 import sys
 import datetime as dt
-from lionel.data_load.process.process_train_data import get_train
-from lionel.data_load.db.connector import DBManager
-from lionel.data_load.constants import DATA
+from lionel.scripts.process_train_data import get_train
+from lionel.db.connector import DBManager
+from lionel.constants import DATA
 from lionel.model.hierarchical import FPLPointsModel
 
 

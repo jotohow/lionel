@@ -1,9 +1,12 @@
-from lionel.data_load.constants import DATA, RAW
-from lionel.data_load.db.connector import DBManager
-import lionel.data_load.process.process_scraped_data as process
-from lionel.utils import setup_logger
 import datetime as dt
 import json
+import sys
+
+from lionel.constants import DATA, RAW
+from lionel.db.connector import DBManager
+import lionel.scripts.process_scraped_data as process
+from lionel.utils import setup_logger
+
 
 logger = setup_logger(__name__)
 
@@ -178,14 +181,11 @@ def move_data_to_main(dbmanager, season=25):
 def run(season=25):
     dbmanager = DBManager(DATA / "fpl.db")
     data = load_scraped_data()
-    stage_data(data, dbmanager)
+    stage_data(data, dbmanager, season=season)
     move_data_to_main(dbmanager, season=season)
 
     return True
 
 
 if __name__ == "__main__":
-    run(season=25)
-    # dbmanager = DBManager(DATA / "fpl.db")
-    # data = load_scraped_data()
-    # stage_data(data, dbmanager)
+    run(season=int(sys.argv[1]))
