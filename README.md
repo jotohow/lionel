@@ -61,6 +61,7 @@ df = pd.DataFrame({
 })
 
 fplm = FPLPointsModel()
+fplm.build_model(df, points)
 fplm.fit(df, points)
 
 # Get predicted points
@@ -87,7 +88,7 @@ df = pd.DataFrame({
 })
 
 xv_sel = NewXVSelector('points_pred')
-xv_sel.build_problem(df)
+xv_sel.build_problem(df, budget=1000)
 xv_sel.solve()
 
 
@@ -95,17 +96,26 @@ xi_sel = XISelector("points_pred")
 xi_sel.build_problem(xv_sel.data)
 xi_sel.solve()
 
-xi_sel.data.sort_values(by='points_pred', ascending=False).head()
+xi_sel.data[xi_sel.data.xv==1]
 ```
-Returns:
+Returns the following, which obeys the position, budget, and team constraints:
 | player      | team_name | position | value | points_pred | xv | xi | captain |
 |-------------|-----------|----------|-------|-------------|----|----|---------|
-| player_14   | team_4    | DEF      | 55    | 10.779401   | 1  | 1  | 1       |
+| player_0    | team_0    | FWD      | 100   | 4.550896    | 1  | 1  | 0       |
+| player_1    | team_1    | FWD      | 90    | 4.953460    | 1  | 1  | 0       |
 | player_2    | team_2    | FWD      | 55    | 7.780676    | 1  | 1  | 0       |
-| player_19   | team_9    | GK       | 45    | 7.769195    | 1  | 1  | 0       |
-| player_4    | team_4    | MID      | 100   | 7.053329    | 0  | 0  | 0       |
+| player_3    | team_3    | MID      | 45    | 4.961371    | 1  | 1  | 0       |
+| player_5    | team_5    | MID      | 90    | 4.548816    | 1  | 1  | 0       |
+| player_7    | team_7    | MID      | 45    | 3.105254    | 1  | 0  | 0       |
+| player_9    | team_9    | MID      | 90    | 4.897183    | 1  | 1  | 0       |
+| player_10   | team_0    | MID      | 55    | 5.297736    | 1  | 1  | 0       |
+| player_11   | team_1    | DEF      | 45    | 2.450868    | 1  | 0  | 0       |
 | player_13   | team_3    | DEF      | 90    | 6.899006    | 1  | 1  | 0       |
-
+| player_14   | team_4    | DEF      | 55    | 10.779401   | 1  | 1  | 1       |
+| player_15   | team_5    | DEF      | 45    | 3.833575    | 1  | 0  | 0       |
+| player_17   | team_7    | DEF      | 90    | 6.717436    | 1  | 1  | 0       |
+| player_18   | team_8    | GK       | 55    | 3.969914    | 1  | 0  | 0       |
+| player_19   | team_9    | GK       | 45    | 7.769195    | 1  | 1  | 0       |
 
 ## Data
 FPL (Pre-2024/25): [Vaastav](https://github.com/vaastav/Fantasy-Premier-League)  
