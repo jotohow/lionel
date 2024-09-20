@@ -173,10 +173,10 @@ def add_24_player_stats(dbm):
     ]
 
     # Merge fixture i
-    fixtures_24 = pd.read_csv("/Users/toby/Dev/lionel/data/raw/fixtures_24.csv")
+    fixtures_24 = pd.read_csv(RAW / "fixtures_24.csv")
 
     # Need to merge team id too....
-    team_ids_24 = pd.read_csv("/Users/toby/Dev/lionel/data/cleaned/team_ids_24.csv")
+    team_ids_24 = pd.read_csv(DATA / "cleaned/team_ids_24.csv")
 
     df_stats_24_2 = df_stats_24_2.merge(
         team_ids_24[["team_name", "team_id"]],

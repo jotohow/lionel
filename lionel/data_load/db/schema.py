@@ -25,7 +25,7 @@ class TeamSeason(Base):
     team_id_web = Column(Integer)
     season = Column(Integer, nullable=False)
 
-    strength = Column(Integer, nullable=False)  # THESE MAY ALL CHANGE SEASON TO SEASON
+    strength = Column(Integer, nullable=False)
     strength_overall_home = Column(Integer, nullable=False)
     strength_overall_away = Column(Integer, nullable=False)
     strength_attack_home = Column(Integer, nullable=False)

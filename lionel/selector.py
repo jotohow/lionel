@@ -6,7 +6,9 @@ It uses linear programming to optimize team selection based on different predict
 
 Classes:
     BaseSelector: Abstract base class for team selection algorithms.
-    NewXVSelector: Concrete implementation of BaseSelector for selecting the first XI players.
+    XISelector: Concrete implementation of BaseSelector for selecting the first XI players.
+    NewXVSelector: Concrete implementation of BaseSelector for selecting the first XV players.
+    UpdateXVSelector: Concrete implementation of NewXVSelector for making transfers to an existing XV.
 
 Functions:
     setup_logger: Sets up the logger for the module.
@@ -76,8 +78,10 @@ class BaseSelector(ABC):
         Returns:
             bool: True if the input data is valid, False otherwise.
         """
-        assert all([col in data.columns.to_list() for col in self.expected_vars])
-        assert data.player.nunique() == len(data)
+        assert all(
+            [col in data.columns.to_list() for col in self.expected_vars]
+        ), f"Missing columns: {set(self.expected_vars) - set(data.columns)}"
+        assert data.player.nunique() == len(data), "Duplicated player names"
         return True
 
     @abstractmethod
@@ -247,20 +251,17 @@ class NewXVSelector(BaseSelector):
     def __init__(
         self,
         pred_var,
-        budget=1000,
     ):
         """
         Initializes a NewXVSelector object.
 
         Args:
             pred_var (str): The name of the variable used for prediction.
-            budget (int, optional): The budget for team selection. Defaults to 1000.
         """
         super().__init__(pred_var)
-        self.budget = budget
         logger.debug("Initialising XV selector object")
 
-    def build_problem(self, data):
+    def build_problem(self, data, budget=1000):
         """
         Builds the optimization problem for team selection.
 
@@ -273,9 +274,10 @@ class NewXVSelector(BaseSelector):
         assert self.validate_inputs(data)
         assert "xv" in data.columns
         assert data.xv.sum() == 0, "XV already selected"
-        return self._build_problem(data)
+        return self._build_problem(data, budget)
 
-    def _build_problem(self, data):
+    def _build_problem(self, data, budget):
+        self.budget = budget
         self.data = data.copy()
         self.y = data[self.pred_var].values
 
@@ -396,12 +398,45 @@ class NewXVSelector(BaseSelector):
 
 
 class UpdateXVSelector(NewXVSelector):
+    """
+    Make transfers to an existing XV selection
 
-    def build_problem(self, data, max_transfers):
+    This class inherits from the NewXVSelector class and provides additional functionality
+    for updating the team's XV selection based on transfer constraints.
+
+    Attributes:
+        prob (Problem): The optimization problem for XV selection.
+    """
+
+    # TODO: Account for differing sale and purchase values
+    # these values are unique to each player and need to be
+    # queried from the API # could do that by adding sale price
+    # and remaining budget to the data...
+
+    # logic could be: total budget = sum(sale prices) + remaining budget
+    # as long as actual sale prices are compared to purchase prices it should
+    # reflect the decision environment
+    # could be organised by replacing the values of players in the current
+    # team with their sale prices
+
+    def build_problem(self, data, max_transfers, budget):
+        """
+        Builds the optimization problem for XV selection.
+
+        This method builds the optimization problem for XV selection based on the given data
+        and the maximum number of transfers allowed.
+
+        Args:
+            data (DataFrame): The data containing player information.
+            max_transfers (int): The maximum number of transfers allowed.
+
+        Returns:
+            Problem: The optimization problem for XV selection.
+        """
         assert self.validate_inputs(data)
         assert "xv" in data.columns
         assert data.xv.sum() == 15, "There must be 15 existing players in the team."
-        self.prob = self._build_problem(data)
+        self.prob = self._build_problem(data, budget)
 
         # Add constraint for number of transfers
         j = self.data.columns.get_loc("xv")

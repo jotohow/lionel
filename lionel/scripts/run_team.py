@@ -1,3 +1,4 @@
+import sys
 import lionel.selector as selector
 import lionel.data_load.process.process_train_data as process_train_data
 import lionel.model.prepare_data as prepare_data
@@ -14,7 +15,7 @@ def run(season, next_gw, dbm, fplm):
     xvsel.solve()
 
     xisel = selector.XISelector("mean_points_pred")
-    xisel.build_problem(df_team)
+    xisel.build_problem(xvsel.data)
     xisel.solve()
 
     df_selection = xisel.data.copy()
@@ -32,4 +33,10 @@ def run(season, next_gw, dbm, fplm):
 
 
 if __name__ == "__main__":
-    run(24, 22)
+    from lionel.data_load.db.connector import DBManager
+    from lionel.model.hierarchical import FPLPointsModel
+    from lionel.data_load.constants import ANALYSIS
+
+    dbm = DBManager()
+    fplm = FPLPointsModel.load(ANALYSIS / "hm_02.nc")
+    run(*[int(x) for x in sys.argv[1:]], dbm, fplm)
