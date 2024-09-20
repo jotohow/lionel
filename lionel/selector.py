@@ -1,63 +1,125 @@
-import os
-import sys
-from pathlib import Path
-import numpy as np
-import datetime as dt
-import pandas as pd
+"""
+Module for team selection algorithms.
+
+This module contains the base class and implementations for various team selection algorithms.
+It uses linear programming to optimize team selection based on different prediction variables.
+
+Classes:
+    BaseSelector: Abstract base class for team selection algorithms.
+    NewXVSelector: Concrete implementation of BaseSelector for selecting the first XI players.
+
+Functions:
+    setup_logger: Sets up the logger for the module.
+
+Dependencies:
+    - pulp
+    - abc
+    - lionel.utils
+
+Usage:
+    This module is intended to be used as part of the larger lionel package for team selection.
+    Instantiate a concrete selector class and use its methods to perform team selection.
+"""
+
 from pulp import LpVariable, LpProblem, lpSum, LpMaximize
 from abc import abstractmethod, ABC
 from lionel.utils import setup_logger
 
 logger = setup_logger(__name__)
 
-"""
-# Required variables:
-team_name
-element - unique player identifier - could change this?
-position (as string)
-value
-prediction variable
 
-# is that it? doesn't seem like a lot...
-"""
-
-
-# TODO: Refactor this to have a build and fit structure similar to the hierarchical model
-# that made a bit more sense...
 class BaseSelector(ABC):
+    """
+    Base class for team selection algorithms.
 
-    def __init__(self, player_df, season, pred_var="pred_Naive"):
-        self.player_df = player_df.fillna(0).reset_index(drop=True)
-        self.season = season
-        self.first_xi = pd.DataFrame()
-        self.players = None
+    Attributes:
+        pred_var (str): The name of the variable used for prediction.
+        expected_vars (list): A list of expected variables in the input data.
+        prob (LpProblem): The optimization problem to be solved.
+
+    Methods:
+        validate_inputs(data): Validates the input data.
+        build_problem(): Builds the optimization problem.
+        solve(): Solves the optimization problem.
+        POS_CONSTRAINTS(): Abstract property for position constraints.
+        _add_position_constraints(): Abstract method for adding position constraints.
+    """
+
+    def __init__(self, pred_var="mean_points_pred"):
+        """
+        Initializes a BaseSelector object.
+
+        Args:
+            pred_var (str, optional): The name of the variable used for prediction. Defaults to "pred_Naive".
+        """
         self.pred_var = pred_var
+        self.expected_vars = ["player", "team_name", "position", "value", self.pred_var]
+        self.prob = None
 
-        expected_vars = ["player", "team_name", "position", "value", self.pred_var]
-        assert all([col in self.player_df.columns.to_list() for col in expected_vars])
-        assert self.player_df.player.nunique() == len(self.player_df)
+    def validate_inputs(self, data):
+        """
+        Validates the input data.
+
+        Args:
+            data (pd.DataFrame): The input data.
+
+        Returns:
+            bool: True if the input data is valid, False otherwise.
+        """
+        assert all([col in data.columns.to_list() for col in self.expected_vars])
+        assert data.player.nunique() == len(data)
+        return True
+
+    @abstractmethod
+    def build_problem(self):
+        """
+        Builds the optimization problem.
+
+        Returns:
+            LpProblem: The optimization problem.
+        """
+        pass
+
+    @abstractmethod
+    def solve(self):
+        """
+        Solves the optimization problem.
+
+        Returns:
+            pd.DataFrame: The solved optimization problem.
+        """
+        return None
 
     @property
     @abstractmethod
     def POS_CONSTRAINTS():
+        """
+        Abstract property for position constraints.
+        """
         pass
 
     @abstractmethod
     def _add_position_constraints():
+        """
+        Abstract method for adding position constraints.
+        """
         pass
-
-    @staticmethod
-    def _create_decision_var(prefix, df):
-        return [LpVariable(prefix + str(i), cat="Binary") for i in df.index]
-
-    @staticmethod
-    def _get_player_indices(players) -> list:
-        players = [player for player in players if player.varValue != 0]
-        indices = [int(player.name.split("_")[1]) for player in players]
-        return indices
 
 
 class XISelector(BaseSelector):
+    """
+    Class for selecting a team of 11 players.
+
+    Attributes:
+        POS_CONSTRAINTS (dict): Position constraints for team selection.
+
+    Methods:
+        __init__(pred_var): Initializes an XISelector object.
+        build_problem(data): Builds the optimization problem for team selection.
+        solve(): Solves the optimization problem and returns the selected team.
+        _add_position_constraints(prob): Adds position constraints to the optimization problem.
+    """
+
     POS_CONSTRAINTS = {
         "DEF": [5, 3],
         "FWD": [3, 1],
@@ -65,164 +127,210 @@ class XISelector(BaseSelector):
         "GK": [1, 1],
     }
 
-    def __init__(self, player_df, season, pred_var):
-        super().__init__(player_df, season, pred_var)
-        self.first_xv = pd.DataFrame()  # confusing to have this defined here...
-        self.other_players = pd.DataFrame()
-        self.players = self._create_decision_var("player_", self.first_xv)
+    def __init__(self, pred_var):
+        """
+        Initializes an XISelector object.
+
+        Args:
+            pred_var (str): The name of the variable used for prediction.
+        """
+        super().__init__(pred_var)
         logger.debug("Initialising XI selector object")
 
-    @property
-    def first_xv(self):
-        if self._first_xv.empty:
-            self._first_xv = self.player_df[self.player_df.picked == 1]
-        return self._first_xv
+    def build_problem(self, data):
+        """
+        Builds the optimization problem for team selection.
 
-    @first_xv.setter
-    def first_xv(self, val):
-        self._first_xv = val
+        Args:
+            data (pd.DataFrame): The input data.
 
-    @property
-    def other_players(self):
-        if self._other_players.empty:
-            self._other_players = self.player_df[self.player_df.picked == 0]
-        return self._other_players
+        Returns:
+            LpProblem: The optimization problem.
+        """
+        assert self.validate_inputs(data)
+        assert all(col in data.columns for col in ["picked", "captain"])
+        data["first_xi"] = 0
 
-    @other_players.setter
-    def other_players(self, val):
-        self._other_players = val
+        self.data = data
+        self.xv = data[data.picked == 1]
+        self.y = self.xv[self.pred_var].values
+        assert self.xv.shape[0] == 15
 
-    def _initialise_xi_prob(self):
+        self.players = [LpVariable(str(i), cat="Binary") for i in self.xv.index]
         prob = LpProblem("First team choices", LpMaximize)
-        points_weighted = self.first_xv[self.pred_var].to_list()
-        prob += lpSum(
-            self.players[i] * points_weighted[i] for i in range(len(self.first_xv))
-        )
+
+        prob += lpSum(self.players[i] * self.y[i] for i in range(len(self.xv)))
         prob += sum(self.players) == 11
         prob = self._add_position_constraints(prob)
-        return prob
+        self.prob = prob
+        return self.prob
+
+    def solve(self):
+        """
+        Solves the optimization problem and returns the selected team.
+
+        Returns:
+            pd.DataFrame: The selected team.
+        """
+        self.prob.solve()
+        vals = [(p.varValue, p.name) for p in self.prob.variables()]
+        picked_idx = [int(v[1]) for v in vals if v[0] == 1]
+        self.xv.loc[self.xv.index.isin(picked_idx), "first_xi"] = 1
+        self.data.loc[self.data.index.isin(picked_idx), "first_xi"] = 1
+        return self.data
 
     def _add_position_constraints(self, prob):
-        positions = self.first_xv.position.to_list()
+        """
+        Adds position constraints to the optimization problem.
+
+        Args:
+            prob (LpProblem): The optimization problem.
+
+        Returns:
+            LpProblem: The optimization problem with added position constraints.
+        """
+        positions = self.xv.position.to_list()
         for pos in ["GK", "DEF", "MID", "FWD"]:
-            # Add upper bound for position
             prob += (
                 lpSum(
-                    self.players[i]
-                    for i in range(len(self.first_xv))
-                    if positions[i] == pos
+                    self.players[i] for i in range(len(self.xv)) if positions[i] == pos
                 )
                 <= self.POS_CONSTRAINTS[pos][0]
             )
-            # Add lower bound for the position
             prob += (
                 lpSum(
-                    self.players[i]
-                    for i in range(len(self.first_xv))
-                    if positions[i] == pos
+                    self.players[i] for i in range(len(self.xv)) if positions[i] == pos
                 )
                 >= self.POS_CONSTRAINTS[pos][1]
             )
         return prob
 
-    # TODO: Clean up this code
-    def _clean_xi(self, indices):
-        team = self.first_xv
-        team["first_xi"] = 0
-        team.loc[indices, "first_xi"] = 1
-        team = team.sort_values("first_xi", ascending=False)
-        # team = team.drop("index", axis=1).reset_index(drop=True)
-        team = pd.concat([team, self.other_players])
-        team["season"] = self.season
-        team["picked_time"] = dt.datetime.now()
-        for col in ["is_home1", "is_home2", "is_home3"]:
-            if col in team.columns:
-                team[col] = team[col].replace({0: np.nan, float(0): np.nan})
-        return team
-
-    def pick_xi(self):
-        prob = self._initialise_xi_prob()
-        prob.solve()
-        indices = self._get_player_indices(self.players)
-        team = self._clean_xi(indices)
-        self.first_xi = team
-        return team
-
 
 class NewXVSelector(BaseSelector):
     """
-    Base class for selecting a team of 15 players. Inherited by UpdateXVSelector,
-    which is used to update an existing team.
+    Base class for selecting a team of 15 players.
+
+    Attributes:
+        POS_CONSTRAINTS (dict): Position constraints for team selection.
+
+    Methods:
+        __init__(pred_var, budget): Initializes a NewXVSelector object.
+        build_problem(data): Builds the optimization problem for team selection.
+        solve(): Solves the optimization problem and returns the selected team.
+        _add_budget_constraints(prob): Adds budget constraints to the optimization problem.
+        _add_club_constraints(prob): Adds club constraints to the optimization problem.
+        _add_captain_constraints(prob): Adds captain constraints to the optimization problem.
+        _add_position_constraints(prob, players, df): Adds position constraints to the optimization problem.
+        _add_xv_constraints(prob): Adds XV constraints to the optimization problem.
     """
 
-    # Want to be able to access these objects without instantiating the class
     POS_CONSTRAINTS = {
         "DEF": 5,
         "FWD": 3,
         "MID": 5,
         "GK": 2,
     }
-    XI_SELECTOR_OBJ = XISelector
 
     def __init__(
         self,
-        player_df,
-        season,
         pred_var,
         budget=1000,
     ):
-        super().__init__(player_df, season, pred_var)
+        """
+        Initializes a NewXVSelector object.
+
+        Args:
+            pred_var (str): The name of the variable used for prediction.
+            budget (int, optional): The budget for team selection. Defaults to 1000.
+        """
+        super().__init__(pred_var)
         self.budget = budget
-
-        self.first_xv = pd.DataFrame()
-        self.teams = self.player_df.team_name.to_list()
-        self.positions = self.player_df.position.to_list()
-        self.points_weighted = self.player_df[self.pred_var].to_list()
-
-        self.players = self._create_decision_var("player_", self.player_df)
-        self.captains = self._create_decision_var("captain_", self.player_df)
-
-        self.xi_selector = None
         logger.debug("Initialising XV selector object")
 
-    @property
-    def first_xv(self):
-        if self._first_xv.empty:
-            self._first_xv = self.pick_xv()
-        return self._first_xv
+    def build_problem(self, data):
+        """
+        Builds the optimization problem for team selection.
 
-    @first_xv.setter
-    def first_xv(self, val):
-        self._first_xv = val
+        Args:
+            data (pd.DataFrame): The input data.
 
-    @property
-    def xi_selector(self):
-        if self._xi_selector is None:
-            self._xi_selector = NewXVSelector.XI_SELECTOR_OBJ(
-                self.first_xv, self.season, self.pred_var
-            )
-        return self._xi_selector
+        Returns:
+            LpProblem: The optimization problem.
+        """
+        assert self.validate_inputs(data)
 
-    @xi_selector.setter
-    def xi_selector(self, val):
-        self._xi_selector = val
+        data["picked"] = 0
+
+        self.data = data
+        self.y = data[self.pred_var].values
+
+        self.players = [LpVariable("p_" + str(i), cat="Binary") for i in data.index]
+        self.captains = [LpVariable("c_" + str(i), cat="Binary") for i in data.index]
+        self.teams = self.data.team_name.values
+        self.values = self.data.value.values
+
+        prob = LpProblem("FPL Player Choices", LpMaximize)
+        j = self.data.columns.get_loc(self.pred_var)
+        prob += lpSum(
+            (self.players[i] + self.captains[i]) * self.data.iloc[i, j]
+            for i in range(len(self.players))
+        )
+
+        # Add constraints
+        prob += sum(self.players) == 15
+        prob = self._add_budget_constraints(prob)
+        prob += sum(self.captains) == 1
+        prob = self._add_position_constraints(prob, self.players, self.data)
+        prob = self._add_club_constraints(prob)
+        prob = self._add_captain_constraints(prob)
+        self.prob = prob
+        return self.prob
+
+    def solve(self):
+        """
+        Solves the optimization problem and returns the selected team.
+
+        Returns:
+            pd.DataFrame: The selected team.
+        """
+        self.prob.solve()
+        xv_idx = [int(v.name.split("_")[1]) for v in self.players if v.varValue == 1]
+        cap_idx = [int(v.name.split("_")[1]) for v in self.captains if v.varValue == 1]
+        self.data.loc[self.data.index.isin(xv_idx), "picked"] = 1
+        self.data.loc[self.data.index.isin(cap_idx), "captain"] = 1
+        return self.data
 
     def _add_budget_constraints(self, prob):
+        """
+        Adds budget constraints to the optimization problem.
+
+        Args:
+            prob (LpProblem): The optimization problem.
+
+        Returns:
+            LpProblem: The optimization problem with added budget constraints.
+        """
         prob += (
-            lpSum(
-                self.players[i] * self.player_df.value[self.player_df.index[i]]
-                for i in range(len(self.player_df))
-            )
+            lpSum(self.players[i] * self.values[i] for i in range(len(self.data)))
             <= self.budget
         )
         return prob
 
     def _add_club_constraints(self, prob):
+        """
+        Adds club constraints to the optimization problem.
+
+        Args:
+            prob (LpProblem): The optimization problem.
+
+        Returns:
+            LpProblem: The optimization problem with added club constraints.
+        """
         for club in self.teams:
             prob += (
                 lpSum(
                     self.players[i]
-                    for i in range(len(self.player_df))
+                    for i in range(len(self.data))
                     if self.teams[i] == club
                 )
                 <= 3
@@ -230,123 +338,35 @@ class NewXVSelector(BaseSelector):
         return prob
 
     def _add_captain_constraints(self, prob):
-        for i in range(len(self.player_df)):
+        """
+        Adds captain constraints to the optimization problem.
+
+        Args:
+            prob (LpProblem): The optimization problem.
+
+        Returns:
+            LpProblem: The optimization problem with added captain constraints.
+        """
+        for i in range(len(self.data)):
             prob += (self.players[i] - self.captains[i]) >= 0
         return prob
 
-    @staticmethod
-    def _get_captain_index(captains) -> int:
-        captain = [player for player in captains if player.varValue != 0]
-        captain_index = int(captain[0].name.split("_")[1])
-        return captain_index
-
     def _add_position_constraints(self, prob, players, df):
+        """
+        Adds position constraints to the optimization problem.
+
+        Args:
+            prob (LpProblem): The optimization problem.
+            players (list): The list of player variables.
+            df (pd.DataFrame): The input data.
+
+        Returns:
+            LpProblem: The optimization problem with added position constraints.
+        """
         positions = df.position.to_list()
         for pos in ["GK", "DEF", "MID", "FWD"]:
             prob += (
                 lpSum(players[i] for i in range(len(df)) if positions[i] == pos)
                 <= self.POS_CONSTRAINTS[pos]
             )
-        return prob
-
-    def _clean_xv(self, indices, captain_index):
-        team_2 = self.player_df.copy(deep=True)
-        team_2.loc[indices, "picked"] = 1
-        team_2.loc[team_2["picked"] != 1, "picked"] = 0
-        team_2["captain"] = 0
-        team_2.loc[captain_index, "captain"] = 1
-        return team_2
-
-    def pick_xi(self):
-        self.pick_xv()
-        self.first_xi = self.xi_selector.pick_xi()
-        return self.first_xi
-
-    def _finalise_xv(self):
-        # Get indices of selected players and captain
-        indices = self._get_player_indices(self.players)
-        captain_index = self._get_captain_index(self.captains)
-        team = self._clean_xv(indices, captain_index)
-        self.first_xv = team
-        return self.first_xv
-
-    def _add_xv_constraints(self, prob):
-        prob += sum(self.players) == 15
-        prob = self._add_budget_constraints(prob)
-        prob += sum(self.captains) == 1
-        prob = self._add_position_constraints(prob, self.players, self.player_df)
-        prob = self._add_club_constraints(prob)
-        prob = self._add_captain_constraints(prob)
-        return prob
-
-    def initialise_xv_prob(self, *args, **kwargs):
-        prob = LpProblem("FPL Player Choices", LpMaximize)
-        prob += lpSum(
-            (self.players[i] + self.captains[i])  # captain will be worth double
-            * self.player_df[self.pred_var][i]
-            for i in range(len(self.player_df))
-        )
-        prob = self._add_xv_constraints(prob)
-        return prob
-
-    def pick_xv(self, *args, **kwargs):
-        prob = self.initialise_xv_prob(*args, **kwargs)
-        prob.solve()
-        team = self._finalise_xv()
-        return team
-
-
-class UpdateXVSelector(NewXVSelector):
-    # TODO: Add budget change logic
-    def __init__(self, player_df, season, initial_xi, budget=1500):
-        self.inital_xi_added = False
-        self.initial_xi = initial_xi
-        super().__init__(player_df, season, budget)
-        self.budgeter = None
-        logger.debug("Initialising update selector object")
-
-    # @property
-    # def budgeter(self):
-    #     if self._budgeter is None:
-    #         try:
-    #             picks = get_my_team_info()["picks"]
-    #             self._budgeter = Budgeter(picks)
-    #         except ValueError:
-    #             logger.info("Cannot create budgeter object. No login info.")
-    #             pass
-    #     return self._budgeter
-
-    # @budgeter.setter
-    # def budgeter(self, val):
-    #     self._budgeter = val
-
-    @property
-    def player_df(self):
-        # add initial team to player_df if not already
-        if not self.inital_xi_added:
-            self._player_df["initial_xi"] = self._player_df["element"].isin(
-                self.initial_xi
-            )
-            self.inital_xi_added = True
-        return self._player_df
-
-    @player_df.setter
-    def player_df(self, val):
-        self._player_df = val
-
-    def _add_changes_constraint(self, prob, max_changes):
-        prob += (
-            lpSum(
-                self.players[i]
-                for i in range(len(self.player_df))
-                if not self.player_df["initial_xi"][i]
-            )
-            <= max_changes
-        )
-        return prob
-
-    def initialise_xv_prob(self, max_changes=1):
-        # add to method from parent class
-        prob = super().initialise_xv_prob()
-        prob = self._add_changes_constraint(prob, max_changes)
         return prob
