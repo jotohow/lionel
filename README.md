@@ -11,7 +11,7 @@ A Fantasy Premier League team picking tool.
 - [License](#license)
 
 ## About
-Lionel predicts Fantasy Premier League (FPL) points using a Bayesian hierarchical model, implemented with a No-U-Turn Sampler in PyMC. Then, it maximises the predicted points using linear programming as implemented in PuLP.
+Lionel predicts Fantasy Premier League (FPL) points using a Bayesian hierarchical model, implemented with a No-U-Turn Sampler in PyMC. Then, it maximises the predicted points using linear programming as implemented in PuLP. More information about the model and its outputs can be found on this [web app](https://lionel.streamlit.app/).
 
 ## Usage
 
