@@ -1,15 +1,11 @@
 import sys
 
-from lionel.data_load.db.connector import DBManager
+from lionel.db.connector import DBManager
 from lionel.model.hierarchical import FPLPointsModel
-from lionel.data_load.constants import DATA
+from lionel.constants import DATA
 
 import lionel.scripts.run_data_load as run_data_load
 import lionel.scripts.run_team as run_team
-
-
-def get_player_strength_data(fplm):
-    pass
 
 
 def run(season, next_gw):
@@ -39,6 +35,11 @@ def run(season, next_gw):
     with dbm.engine.connect() as conn:
         conn.execute(dele)
         conn.commit()
+
+    # TODO: Need to either give this a timestamp or remove the selection from
+    # the gameweek in question
+    df_selection["season"] = season
+    df_selection["gameweek"] = next_gw
     df_selection.to_sql("selections", dbm.engine, if_exists="append", index=False)
 
     # Also get out scoreline predictions
