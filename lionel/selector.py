@@ -450,3 +450,15 @@ class UpdateXVSelector(NewXVSelector):
         )
 
         return self.prob
+
+
+def run_selection(df_pred, pred_var="mean_points_pred"):
+    xvsel = NewXVSelector(pred_var)
+    xvsel.build_problem(df_pred)
+    xvsel.solve()
+
+    xisel = XISelector(pred_var)
+    xisel.build_problem(xvsel.data)
+    xisel.solve()
+
+    return xisel.data.copy()

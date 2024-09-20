@@ -1,15 +1,26 @@
 import sys
 import datetime as dt
-from lionel.scripts.process_train_data import get_train
+from lionel.scripts.train_process_data import get_train
 from lionel.db.connector import DBManager
 from lionel.constants import DATA
 from lionel.model.hierarchical import FPLPointsModel
 
 
-def run(next_gw, season=25):
-    dbm = DBManager(DATA / "fpl.db")
+def run(dbm, next_gw, season, sampler_config=None):
+    """
+    Run the training process for the FPLPointsModel.
+
+    Args:
+        dbm (DatabaseManager): The database manager object.
+        next_gw (int): The next game week.
+        season (str): The season identifier.
+        sampler_config (dict, optional): Configuration for the sampler. Defaults to None.
+
+    Returns:
+        bool: True if the training process is successful.
+    """
     data = get_train(dbm, season, next_gw)
-    fplm = FPLPointsModel()
+    fplm = FPLPointsModel(sampler_config)
     fplm.fit(data, data.points)
     today = dt.datetime.today().strftime("%Y%m%d")
     fplm.save(DATA / f"analysis/hm_{today}.nc")
@@ -17,4 +28,11 @@ def run(next_gw, season=25):
 
 
 if __name__ == "__main__":
-    run(*[int(x) for x in sys.argv[1:]])
+    dbm = DBManager(DATA / "fpl.db")
+    sampler_config = {
+        "draws": 1000,
+        "tune": 200,
+        "chains": 4,
+    }
+    next_gw, season = [int(x) for x in sys.argv[1:]]
+    run(dbm, next_gw, season, sampler_config)

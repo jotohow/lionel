@@ -4,7 +4,7 @@ import sys
 
 from lionel.constants import DATA, RAW
 from lionel.db.connector import DBManager
-import lionel.scripts.process_scraped_data as process
+import lionel.scripts.dl_process_scraped_data as process
 from lionel.utils import setup_logger
 
 

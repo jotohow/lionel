@@ -4,7 +4,7 @@ import time
 
 import lionel.db.schema as schema
 from lionel.constants import DATA, RAW
-from lionel.scripts.add_24_data import add_24_data
+from lionel.scripts.dl_add_24_data import add_24_data
 from lionel.db.connector import DBManager
 from lionel.utils import setup_logger
 
