@@ -1,12 +1,24 @@
 import sys
 import datetime as dt
-from lionel.scripts.process_train_data import get_train
+from lionel.scripts.train_process_data import get_train
 from lionel.db.connector import DBManager
 from lionel.constants import DATA
 from lionel.model.hierarchical import FPLPointsModel
 
 
 def run(dbm, next_gw, season, sampler_config=None):
+    """
+    Run the training process for the FPLPointsModel.
+
+    Args:
+        dbm (DatabaseManager): The database manager object.
+        next_gw (int): The next game week.
+        season (str): The season identifier.
+        sampler_config (dict, optional): Configuration for the sampler. Defaults to None.
+
+    Returns:
+        bool: True if the training process is successful.
+    """
     data = get_train(dbm, season, next_gw)
     fplm = FPLPointsModel(sampler_config)
     fplm.fit(data, data.points)
