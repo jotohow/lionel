@@ -320,11 +320,10 @@ class FPLPointsModel(ModelBuilder):
         Returns:
             None
         """
-        # Filter columns in the input data
+        # Check input data
         assert all(
             [col in X.columns for col in self.EXPECTED_COLUMNS]
         ), f"Missing columns: {set(self.EXPECTED_COLUMNS) - set(X.columns)}"
-        X = X[self.EXPECTED_COLUMNS]
         X["no_contribution"] = self._get_no_contribution(X)
 
         # How can I assert that player is a unique identifier? - I don't think I can because team and position can both change
