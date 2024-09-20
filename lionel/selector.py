@@ -22,6 +22,7 @@ Usage:
 """
 
 from pulp import LpVariable, LpProblem, lpSum, LpMaximize
+import numpy as np
 from abc import abstractmethod, ABC
 from lionel.utils import setup_logger
 
@@ -53,7 +54,16 @@ class BaseSelector(ABC):
             pred_var (str, optional): The name of the variable used for prediction. Defaults to "pred_Naive".
         """
         self.pred_var = pred_var
-        self.expected_vars = ["player", "team_name", "position", "value", self.pred_var]
+        self.expected_vars = [
+            "player",
+            "team_name",
+            "position",
+            "value",
+            "xv",
+            "xi",
+            "captain",
+            self.pred_var,
+        ]
         self.prob = None
 
     def validate_inputs(self, data):
@@ -148,11 +158,14 @@ class XISelector(BaseSelector):
             LpProblem: The optimization problem.
         """
         assert self.validate_inputs(data)
-        assert all(col in data.columns for col in ["picked", "captain"])
-        data["first_xi"] = 0
+        assert all(col in data.columns for col in ["xv", "captain"])
+        assert "xi" in data.columns
+        assert data.xv.sum() == 15
+        assert data.captain.sum() == 1
+        # assert data.xi.sum() == 0, "XI already selected"
 
         self.data = data
-        self.xv = data[data.picked == 1]
+        self.xv = data[data.xv == 1]
         self.y = self.xv[self.pred_var].values
         assert self.xv.shape[0] == 15
 
@@ -175,8 +188,8 @@ class XISelector(BaseSelector):
         self.prob.solve()
         vals = [(p.varValue, p.name) for p in self.prob.variables()]
         picked_idx = [int(v[1]) for v in vals if v[0] == 1]
-        self.xv.loc[self.xv.index.isin(picked_idx), "first_xi"] = 1
-        self.data.loc[self.data.index.isin(picked_idx), "first_xi"] = 1
+        self.xv.loc[self.xv.index.isin(picked_idx), "xi"] = 1
+        self.data.loc[self.data.index.isin(picked_idx), "xi"] = 1
         return self.data
 
     def _add_position_constraints(self, prob):
@@ -258,10 +271,12 @@ class NewXVSelector(BaseSelector):
             LpProblem: The optimization problem.
         """
         assert self.validate_inputs(data)
+        assert "xv" in data.columns
+        assert data.xv.sum() == 0, "XV already selected"
+        return self._build_problem(data)
 
-        data["picked"] = 0
-
-        self.data = data
+    def _build_problem(self, data):
+        self.data = data.copy()
         self.y = data[self.pred_var].values
 
         self.players = [LpVariable("p_" + str(i), cat="Binary") for i in data.index]
@@ -293,11 +308,19 @@ class NewXVSelector(BaseSelector):
         Returns:
             pd.DataFrame: The selected team.
         """
-        self.prob.solve()
+
+        result = self.prob.solve()
+        failure_msg = "Optimization failed, check initial team observed constraints"
+        assert result != -1, failure_msg
+
         xv_idx = [int(v.name.split("_")[1]) for v in self.players if v.varValue == 1]
         cap_idx = [int(v.name.split("_")[1]) for v in self.captains if v.varValue == 1]
-        self.data.loc[self.data.index.isin(xv_idx), "picked"] = 1
-        self.data.loc[self.data.index.isin(cap_idx), "captain"] = 1
+
+        self.data["xv"] = np.where(self.data.index.isin(xv_idx), 1, 0)
+        self.data["captain"] = np.where(self.data.index.isin(cap_idx), 1, 0)
+
+        # self.data.loc[self.data.index.isin(xv_idx), "xv"] = 1
+        # self.data.loc[self.data.index.isin(cap_idx), "captain"] = 1
         return self.data
 
     def _add_budget_constraints(self, prob):
@@ -370,3 +393,25 @@ class NewXVSelector(BaseSelector):
                 <= self.POS_CONSTRAINTS[pos]
             )
         return prob
+
+
+class UpdateXVSelector(NewXVSelector):
+
+    def build_problem(self, data, max_transfers):
+        assert self.validate_inputs(data)
+        assert "xv" in data.columns
+        assert data.xv.sum() == 15, "There must be 15 existing players in the team."
+        self.prob = self._build_problem(data)
+
+        # Add constraint for number of transfers
+        j = self.data.columns.get_loc("xv")
+        self.prob += (
+            lpSum(
+                self.players[i]
+                for i in range(len(self.data))
+                if not self.data.iloc[i, j] == 1
+            )
+            <= max_transfers
+        )
+
+        return self.prob
