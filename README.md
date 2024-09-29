@@ -17,9 +17,12 @@ Lionel predicts Fantasy Premier League (FPL) points using a Bayesian hierarchica
 
 ### Installation
 
+Either pip install from git:
 ```
-$ TODO: Installation steps
+pip install git+https://github.com/jth500/lionel.git
 ```
+
+Or clone the repository.
 
 ### Example usage
 
