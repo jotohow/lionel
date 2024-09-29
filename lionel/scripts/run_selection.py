@@ -20,13 +20,16 @@ def run(df_pred_next_5, season, next_gw, dbm):
     df_selection["gameweek"] = next_gw
 
     # Should this be here? probably doing too much in this function if so...
-    table = dbm.tables["selections"]
-    dele = table.delete().where(
-        table.c.season == season and table.c.gameweek == next_gw
-    )
-    with dbm.engine.connect() as conn:
-        conn.execute(dele)
-        conn.commit()
+    try:
+        table = dbm.tables["selections"]
+        dele = table.delete().where(
+            table.c.season == season and table.c.gameweek == next_gw
+        )
+        with dbm.engine.connect() as conn:
+            conn.execute(dele)
+            conn.commit()
+    except KeyError:
+        pass
     df_selection["season"] = season
     df_selection["gameweek"] = next_gw
     df_selection.to_sql("selections", dbm.engine, if_exists="append", index=False)

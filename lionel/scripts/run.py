@@ -43,4 +43,11 @@ def run(season, next_gw, model_path=ANALYSIS / "hm_02.nc"):
 if __name__ == "__main__":
     import sys
 
-    run(*[int(x) for x in sys.argv[1:]])
+    n_args = len(sys.argv[1:])
+    if n_args == 3:
+        season, next_gw, model_path = sys.argv[1:]
+    else:
+        season, next_gw = sys.argv[1:]
+        model_path = ANALYSIS / "hm_02.nc"
+
+    run(int(season), int(next_gw), model_path)
