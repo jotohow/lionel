@@ -1,5 +1,7 @@
 # lionel
-A Fantasy Premier League team picking tool.
+A Fantasy Premier League team optimisation tool that uses Bayesian hierarchical modelling ([PyMC](https://www.pymc.io/welcome.html)) and linear programming ([PuLP](https://coin-or.github.io/pulp/)) to maximise expected points.
+
+
 
 ## Index
 
