@@ -26,4 +26,21 @@ TEAM_MAP = {
     }
 }
 
-PLAYER_NAME_MAP = {}
+PLAYER_MAP = {
+    "full_name": {"Dominic Solanke-Mitchell": "Dominic Solanke"},
+    "name": {
+        "Philip": "Billing",
+        "J.Ramsey": "Ramsey",
+        "Cook": "L.Cook",
+        "H.Traorè": "Hamed Traorè",
+        "Kozłowski": "Kozlowski",
+        "Sánchez": "Sanchez",
+        "Andrey Santos": "Andrey",
+        "Vinicius": "Vinícius",
+        "N.Phillips": "Phillips",
+        "M.Salah": "Salah",
+        "N.Willians": "Williams",
+        "P.M.Sarr": "Sarr",
+        "J.Gomes": "João Gomes",
+    },
+}

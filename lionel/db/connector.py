@@ -1,10 +1,7 @@
 import sqlalchemy as sa
-from sqlalchemy import (
-    create_engine,
-    text,
-)
-from lionel.constants import DATA
+from sqlalchemy import create_engine, insert, text
 
+from lionel.constants import DATA
 
 """
 
@@ -37,7 +34,11 @@ class DBManager:
         else:
             self._metadata = value
 
+    # TODO: Change references and drop this
     def delete_rows(self, table_name, season):
+        self.delete_rows_by_season(table_name, season)
+
+    def delete_rows_by_season(self, table_name, season):
         table = self.tables[table_name]
         dele = table.delete().where(table.c.season == season)
         with self.engine.connect() as conn:
@@ -50,3 +51,9 @@ class DBManager:
             result = conn.execute(query)
             conn.commit()
             return result
+
+    def insert(self, table_name, data: list):
+        table = self.tables[table_name]
+        with self.engine.connect() as conn:
+            _ = conn.execute(insert(table), data)
+            conn.commit()
