@@ -44,3 +44,8 @@ PLAYER_MAP = {
         "J.Gomes": "João Gomes",
     },
 }
+
+SEASON_DATES = {
+    25: {"start": "2024-08-09", "end": "2025-05-17"},
+    24: {"start": "2023-08-11", "end": "2024-05-19"},
+}

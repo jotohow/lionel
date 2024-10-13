@@ -2,11 +2,10 @@ import datetime as dt
 import json
 import sys
 
+import lionel.scripts.dl_process_scraped_data as process
 from lionel.constants import DATA, RAW
 from lionel.db.connector import DBManager
-import lionel.scripts.dl_process_scraped_data as process
 from lionel.utils import setup_logger
-
 
 logger = setup_logger(__name__)
 
@@ -39,7 +38,12 @@ def stage_data(data, dbmanager, season=25):
     for tuple_ in pairs:
         df, table = tuple_
         dbmanager.delete_rows(table, season)
-        df.to_sql(table, con=dbmanager.engine, if_exists="append", index=False)
+        df.to_sql(
+            table,
+            con=dbmanager.engine.raw_connection(),  # changed for pandas 2.2 - weird
+            if_exists="append",
+            index=False,
+        )
 
     return True
 

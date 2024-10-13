@@ -16,7 +16,7 @@ from lionel.constants import DATA
 
 class DBManager:
     def __init__(self, db_path=DATA / "fpl.db", metadata=None):
-        self.engine = create_engine(f"sqlite:///{db_path}", echo=False)
+        self.engine = create_engine(f"sqlite:///{db_path}", echo=False, future=True)
         self.metadata = metadata
         self.tables = self.metadata.tables
         # self.Session = sessionmaker(bind=self.engine) # not sure these are needed

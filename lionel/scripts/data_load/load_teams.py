@@ -14,21 +14,24 @@ def load_scraped_teams():
     team_map = data["team_map"]
     df_teams = pd.DataFrame([{"web_id": k, **v} for k, v in team_map.items()])
     df_teams = df_teams.replace({"name": TEAM_MAP["team_name"]})
+    df_teams["web_id"] = df_teams["web_id"].astype(int)
     return df_teams[["web_id", "name"]]  # drop the stregth etc cols
 
 
-def get_existing_teams(dbm: DBManager):
+def clean_teams(df_teams):
+    return df_teams.replace({"name": TEAM_MAP["team_name"]})
 
+
+def get_existing_teams(dbm: DBManager):
     q = "SELECT DISTINCT name FROM teams"
-    existing_team_names = dbm.query(q).fetchall()
-    return [x[0] for x in existing_team_names]
+    return pd.read_sql(q, dbm.engine.raw_connection()).name.tolist()
 
 
 # These three are nested - not a good way to do it...
 def get_team_ids(dbm):
     q = "SELECT id, name FROM teams"
-    teams = dbm.query(q).fetchall()
-    return {x[1]: x[0] for x in teams}
+    teams = pd.read_sql(q, dbm.engine.raw_connection()).set_index("id")
+    return {v["name"]: k for k, v in teams.to_dict(orient="index").items()}
 
 
 def build_team_season_map(dbm, df_teams, season=25):
@@ -41,7 +44,9 @@ def build_team_season_map(dbm, df_teams, season=25):
 
 def add_new_team_seasons(dbm, df_teams, season=25):
     df_teams = build_team_season_map(dbm, df_teams, season)
-    existing_team_seasons = pd.read_sql("SELECT * FROM team_seasons", dbm.engine)
+    existing_team_seasons = pd.read_sql(
+        "SELECT * FROM team_seasons", dbm.engine.raw_connection()
+    )
 
     # Excluce teams already in the table
     df_teams = df_teams.merge(
@@ -53,24 +58,39 @@ def add_new_team_seasons(dbm, df_teams, season=25):
     df_teams = df_teams.loc[
         df_teams["_merge"] == "left_only", ["web_id", "name", "team_id", "season"]
     ]
+    if df_teams.empty:
+        return None
     dbm.insert("team_seasons", df_teams.to_dict(orient="records"))
     return None
 
 
-def run(dbm, season=25):
-    df_teams = load_scraped_teams()  # the team season data
+def load_to_db(dbm, df_teams, season=25):
     existing_teams = get_existing_teams(dbm)
-
-    # Add new teams to the teams table
     new_teams = df_teams[~df_teams["name"].isin(existing_teams)]
-    dbm.insert("teams", new_teams.to_dict(orient="records"))
-
-    # Add new team_seasons to the team_seasons table
+    if not new_teams.empty:
+        dbm.insert("teams", new_teams.to_dict(orient="records"))
     _ = add_new_team_seasons(dbm, df_teams, season)
+    return None
+
+
+def load_from_scrape(dbm, season=25):
+    df_teams = load_scraped_teams()  # the team season data
+    _ = load_to_db(dbm, df_teams, season)
+    return None
+
+
+def load_from_file(dbm, season=24):
+    df_teams = pd.read_csv(RAW / f"team_ids_{season}.csv")
+    df_teams = df_teams[["id", "name"]].rename(columns={"id": "web_id"})
+    df_teams["season"] = season
+    df_teams = clean_teams(df_teams)
+
+    _ = load_to_db(dbm, df_teams, season)
     return None
 
 
 if __name__ == "__main__":
     dbm = DBManager(db_path="/Users/toby/Dev/lionel/data/fpl_test.db")
-    run(dbm, season=25)
+    load_from_file(dbm, season=24)
+    load_from_scrape(dbm, season=25)
     print("Teams loaded")
