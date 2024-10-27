@@ -1,7 +1,7 @@
 import datetime as dt
 from pathlib import Path
 
-BASE = Path(__file__).parents[1]
+BASE = Path(__file__).parents[2]
 DATA = BASE / "data"
 RAW = DATA / "raw"
 PROCESSED = DATA / "processed"
