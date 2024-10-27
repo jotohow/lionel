@@ -4,7 +4,7 @@ import itertools
 import numpy as np
 import pandas as pd
 
-from lionel.constants import ANALYSIS
+from lionel.constants import ANALYSIS, DATA
 
 # import lionel.data_load.storage_handler as storage_handler
 from lionel.db.connector import DBManager
@@ -42,5 +42,5 @@ def run(dbm, next_gw, season, sampler_config=None):
 
 
 if __name__ == "__main__":
-    dbm = DBManager(db_path="/Users/toby/Dev/lionel/data/fpl_test.db")
-    run(dbm, next_gw=8, season=25)
+    dbm = DBManager(db_path=DATA / "lionel.db")
+    run(dbm, next_gw=9, season=25)

@@ -10,11 +10,11 @@ import sqlalchemy as sa
 
 import lionel.data_load.model.predict as predict
 import lionel.selector as selector
-from lionel.constants import ANALYSIS, BASE, RAW, TODAY
+from lionel.constants import ANALYSIS, BASE, DATA, RAW, TODAY
 from lionel.db.connector import DBManager
 from lionel.model.hierarchical import FPLPointsModel
 
-dbm = DBManager(db_path="/Users/toby/Dev/lionel/data/fpl_test2.db")
+dbm = DBManager(db_path=DATA / "lionel.db")
 
 
 class ModelExists(luigi.ExternalTask):
@@ -46,6 +46,7 @@ class PredictScorelines(luigi.Task):
         df_scoreline.to_csv(self.output().path, index=False)
 
 
+# TODO: Does this need to only be once per model?
 class PredictPlayers(luigi.Task):
     next_gw = luigi.IntParameter()
     season = luigi.IntParameter()

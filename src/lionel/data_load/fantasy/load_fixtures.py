@@ -2,7 +2,7 @@ import datetime as dt
 
 import pandas as pd
 
-import lionel.scripts.data_load.scrape as scrape
+import lionel.data_load.fantasy.scrape as scrape
 from lionel.constants import RAW
 from lionel.data_load.fantasy.config import DataLoadConfig as Config
 from lionel.db.connector import DBManager

@@ -3,7 +3,7 @@ import json
 
 import pandas as pd
 
-import lionel.scripts.data_load.scrape as scrape
+import lionel.data_load.fantasy.scrape as scrape
 from lionel.constants import RAW, TODAY
 from lionel.db.connector import DBManager
 

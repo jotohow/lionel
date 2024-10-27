@@ -5,12 +5,11 @@ import json
 import luigi
 import pandas as pd
 
-from lionel.constants import BASE, TODAY
+from lionel.constants import BASE, DATA, TODAY
 from lionel.db.connector import DBManager
 from lionel.model.hierarchical import FPLPointsModel
 
-dbm = DBManager(db_path="/Users/toby/Dev/lionel/data/fpl_test2.db")
-# TODAY = (dt.datetime.today() - dt.timedelta(days=1))
+dbm = DBManager(db_path=DATA / "lionel.db")
 today = TODAY.strftime("%Y%m%d")
 
 
@@ -33,13 +32,14 @@ class TrainModel(luigi.Task):
         # initialise the model
         # extract the sampler and model configs
         try:
-            with open(BASE / "lionel/dags/sampler_config.json") as f:
+            with open(BASE / "src/dags/sampler_config.json") as f:
                 sampler_config = json.load(f)
         except:
             sampler_config = None
+        print("sampler:", sampler_config)
 
         try:
-            with open(BASE / "lionel/dags/sampler_config.json") as f:
+            with open(BASE / "src/dags/sampler_config.json") as f:
                 model_config = json.load(f)
         except:
             model_config = None

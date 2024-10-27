@@ -10,10 +10,10 @@ import lionel.data_load.fantasy.load_players as load_players
 import lionel.data_load.fantasy.load_stats as load_stats
 import lionel.data_load.fantasy.load_teams as load_teams
 import lionel.data_load.fantasy.scrape as scrape
-from lionel.constants import BASE, RAW, TODAY
+from lionel.constants import BASE, DATA, RAW, TODAY
 from lionel.db.connector import DBManager
 
-dbm = DBManager(db_path="/Users/toby/Dev/lionel/data/fpl_test2.db")
+dbm = DBManager(db_path=DATA / "lionel.db")
 # TODAY = (dt.datetime.today() - dt.timedelta(days=1))
 today = TODAY.strftime("%Y%m%d")
 
