@@ -1,10 +1,7 @@
 import sqlalchemy as sa
-from sqlalchemy import (
-    create_engine,
-    text,
-)
-from lionel.constants import DATA
+from sqlalchemy import create_engine, insert, text
 
+from lionel.constants import DATA
 
 """
 
@@ -19,7 +16,7 @@ from lionel.constants import DATA
 
 class DBManager:
     def __init__(self, db_path=DATA / "fpl.db", metadata=None):
-        self.engine = create_engine(f"sqlite:///{db_path}", echo=False)
+        self.engine = create_engine(f"sqlite:///{db_path}", echo=False, future=True)
         self.metadata = metadata
         self.tables = self.metadata.tables
         # self.Session = sessionmaker(bind=self.engine) # not sure these are needed
@@ -37,7 +34,11 @@ class DBManager:
         else:
             self._metadata = value
 
+    # TODO: Change references and drop this
     def delete_rows(self, table_name, season):
+        self.delete_rows_by_season(table_name, season)
+
+    def delete_rows_by_season(self, table_name, season):
         table = self.tables[table_name]
         dele = table.delete().where(table.c.season == season)
         with self.engine.connect() as conn:
@@ -47,6 +48,13 @@ class DBManager:
     def query(self, sql_query):
         query = text(sql_query)
         with self.engine.connect() as conn:
-            result = conn.execute(query)
-            conn.commit()
+            # for some reason I suddenly require fethcall here...
+            result = conn.execute(query).fetchall()
+            # conn.commit()
             return result
+
+    def insert(self, table_name, data: list):
+        table = self.tables[table_name]
+        with self.engine.connect() as conn:
+            _ = conn.execute(insert(table), data)
+            conn.commit()
