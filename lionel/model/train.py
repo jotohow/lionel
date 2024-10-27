@@ -34,7 +34,7 @@ def run(dbm, next_gw, season, sampler_config=None):
     data = pd.read_sql(q, dbm.engine.raw_connection())
 
     fplm = FPLPointsModel(sampler_config=sampler_config)
-    fplm.build_model(data, data.points)
+    # fplm.build_model(data, data.points)
     fplm.fit(data, data.points)
     today = dt.datetime.today().strftime("%Y%m%d")
     fplm.save(ANALYSIS / f"hm_{today}.nc")
