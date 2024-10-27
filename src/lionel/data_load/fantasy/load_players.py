@@ -3,7 +3,8 @@ import json
 
 import pandas as pd
 
-from lionel.constants import PLAYER_MAP, RAW, TODAY
+from lionel.constants import RAW, TODAY
+from lionel.data_load.fantasy.config import DataLoadConfig
 from lionel.db.connector import DBManager
 
 today = TODAY.strftime("%Y%m%d")
@@ -15,7 +16,7 @@ def load_scraped_unique_players():
     df_players = pd.DataFrame(data["element_map"].values())
     df_players["full_name"] = df_players["first_name"] + " " + df_players["second_name"]
     df_players = df_players.rename(columns={"web_name": "name"})
-    df_players = df_players.replace(PLAYER_MAP)
+    df_players = df_players.replace(DataLoadConfig.PLAYER_MAP)
     df_players["position"] = df_players["element_type"].map(
         {1: "GK", 2: "DEF", 3: "MID", 4: "FWD"}
     )

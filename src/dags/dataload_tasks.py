@@ -35,9 +35,18 @@ def get_next_gw_season(dbm):
 next_gw, season = get_next_gw_season(dbm)
 
 
+class DataLoadTask(luigi.Task):
+    """Base class for data loading tasks"""
+
+    task_namespace = "Dataload"
+
+    pass
+
+
 class GameWeekEnded(luigi.ExternalTask):
     """Check if the most recent gameweek has ended"""
 
+    task_namespace = "Dataload"
     # Ref example https://github.com/spotify/luigi/blob/829fc0c36ecb4d0ae4f0680dec6d538577b249a2/examples/top_artists.py#L28
 
     def complete(self):
@@ -48,7 +57,7 @@ class GameWeekEnded(luigi.ExternalTask):
         q = f"""
         SELECT home_score
         FROM fixtures
-        WHERE gameweek = {next_gw} AND season = {season};
+        WHERE gameweek = {next_gw - 1} AND season = {season};
         """
         scores = dbm.query(q)
         scores = [_[0] for _ in scores]
@@ -56,14 +65,14 @@ class GameWeekEnded(luigi.ExternalTask):
         return gw_finished
 
 
-class Scrape(luigi.Task):
+class Scrape(DataLoadTask):
 
     def requires(self):
         return GameWeekEnded()
 
     def output(self):
         # Json where we dump the stuff
-        next_gw, season = get_next_gw_season(dbm)
+        # next_gw, season = get_next_gw_season(dbm)
         # today = dt.datetime.today().strftime("%Y%m%d")
         p = str(RAW / f"scraped_data_{today}.json")
         return luigi.LocalTarget(p)
@@ -77,7 +86,7 @@ class Scrape(luigi.Task):
 
 
 # NOTE: Problem that load code uses dates but now I want to use gw/season
-class LoadGameweeks(luigi.Task):
+class LoadGameweeks(DataLoadTask):
 
     def requires(self):
         return Scrape()
@@ -91,7 +100,7 @@ class LoadGameweeks(luigi.Task):
             f.write("Task completed successfully.")
 
 
-class LoadTeams(luigi.Task):
+class LoadTeams(DataLoadTask):
     def requires(self):
         return Scrape()
 
@@ -104,7 +113,7 @@ class LoadTeams(luigi.Task):
             f.write("Task completed successfully.")
 
 
-class LoadFixtures(luigi.Task):
+class LoadFixtures(DataLoadTask):
     def requires(self):
         # require load teams and load gameweeks
         return [LoadTeams(), LoadGameweeks()]
@@ -118,7 +127,7 @@ class LoadFixtures(luigi.Task):
             f.write("Task completed successfully.")
 
 
-class LoadPlayers(luigi.Task):
+class LoadPlayers(DataLoadTask):
     def requires(self):
         return Scrape()
 
@@ -131,7 +140,7 @@ class LoadPlayers(luigi.Task):
             f.write("Task completed successfully.")
 
 
-class LoadStats(luigi.Task):
+class LoadStats(DataLoadTask):
     def requires(self):
         return [LoadFixtures(), LoadPlayers()]
 

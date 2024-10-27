@@ -76,4 +76,8 @@ class DataLoadConfig:
         "selected",
         "transfers_in",
         "transfers_out",
-    ] + ["element", "fixture", "opponent_team", "was_home"]
+        "element",
+        "fixture",
+        "opponent_team",
+        "was_home",
+    ]

@@ -3,7 +3,8 @@ import json
 
 import pandas as pd
 
-from lionel.constants import RAW, TEAM_MAP, TODAY
+from lionel.constants import RAW, TODAY
+from lionel.data_load.fantasy.config import DataLoadConfig
 from lionel.db.connector import DBManager
 
 
@@ -13,13 +14,13 @@ def load_scraped_teams():
     data = json.load(open(p, "r"))
     team_map = data["team_map"]
     df_teams = pd.DataFrame([{"web_id": k, **v} for k, v in team_map.items()])
-    df_teams = df_teams.replace({"name": TEAM_MAP["team_name"]})
+    df_teams = df_teams.replace({"name": DataLoadConfig.TEAM_MAP["team_name"]})
     df_teams["web_id"] = df_teams["web_id"].astype(int)
     return df_teams[["web_id", "name"]]  # drop the stregth etc cols
 
 
 def clean_teams(df_teams):
-    return df_teams.replace({"name": TEAM_MAP["team_name"]})
+    return df_teams.replace({"name": DataLoadConfig.TEAM_MAP["team_name"]})
 
 
 def get_existing_teams(dbm: DBManager):

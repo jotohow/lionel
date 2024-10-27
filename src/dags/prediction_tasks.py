@@ -28,7 +28,15 @@ class ModelExists(luigi.ExternalTask):
         return luigi.LocalTarget(str(models[0]))
 
 
-class PredictScorelines(luigi.Task):
+class PredictionTask(luigi.Task):
+    """Base class for prediction tasks"""
+
+    task_namespace = "Prediction"
+
+    pass
+
+
+class PredictScorelines(PredictionTask):
     next_gw = luigi.IntParameter()
     season = luigi.IntParameter()
 
@@ -47,7 +55,7 @@ class PredictScorelines(luigi.Task):
 
 
 # TODO: Does this need to only be once per model?
-class PredictPlayers(luigi.Task):
+class PredictPlayers(PredictionTask):
     next_gw = luigi.IntParameter()
     season = luigi.IntParameter()
 
@@ -65,7 +73,7 @@ class PredictPlayers(luigi.Task):
         df_player.to_csv(self.output().path, index=False)
 
 
-class LoadScorelines(luigi.Task):
+class LoadScorelines(PredictionTask):
     next_gw = luigi.IntParameter()
     season = luigi.IntParameter()
 
@@ -85,7 +93,7 @@ class LoadScorelines(luigi.Task):
             f.write("Task completed successfully.")
 
 
-class SelectTeam(luigi.Task):
+class SelectTeam(PredictionTask):
     next_gw = luigi.IntParameter()
     season = luigi.IntParameter()
 
@@ -104,7 +112,7 @@ class SelectTeam(luigi.Task):
         selections.to_csv(self.output().path, index=False)
 
 
-class LoadSelection(luigi.Task):
+class LoadSelection(PredictionTask):
     next_gw = luigi.IntParameter()
     season = luigi.IntParameter()
 
@@ -133,7 +141,7 @@ class LoadSelection(luigi.Task):
             f.write("Task completed successfully.")
 
 
-class PlayerInference(luigi.Task):
+class PlayerInference(PredictionTask):
     def requires(self):
         return ModelExists()
 
@@ -148,7 +156,7 @@ class PlayerInference(luigi.Task):
         data.to_csv(self.output().path, index=False)
 
 
-class LoadPlayerInference(luigi.Task):
+class LoadPlayerInference(PredictionTask):
     def requires(self):
         return PlayerInference()
 
@@ -172,7 +180,7 @@ class LoadPlayerInference(luigi.Task):
             f.write("Task completed successfully.")
 
 
-class TeamInference(luigi.Task):
+class TeamInference(PredictionTask):
     def requires(self):
         return ModelExists()
 
@@ -187,7 +195,7 @@ class TeamInference(luigi.Task):
         data.to_csv(self.output().path, index=False)
 
 
-class LoadTeamInference(luigi.Task):
+class LoadTeamInference(PredictionTask):
     def requires(self):
         return TeamInference()
 
