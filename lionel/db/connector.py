@@ -48,8 +48,9 @@ class DBManager:
     def query(self, sql_query):
         query = text(sql_query)
         with self.engine.connect() as conn:
-            result = conn.execute(query)
-            conn.commit()
+            # for some reason I suddenly require fethcall here...
+            result = conn.execute(query).fetchall()
+            # conn.commit()
             return result
 
     def insert(self, table_name, data: list):

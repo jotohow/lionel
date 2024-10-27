@@ -8,27 +8,10 @@ from lionel.model.hierarchical import FPLPointsModel
 
 def get_players_recent_games(dbm, season, gameweek, n_games):
     q = f"""
-    SELECT 
-        CONCAT(p.id, "_", p.name) AS player,
-        ps.position,
-        CASE WHEN s.is_home = 1 THEN f.home_id ELSE f.away_id END AS team_id,
-        f.gameweek, f.season,
-        s.minutes, s.total_points, s.goals_scored, s.assists, s.is_home
-
-    FROM stats AS s
-    INNER JOIN fixtures AS f
-    ON s.fixture_id = f.id
-
-    INNER JOIN player_seasons as ps
-    ON s.player_id = ps.id
-
-    INNER JOIN players as p
-    ON ps.player_id = p.id
-
+    SELECT * FROM prediction
     WHERE 
-        (f.season = {season} AND f.gameweek > {gameweek - n_games} AND f.gameweek <= {gameweek})
-        OR (f.season = {season - 1} AND f.gameweek > 38 - {n_games} + {gameweek} AND f.gameweek <= 38)
-
+        (season = {season} AND gameweek > {gameweek - n_games} AND gameweek <= {gameweek})
+        OR (season = {season - 1} AND gameweek > 38 - {n_games} + {gameweek} AND gameweek <= 38)
     """
 
     df_recent = pd.read_sql(q, dbm.engine.raw_connection())
@@ -37,8 +20,8 @@ def get_players_recent_games(dbm, season, gameweek, n_games):
     )
     df_recent = (
         df_recent.sort_values(by=["season", "gameweek"]).groupby("player").tail(1)
-    )
-    return df_recent
+    ).reset_index(drop=True)
+    return df_recent  # [['player', 'position', 'minutes']]
 
 
 def get_future_fixtures(dbm, season):
@@ -66,7 +49,6 @@ def build_pred_data(dbm, gameweek, season, n_games=3):
 
     # Merge home and away fixtures
     cols = ["player", "position", "minutes", "is_home", "team_id"]
-
     df_h = df_fix.merge(
         df_recent[cols],
         left_on="home_id",
@@ -81,5 +63,5 @@ def build_pred_data(dbm, gameweek, season, n_games=3):
     df_a["is_home"] = 0
     df = pd.concat([df_h, df_a], axis=0).reset_index(drop=True)
     df[["home_goals", "away_goals"]] = None
-    assert df.shape[0] == df.player.nunique() * len(df.gameweek.unique())
+    # assert df.shape[0] == df.player.nunique() * len(df.gameweek.unique()) # doesn't apply if teams have fewer fixtures
     return df

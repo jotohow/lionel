@@ -1,4 +1,4 @@
-name: lionel
+name: lionel2
 channels:
   - conda-forge
   - defaults
@@ -20,5 +20,6 @@ dependencies:
     - pulp
     - python-dotenv
     - requests
+    - luigi
     - git+https://github.com/jth500/scrapl.git
-    - apache-airflow[celery]==2.10.2" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.10.2/constraints-3.8.txt"
+    # - apache-airflow[celery]==2.10.2" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.10.2/constraints-3.8.txt"

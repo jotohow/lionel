@@ -27,7 +27,9 @@ def run(dbm, next_gw, season, sampler_config=None):
 
     q = f"""
     SELECT * FROM training 
-    WHERE season = {season} OR (season = {season-1} AND gameweek > {next_gw});
+    WHERE 
+        (season = {season} AND gameweek < {next_gw}) 
+        OR (season = {season-1} AND gameweek > {next_gw});
     """
     data = pd.read_sql(q, dbm.engine.raw_connection())
 

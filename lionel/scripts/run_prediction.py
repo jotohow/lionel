@@ -1,5 +1,5 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 from lionel.model.hierarchical import FPLPointsModel
 
@@ -18,11 +18,11 @@ def build_future_fixture_df(dbm, season, next_gw):
     """
 
     # Get fixtures for all gameweeks after the current one
-    df_fix = pd.read_sql("fixtures", dbm.engine)
+    df_fix = pd.read_sql("fixtures", dbm.engine.raw_connection())
     df_fix = df_fix[(df_fix["season"] == season) & (df_fix["gameweek"] >= next_gw)]
 
     # Get team_names from the DB
-    df_teams = pd.read_sql("teams_season", dbm.engine)
+    df_teams = pd.read_sql("teams_season", dbm.engine.raw_connection())
     df_teams["season"] = df_teams["team_season_id"].astype(str).str[:2].astype(int)
 
     # Add team names to fixture list
@@ -228,11 +228,12 @@ def run(season, next_gw, dbm, fplm):
 
 if __name__ == "__main__":
     import sys
+
+    from lionel.constants import DATA
     from lionel.db.connector import DBManager
     from lionel.model.hierarchical import FPLPointsModel
-    from lionel.constants import DATA
 
     dbm = DBManager(DATA / "fpl.db")
-    fplm = FPLPointsModel.load(DATA / "analysis/hm_02.nc")
+    fplm = FPLPointsModel.load(DATA / "analysis/hm_20240921.nc")
     season, next_gw = [int(x) for x in sys.argv[1:]]
     run(season, next_gw, dbm, fplm)

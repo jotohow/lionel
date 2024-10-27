@@ -1,9 +1,10 @@
-import sys
 import datetime as dt
-from lionel.scripts.train_process_data import get_train
-from lionel.db.connector import DBManager
+import sys
+
 from lionel.constants import ANALYSIS, DATA
+from lionel.db.connector import DBManager
 from lionel.model.hierarchical import FPLPointsModel
+from lionel.scripts.train_process_data import get_train
 
 
 def run(dbm, next_gw, season, sampler_config=None):
@@ -38,3 +39,5 @@ if __name__ == "__main__":
     }
     next_gw, season = [int(x) for x in sys.argv[1:]]
     run(dbm, next_gw, season, sampler_config)
+
+    # python -m lionel.scripts.run_training 9 25

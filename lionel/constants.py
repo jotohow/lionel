@@ -1,3 +1,4 @@
+import datetime as dt
 from pathlib import Path
 
 BASE = Path(__file__).parents[1]
@@ -6,6 +7,11 @@ RAW = DATA / "raw"
 PROCESSED = DATA / "processed"
 CLEANED = DATA / "cleaned"
 ANALYSIS = DATA / "analysis"
+
+# TODAY = dt.datetime.today()
+# TODAY = dt.datetime.today() - dt.timedelta(days=1)
+TODAY = dt.datetime(2024, 10, 25)
+print(f"Running for {TODAY}")
 
 SEASON_MAP = {
     25: "2024-25",

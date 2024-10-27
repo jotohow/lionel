@@ -86,23 +86,6 @@ def load_from_file(dbm, season=24):
     return None
 
 
-# def run(dbm, season=25):
-
-#     # Load from scraped data
-#     df_players = load_scraped_unique_players()
-
-#     # Add new unique players
-#     existing_players = get_existing_players(dbm)
-#     new_players = df_players.loc[
-#         ~df_players["full_name"].isin(existing_players), ["name", "full_name"]
-#     ]
-#     dbm.insert("players", new_players.to_dict(orient="records"))
-
-#     _ = update_player_seasons(dbm, df_players, season)
-
-#     return None
-
-
 if __name__ == "__main__":
     dbm = DBManager(db_path="/Users/toby/Dev/lionel/data/fpl_test.db")
     load_from_file(dbm, season=24)
