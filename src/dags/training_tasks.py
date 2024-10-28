@@ -5,12 +5,10 @@ import json
 import luigi
 import pandas as pd
 
-from lionel.constants import BASE, DATA, TODAY
-from lionel.db.connector import DBManager
+from lionel.constants import BASE
 from lionel.model.hierarchical import FPLPointsModel
 
-dbm = DBManager(db_path=DATA / "lionel.db")
-today = TODAY.strftime("%Y%m%d")
+from .utils import dbm, next_gw, season, today
 
 
 # TODO: Add triggers for this. How often do I want to do it?
@@ -59,4 +57,4 @@ class TrainModel(luigi.Task):
 
 
 if __name__ == "__main__":
-    luigi.build([TrainModel(season=25, next_gw=9)])
+    luigi.build([TrainModel(season=season, next_gw=next_gw)])

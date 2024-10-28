@@ -1,7 +1,5 @@
 """Tasks to make predictions with the model and store them in the database."""
 
-import datetime as dt
-import json
 from pathlib import Path
 
 import luigi
@@ -10,11 +8,10 @@ import sqlalchemy as sa
 
 import lionel.data_load.model.predict as predict
 import lionel.selector as selector
-from lionel.constants import ANALYSIS, BASE, DATA, RAW, TODAY
-from lionel.db.connector import DBManager
+from lionel.constants import ANALYSIS, BASE, TODAY
 from lionel.model.hierarchical import FPLPointsModel
 
-dbm = DBManager(db_path=DATA / "lionel.db")
+from .utils import dbm, next_gw, season
 
 
 class ModelExists(luigi.ExternalTask):
@@ -222,10 +219,10 @@ class LoadTeamInference(PredictionTask):
 if __name__ == "__main__":
     luigi.build(
         [
-            PredictScorelines(next_gw=9, season=25),
-            PredictPlayers(next_gw=9, season=25),
-            LoadScorelines(next_gw=9, season=25),
-            LoadSelection(next_gw=9, season=25),
+            PredictScorelines(next_gw=next_gw, season=season),
+            PredictPlayers(next_gw=next_gw, season=season),
+            LoadScorelines(next_gw=next_gw, season=season),
+            LoadSelection(next_gw=next_gw, season=season),
             PlayerInference(),
             LoadPlayerInference(),
             TeamInference(),

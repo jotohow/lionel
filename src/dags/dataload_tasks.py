@@ -11,28 +11,10 @@ import lionel.data_load.fantasy.load_stats as load_stats
 import lionel.data_load.fantasy.load_teams as load_teams
 import lionel.data_load.fantasy.scrape as scrape
 from lionel.constants import BASE, DATA, RAW, TODAY
-from lionel.db.connector import DBManager
 
-dbm = DBManager(db_path=DATA / "lionel.db")
-# TODAY = (dt.datetime.today() - dt.timedelta(days=1))
+from .utils import dbm, next_gw, season
+
 today = TODAY.strftime("%Y%m%d")
-
-
-def get_next_gw_season(dbm):
-    q = """
-        SELECT gameweek, season
-        FROM gameweeks 
-        WHERE deadline > CURRENT_DATE 
-        ORDER BY deadline ASC
-        LIMIT 1;
-        """
-    # TODO: Needs a try/except for the end of the season
-    next_gw, season = dbm.query(q)[0]
-    return next_gw, season
-
-
-# is this ok to be run at the module level... seems a bit sus...
-next_gw, season = get_next_gw_season(dbm)
 
 
 class DataLoadTask(luigi.Task):
@@ -48,32 +30,35 @@ class GameWeekEnded(luigi.ExternalTask):
 
     task_namespace = "Dataload"
     # Ref example https://github.com/spotify/luigi/blob/829fc0c36ecb4d0ae4f0680dec6d538577b249a2/examples/top_artists.py#L28
+    gameweek = luigi.IntParameter(default=next_gw - 1)  # TODO
+    season = luigi.IntParameter(default=season)
 
     def complete(self):
 
-        # next_gw, season = get_next_gw_season(dbm)
-
-        # Check if all fixtures from the previous gameweek have finished
+        # Get the last kickoff time for the previous gameweek
         q = f"""
-        SELECT home_score
+        SELECT kickoff_time 
         FROM fixtures
-        WHERE gameweek = {next_gw - 1} AND season = {season};
+        WHERE gameweek = {self.gameweek} AND season = {self.season}
+        ORDER BY kickoff_time DESC;
         """
-        scores = dbm.query(q)
-        scores = [_[0] for _ in scores]
-        gw_finished = all(scores)
-        return gw_finished
+        ds = dbm.query(q)[0][0]
+        last_kickoff = dt.datetime.strptime(ds, "%Y-%m-%dT%H:%M:%SZ")
+
+        # finished if we're the day after the last kickoff
+        gw_ended = last_kickoff.date() < dt.date.today()
+        return gw_ended
 
 
 class Scrape(DataLoadTask):
 
+    # next_gw, season = get_next_gw_season(dbm)
+
     def requires(self):
-        return GameWeekEnded()
+        return GameWeekEnded(next_gw - 1, season)
+        # return GameWeekEnded()
 
     def output(self):
-        # Json where we dump the stuff
-        # next_gw, season = get_next_gw_season(dbm)
-        # today = dt.datetime.today().strftime("%Y%m%d")
         p = str(RAW / f"scraped_data_{today}.json")
         return luigi.LocalTarget(p)
 
