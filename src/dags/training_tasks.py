@@ -18,9 +18,6 @@ class TrainModel(luigi.Task):
     season = luigi.IntParameter(default=25)
     next_gw = luigi.IntParameter(default=8)
 
-    # def requires(self):
-    #     return []
-
     def output(self):
         path = str(BASE / f"models/hm_{today}.nc")
         return luigi.LocalTarget(path)

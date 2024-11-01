@@ -216,16 +216,20 @@ class LoadTeamInference(PredictionTask):
             f.write("Task completed successfully.")
 
 
+class PredictionTasks(luigi.WrapperTask):
+    next_gw = luigi.IntParameter()
+    season = luigi.IntParameter()
+
+    def requires(self):
+        yield PredictScorelines(next_gw=self.next_gw, season=self.season)
+        yield PredictPlayers(next_gw=self.next_gw, season=self.season)
+        yield LoadScorelines(next_gw=self.next_gw, season=self.season)
+        yield LoadSelection(next_gw=self.next_gw, season=self.season)
+        yield PlayerInference()
+        yield LoadPlayerInference()
+        yield TeamInference()
+        yield LoadTeamInference()
+
+
 if __name__ == "__main__":
-    luigi.build(
-        [
-            PredictScorelines(next_gw=next_gw, season=season),
-            PredictPlayers(next_gw=next_gw, season=season),
-            LoadScorelines(next_gw=next_gw, season=season),
-            LoadSelection(next_gw=next_gw, season=season),
-            PlayerInference(),
-            LoadPlayerInference(),
-            TeamInference(),
-            LoadTeamInference(),
-        ]
-    )
+    luigi.build([PredictionTasks(next_gw=next_gw, season=season)])

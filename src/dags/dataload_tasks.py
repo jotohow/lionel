@@ -138,14 +138,17 @@ class LoadStats(DataLoadTask):
             f.write("Task completed successfully.")
 
 
+class DataLoadTask(luigi.WrapperTask):
+    """Wrapper task for all data loading tasks"""
+
+    def requires(self):
+        yield Scrape()
+        yield LoadGameweeks()
+        yield LoadTeams()
+        yield LoadFixtures()
+        yield LoadPlayers()
+        yield LoadStats()
+
+
 if __name__ == "__main__":
-    luigi.build(
-        [
-            Scrape(),
-            LoadGameweeks(),
-            LoadTeams(),
-            LoadFixtures(),
-            LoadPlayers(),
-            LoadStats(),
-        ]
-    )
+    luigi.build([DataLoadTask()])
