@@ -10,6 +10,8 @@ import lionel.data_load.model.predict as predict
 import lionel.selector as selector
 from lionel.constants import ANALYSIS, BASE, TODAY
 from lionel.model.hierarchical import FPLPointsModel
+from lionel.selector.fpl.xi_selector import XISelector
+from lionel.selector.fpl.xv_selector import XVSelector
 
 from .utils import dbm, next_gw, season
 
@@ -103,10 +105,22 @@ class SelectTeam(PredictionTask):
 
     def run(self):
         preds = pd.read_csv(self.input().path)
-        selections = selector.run_selection(preds)
+        preds = preds.rename(columns={"value": "price", "team_name": "team"})
+        selections = self.run_selection(preds)
         selections["gameweek"] = self.next_gw
         selections["season"] = self.season
+        selections = selections.rename(columns={"price": "value", "team": "team_name"})
         selections.to_csv(self.output().path, index=False)
+
+    @staticmethod
+    def run_selection(df_pred, pred_var="mean_points_pred"):
+        xvsel = XVSelector(df_pred, pred_var)
+        xvsel.select()
+
+        xisel = XISelector(xvsel.selected_df, pred_var)
+        xisel.select()
+
+        return xisel.candidate_df
 
 
 class LoadSelection(PredictionTask):
