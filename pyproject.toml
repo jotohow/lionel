@@ -20,6 +20,9 @@ pulp = "*"
 
 [tool.poetry.dev-dependencies]
 black = "^24.10.0"
+pytest = "^6.2.0"
+flake8 = "^3.9.0"
+ipykernel = "*"
 
 [build-system]
 requires = ["poetry-core"]

@@ -1,0 +1,137 @@
+[
+    {
+        "player": "player_50",
+        "team": "team_1",
+        "position": "MID",
+        "price": 45,
+        "predicted_points": 9,
+        "xv": 1,
+        "captain": 0
+    },
+    {
+        "player": "player_19",
+        "team": "team_2",
+        "position": "DEF",
+        "price": 96,
+        "predicted_points": 9,
+        "xv": 1,
+        "captain": 0
+    },
+    {
+        "player": "player_1",
+        "team": "team_15",
+        "position": "FWD",
+        "price": 50,
+        "predicted_points": 10,
+        "xv": 1,
+        "captain": 1
+    },
+    {
+        "player": "player_46",
+        "team": "team_0",
+        "position": "FWD",
+        "price": 75,
+        "predicted_points": 10,
+        "xv": 1,
+        "captain": 0
+    },
+    {
+        "player": "player_45",
+        "team": "team_0",
+        "position": "MID",
+        "price": 82,
+        "predicted_points": 9,
+        "xv": 1,
+        "captain": 0
+    },
+    {
+        "player": "player_67",
+        "team": "team_7",
+        "position": "DEF",
+        "price": 83,
+        "predicted_points": 7.9,
+        "xv": 1,
+        "captain": 0
+    },
+    {
+        "player": "player_68",
+        "team": "team_14",
+        "position": "DEF",
+        "price": 51,
+        "predicted_points": 9,
+        "xv": 1,
+        "captain": 0
+    },
+    {
+        "player": "player_73",
+        "team": "team_4",
+        "position": "MID",
+        "price": 47,
+        "predicted_points": 10,
+        "xv": 1,
+        "captain": 0
+    },
+    {
+        "player": "player_30",
+        "team": "team_1",
+        "position": "DEF",
+        "price": 73,
+        "predicted_points": 7,
+        "xv": 1,
+        "captain": 0
+    },
+    {
+        "player": "player_28",
+        "team": "team_3",
+        "position": "GK",
+        "price": 60,
+        "predicted_points": 10,
+        "xv": 1,
+        "captain": 0
+    },
+    {
+        "player": "player_24",
+        "team": "team_16",
+        "position": "DEF",
+        "price": 55,
+        "predicted_points": 8,
+        "xv": 1,
+        "captain": 0
+    },
+    {
+        "player": "player_79",
+        "team": "team_6",
+        "position": "MID",
+        "price": 57,
+        "predicted_points": 9,
+        "xv": 1,
+        "captain": 0
+    },
+    {
+        "player": "player_53",
+        "team": "team_19",
+        "position": "FWD",
+        "price": 84,
+        "predicted_points": 9,
+        "xv": 1,
+        "captain": 0
+    },
+    {
+        "player": "player_98",
+        "team": "team_2",
+        "position": "MID",
+        "price": 77,
+        "predicted_points": 8,
+        "xv": 1,
+        "captain": 0
+    },
+    {
+        "player": "player_91",
+        "team": "team_5",
+        "position": "GK",
+        "price": 64,
+        "predicted_points": 9,
+        "xv": 1,
+        "captain": 0
+    }
+]

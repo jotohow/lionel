@@ -1,0 +1,702 @@
+[
+    {
+        "player": "player_0",
+        "team": "team_4",
+        "position": "FWD",
+        "price": 85,
+        "predicted_points": 4
+    },
+    {
+        "player": "player_1",
+        "team": "team_15",
+        "position": "FWD",
+        "price": 50,
+        "predicted_points": 10
+    },
+    {
+        "player": "player_2",
+        "team": "team_19",
+        "position": "DEF",
+        "price": 78,
+        "predicted_points": 3
+    },
+    {
+        "player": "player_3",
+        "team": "team_11",
+        "position": "DEF",
+        "price": 61,
+        "predicted_points": 1
+    },
+    {
+        "player": "player_4",
+        "team": "team_14",
+        "position": "GK",
+        "price": 68,
+        "predicted_points": 9
+    },
+    {
+        "player": "player_5",
+        "team": "team_3",
+        "position": "DEF",
+        "price": 86,
+        "predicted_points": 3
+    },
+    {
+        "player": "player_6",
+        "team": "team_19",
+        "position": "MID",
+        "price": 71,
+        "predicted_points": 0
+    },
+    {
+        "player": "player_7",
+        "team": "team_16",
+        "position": "FWD",
+        "price": 100,
+        "predicted_points": 4
+    },
+    {
+        "player": "player_8",
+        "team": "team_17",
+        "position": "DEF",
+        "price": 57,
+        "predicted_points": 6
+    },
+    {
+        "player": "player_9",
+        "team": "team_9",
+        "position": "FWD",
+        "price": 96,
+        "predicted_points": 4
+    },
+    {
+        "player": "player_10",
+        "team": "team_16",
+        "position": "GK",
+        "price": 61,
+        "predicted_points": 9
+    },
+    {
+        "player": "player_11",
+        "team": "team_1",
+        "position": "GK",
+        "price": 82,
+        "predicted_points": 3
+    },
+    {
+        "player": "player_12",
+        "team": "team_18",
+        "position": "DEF",
+        "price": 48,
+        "predicted_points": 6
+    },
+    {
+        "player": "player_13",
+        "team": "team_8",
+        "position": "GK",
+        "price": 43,
+        "predicted_points": 3
+    },
+    {
+        "player": "player_14",
+        "team": "team_12",
+        "position": "MID",
+        "price": 62,
+        "predicted_points": 5
+    },
+    {
+        "player": "player_15",
+        "team": "team_6",
+        "position": "MID",
+        "price": 44,
+        "predicted_points": 7
+    },
+    {
+        "player": "player_16",
+        "team": "team_2",
+        "position": "GK",
+        "price": 60,
+        "predicted_points": 7
+    },
+    {
+        "player": "player_17",
+        "team": "team_4",
+        "position": "FWD",
+        "price": 81,
+        "predicted_points": 1
+    },
+    {
+        "player": "player_18",
+        "team": "team_18",
+        "position": "FWD",
+        "price": 66,
+        "predicted_points": 2
+    },
+    {
+        "player": "player_19",
+        "team": "team_2",
+        "position": "DEF",
+        "price": 96,
+        "predicted_points": 9
+    },
+    {
+        "player": "player_20",
+        "team": "team_11",
+        "position": "MID",
+        "price": 89,
+        "predicted_points": 4
+    },
+    {
+        "player": "player_21",
+        "team": "team_8",
+        "position": "FWD",
+        "price": 100,
+        "predicted_points": 4
+    },
+    {
+        "player": "player_22",
+        "team": "team_3",
+        "position": "MID",
+        "price": 91,
+        "predicted_points": 4
+    },
+    {
+        "player": "player_23",
+        "team": "team_0",
+        "position": "GK",
+        "price": 99,
+        "predicted_points": 2
+    },
+    {
+        "player": "player_24",
+        "team": "team_16",
+        "position": "DEF",
+        "price": 55,
+        "predicted_points": 8
+    },
+    {
+        "player": "player_25",
+        "team": "team_2",
+        "position": "FWD",
+        "price": 43,
+        "predicted_points": 1
+    },
+    {
+        "player": "player_26",
+        "team": "team_0",
+        "position": "GK",
+        "price": 43,
+        "predicted_points": 5
+    },
+    {
+        "player": "player_27",
+        "team": "team_3",
+        "position": "GK",
+        "price": 62,
+        "predicted_points": 3
+    },
+    {
+        "player": "player_28",
+        "team": "team_3",
+        "position": "GK",
+        "price": 60,
+        "predicted_points": 10
+    },
+    {
+        "player": "player_29",
+        "team": "team_15",
+        "position": "GK",
+        "price": 58,
+        "predicted_points": 4
+    },
+    {
+        "player": "player_30",
+        "team": "team_1",
+        "position": "DEF",
+        "price": 73,
+        "predicted_points": 7
+    },
+    {
+        "player": "player_31",
+        "team": "team_12",
+        "position": "DEF",
+        "price": 64,
+        "predicted_points": 3
+    },
+    {
+        "player": "player_32",
+        "team": "team_11",
+        "position": "FWD",
+        "price": 97,
+        "predicted_points": 7
+    },
+    {
+        "player": "player_33",
+        "team": "team_0",
+        "position": "GK",
+        "price": 56,
+        "predicted_points": 8
+    },
+    {
+        "player": "player_34",
+        "team": "team_2",
+        "position": "FWD",
+        "price": 94,
+        "predicted_points": 0
+    },
+    {
+        "player": "player_35",
+        "team": "team_2",
+        "position": "FWD",
+        "price": 46,
+        "predicted_points": 7
+    },
+    {
+        "player": "player_36",
+        "team": "team_16",
+        "position": "GK",
+        "price": 67,
+        "predicted_points": 0
+    },
+    {
+        "player": "player_37",
+        "team": "team_6",
+        "position": "GK",
+        "price": 53,
+        "predicted_points": 0
+    },
+    {
+        "player": "player_38",
+        "team": "team_15",
+        "position": "MID",
+        "price": 56,
+        "predicted_points": 7
+    },
+    {
+        "player": "player_39",
+        "team": "team_0",
+        "position": "FWD",
+        "price": 92,
+        "predicted_points": 3
+    },
+    {
+        "player": "player_40",
+        "team": "team_16",
+        "position": "GK",
+        "price": 50,
+        "predicted_points": 7
+    },
+    {
+        "player": "player_41",
+        "team": "team_17",
+        "position": "GK",
+        "price": 66,
+        "predicted_points": 8
+    },
+    {
+        "player": "player_42",
+        "team": "team_3",
+        "position": "FWD",
+        "price": 54,
+        "predicted_points": 5
+    },
+    {
+        "player": "player_43",
+        "team": "team_8",
+        "position": "MID",
+        "price": 97,
+        "predicted_points": 2
+    },
+    {
+        "player": "player_44",
+        "team": "team_6",
+        "position": "FWD",
+        "price": 41,
+        "predicted_points": 1
+    },
+    {
+        "player": "player_45",
+        "team": "team_0",
+        "position": "MID",
+        "price": 82,
+        "predicted_points": 9
+    },
+    {
+        "player": "player_46",
+        "team": "team_0",
+        "position": "FWD",
+        "price": 75,
+        "predicted_points": 10
+    },
+    {
+        "player": "player_47",
+        "team": "team_13",
+        "position": "FWD",
+        "price": 98,
+        "predicted_points": 0
+    },
+    {
+        "player": "player_48",
+        "team": "team_14",
+        "position": "DEF",
+        "price": 52,
+        "predicted_points": 5
+    },
+    {
+        "player": "player_49",
+        "team": "team_5",
+        "position": "FWD",
+        "price": 70,
+        "predicted_points": 3
+    },
+    {
+        "player": "player_50",
+        "team": "team_1",
+        "position": "MID",
+        "price": 45,
+        "predicted_points": 9
+    },
+    {
+        "player": "player_51",
+        "team": "team_11",
+        "position": "FWD",
+        "price": 50,
+        "predicted_points": 2
+    },
+    {
+        "player": "player_52",
+        "team": "team_18",
+        "position": "MID",
+        "price": 93,
+        "predicted_points": 8
+    },
+    {
+        "player": "player_53",
+        "team": "team_19",
+        "position": "FWD",
+        "price": 84,
+        "predicted_points": 9
+    },
+    {
+        "player": "player_54",
+        "team": "team_18",
+        "position": "GK",
+        "price": 82,
+        "predicted_points": 8
+    },
+    {
+        "player": "player_55",
+        "team": "team_12",
+        "position": "DEF",
+        "price": 53,
+        "predicted_points": 3
+    },
+    {
+        "player": "player_56",
+        "team": "team_12",
+        "position": "GK",
+        "price": 96,
+        "predicted_points": 5
+    },
+    {
+        "player": "player_57",
+        "team": "team_10",
+        "position": "DEF",
+        "price": 64,
+        "predicted_points": 6
+    },
+    {
+        "player": "player_58",
+        "team": "team_5",
+        "position": "GK",
+        "price": 77,
+        "predicted_points": 0
+    },
+    {
+        "player": "player_59",
+        "team": "team_18",
+        "position": "FWD",
+        "price": 74,
+        "predicted_points": 7
+    },
+    {
+        "player": "player_60",
+        "team": "team_3",
+        "position": "DEF",
+        "price": 41,
+        "predicted_points": 5
+    },
+    {
+        "player": "player_61",
+        "team": "team_3",
+        "position": "DEF",
+        "price": 54,
+        "predicted_points": 6
+    },
+    {
+        "player": "player_62",
+        "team": "team_9",
+        "position": "DEF",
+        "price": 74,
+        "predicted_points": 3
+    },
+    {
+        "player": "player_63",
+        "team": "team_2",
+        "position": "GK",
+        "price": 73,
+        "predicted_points": 8
+    },
+    {
+        "player": "player_64",
+        "team": "team_17",
+        "position": "MID",
+        "price": 94,
+        "predicted_points": 3
+    },
+    {
+        "player": "player_65",
+        "team": "team_0",
+        "position": "DEF",
+        "price": 98,
+        "predicted_points": 3
+    },
+    {
+        "player": "player_66",
+        "team": "team_13",
+        "position": "FWD",
+        "price": 48,
+        "predicted_points": 1
+    },
+    {
+        "player": "player_67",
+        "team": "team_7",
+        "position": "DEF",
+        "price": 83,
+        "predicted_points": 7.9
+    },
+    {
+        "player": "player_68",
+        "team": "team_14",
+        "position": "DEF",
+        "price": 51,
+        "predicted_points": 9
+    },
+    {
+        "player": "player_69",
+        "team": "team_13",
+        "position": "DEF",
+        "price": 62,
+        "predicted_points": 7
+    },
+    {
+        "player": "player_70",
+        "team": "team_9",
+        "position": "MID",
+        "price": 54,
+        "predicted_points": 5
+    },
+    {
+        "player": "player_71",
+        "team": "team_11",
+        "position": "MID",
+        "price": 67,
+        "predicted_points": 1
+    },
+    {
+        "player": "player_72",
+        "team": "team_13",
+        "position": "GK",
+        "price": 69,
+        "predicted_points": 8
+    },
+    {
+        "player": "player_73",
+        "team": "team_4",
+        "position": "MID",
+        "price": 47,
+        "predicted_points": 10
+    },
+    {
+        "player": "player_74",
+        "team": "team_17",
+        "position": "DEF",
+        "price": 96,
+        "predicted_points": 4
+    },
+    {
+        "player": "player_75",
+        "team": "team_4",
+        "position": "MID",
+        "price": 72,
+        "predicted_points": 1
+    },
+    {
+        "player": "player_76",
+        "team": "team_13",
+        "position": "MID",
+        "price": 85,
+        "predicted_points": 6
+    },
+    {
+        "player": "player_77",
+        "team": "team_2",
+        "position": "FWD",
+        "price": 69,
+        "predicted_points": 5
+    },
+    {
+        "player": "player_78",
+        "team": "team_12",
+        "position": "MID",
+        "price": 46,
+        "predicted_points": 1
+    },
+    {
+        "player": "player_79",
+        "team": "team_6",
+        "position": "MID",
+        "price": 57,
+        "predicted_points": 9
+    },
+    {
+        "player": "player_80",
+        "team": "team_18",
+        "position": "FWD",
+        "price": 65,
+        "predicted_points": 6
+    },
+    {
+        "player": "player_81",
+        "team": "team_14",
+        "position": "GK",
+        "price": 68,
+        "predicted_points": 6
+    },
+    {
+        "player": "player_82",
+        "team": "team_15",
+        "position": "DEF",
+        "price": 88,
+        "predicted_points": 3
+    },
+    {
+        "player": "player_83",
+        "team": "team_7",
+        "position": "MID",
+        "price": 52,
+        "predicted_points": 2
+    },
+    {
+        "player": "player_84",
+        "team": "team_8",
+        "position": "FWD",
+        "price": 96,
+        "predicted_points": 7
+    },
+    {
+        "player": "player_85",
+        "team": "team_3",
+        "position": "DEF",
+        "price": 98,
+        "predicted_points": 2
+    },
+    {
+        "player": "player_86",
+        "team": "team_15",
+        "position": "GK",
+        "price": 97,
+        "predicted_points": 3
+    },
+    {
+        "player": "player_87",
+        "team": "team_3",
+        "position": "FWD",
+        "price": 91,
+        "predicted_points": 0
+    },
+    {
+        "player": "player_88",
+        "team": "team_1",
+        "position": "GK",
+        "price": 79,
+        "predicted_points": 0
+    },
+    {
+        "player": "player_89",
+        "team": "team_1",
+        "position": "MID",
+        "price": 41,
+        "predicted_points": 2
+    },
+    {
+        "player": "player_90",
+        "team": "team_12",
+        "position": "FWD",
+        "price": 60,
+        "predicted_points": 7
+    },
+    {
+        "player": "player_91",
+        "team": "team_5",
+        "position": "GK",
+        "price": 64,
+        "predicted_points": 9
+    },
+    {
+        "player": "player_92",
+        "team": "team_15",
+        "position": "FWD",
+        "price": 87,
+        "predicted_points": 8
+    },
+    {
+        "player": "player_93",
+        "team": "team_10",
+        "position": "FWD",
+        "price": 59,
+        "predicted_points": 3
+    },
+    {
+        "player": "player_94",
+        "team": "team_3",
+        "position": "GK",
+        "price": 96,
+        "predicted_points": 1
+    },
+    {
+        "player": "player_95",
+        "team": "team_4",
+        "position": "FWD",
+        "price": 62,
+        "predicted_points": 1
+    },
+    {
+        "player": "player_96",
+        "team": "team_5",
+        "position": "FWD",
+        "price": 55,
+        "predicted_points": 6
+    },
+    {
+        "player": "player_97",
+        "team": "team_6",
+        "position": "DEF",
+        "price": 67,
+        "predicted_points": 5
+    },
+    {
+        "player": "player_98",
+        "team": "team_2",
+        "position": "MID",
+        "price": 77,
+        "predicted_points": 8
+    },
+    {
+        "player": "player_99",
+        "team": "team_1",
+        "position": "GK",
+        "price": 55,
+        "predicted_points": 1
+    }
+]
