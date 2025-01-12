@@ -1,13 +1,12 @@
 [tool.poetry]
 name = "lionel"
-version = "0.1.1"
+version = "0.1.2"
 description = "Predict fantasy player points and optimise the team"
 authors = ["jth500 <jtobyh@gmail.com>"]
 license = "MIT"
 readme = "README.md"
 homepage = "https://github.com/jth500/lionel"  # Optional
 repository = "https://github.com/jth500/lionel"
-
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -19,6 +18,13 @@ arviz = "==0.19.0"
 seaborn = "*"
 pulp = "*"
 
+[tool.poetry.dev-dependencies]
+black = "^24.10.0"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 120
+target-version = ["py311"]
