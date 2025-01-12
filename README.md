@@ -2,10 +2,10 @@
 
 **Lionel** is a Fantasy Premier League (FPL) team optimization tool that serves **two primary goals**:
 
-1. **Provide code to predict fantasy player points** using Bayesian hierarchical modeling.  
+1. **Predict fantasy player points** with 1) a library-agnostic framework, and 2) a concrete Bayesian hierarchical implementation.
 2. **Offer an extendable selection/optimization framework** for building squads under FPL-style constraints (budget, positions, transfers, etc.).
 
-With **Lionel**, you can either use the existing selection classes (e.g., for picking a 15-player squad or 11-player lineup) or adapt the underlying selection framework to build new team selection techniques.
+You can use the existing selection classes (e.g., for picking a 15-player squad or 11-player lineup) or adapt the **underlying selection logic** to build new team selection strategies. The **Lionel models package** can be extended to build **custom Bayesian (or other) models** for player points, which you can then pair with the selection framework to optimize squads based on your own custom predictions.
 
 ---
 
@@ -34,16 +34,14 @@ With **Lionel**, you can either use the existing selection classes (e.g., for pi
 ## Features
 
 - **Bayesian Hierarchical Modeling**  
-  Predict player performance using PyMC’s No-U-Turn Sampler
+  Predict player performance using PyMC’s No-U-Turn Sampler (or bring your own modeling approach).
 
 - **Linear Programming Optimization**  
   Optimize team selection within budget, positional, and transfer constraints using PuLP.
 
 - **Modular & Extendable**  
-  A core `BaseSelector` class plus specialized selectors (XV, XI, Update XV, etc.) let you add custom constraints/objectives for new or unanticipated use cases.
-
-- **Pipeline Management**  
-  Handle data preparation and model training workflows with Luigi.
+  - **Selectors**: A core `BaseSelector` class plus specialized selectors (XV, XI, Update XV, etc.) let you add custom constraints/objectives for new or unanticipated use cases.  
+  - **Models**: Base Model classes (`LionelBaseModel`, `BaseBayesianModel`) that you can subclass to create new modeling approaches for predicting fantasy points.  
 
 - **Web Interface**  
   Access team selections and model details via a web application.
@@ -75,39 +73,51 @@ pip install -r requirements.txt
 
 ### Predicting Expected Points
 
-One core functionality is **predicting FPL points** using a Bayesian hierarchical model:
+One core functionality is **predicting FPL points** using a Bayesian hierarchical model. You can use the provided classes—like `HierarchicalPointsModel`—which implements a Bayesian approach for modelling player contributions.
 
 ```python
 import pandas as pd
-from lionel.model.hierarchical import FPLPointsModel
+import numpy as np
+from lionel.model.bayesian.hierachical import HierarchicalPointsModel
 
-# Sample data
-data = {
-    'player': ["player_1", "player_2", "player_3", "player_4", "player_5", "player_6"] * 2,
-    'gameweek': [1]*6 + [2]*6,
-    'season': [25]*12,
-    'home_team': ["team_1"]*6 + ["team_2"]*6,
-    'away_team': ["team_2"]*6 + ["team_1"]*6,
-    'home_goals': [1]*6 + [2]*6,
-    'away_goals': [0]*6 + [1]*6,
-    'position': ["FWD", "MID", "DEF", "GK", "FWD", "MID"]*2,
-    'minutes': [90]*12,
-    'goals_scored': [1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1],
-    'assists': [0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1],
-    'is_home': [True, True, True, False, False, False]*2,
-    'points': [10, 6, 2, 2, 2, 2, 6, 2, 10, 10, 2, 10]
-}
+# Example data (12 rows for 2 gameweeks)
+player = ["player_1", "player_2", "player_3", "player_4", "player_5", "player_6"] 
+gameweek = [1]*6 + [2]*6
+season = [25]*12
+home_team = ["team_1"]*6 + ["team_2"]*6
+away_team = ["team_2"]*6 + ["team_1"]*6
+home_goals = [1]*6 + [2]*6
+away_goals = [0]*6 + [1]*6
+position = ["FWD","MID","DEF","GK","FWD","MID"]*2
+minutes = [90]*12
+goals_scored = [1,0,0,0,0,0,0,0,1,1,0,1]
+assists = [0,1,0,0,0,0,1,0,0,0,1,1]
+is_home = [True,True,True,False,False,False,False,False,False,True,True,True]
+points = [10,6,2,2,2,2,6,2,10,10,2,10]
 
-df = pd.DataFrame(data)
+df = pd.DataFrame({
+    'player': player+player,
+    'gameweek': gameweek,
+    'season': season,
+    'home_team': home_team,
+    'away_team': away_team,
+    'home_goals': home_goals,
+    'away_goals': away_goals,
+    'position': position,
+    'minutes': minutes,
+    'goals_scored': goals_scored,
+    'assists': assists,
+    'is_home': is_home
+})
 
 # Initialize and fit the model
-fpl_model = FPLPointsModel()
-fpl_model.build_model(df, df['points'])
-fpl_model.fit(df, df['points'])
+model = HierarchicalPointsModel()
+model.fit(df, np.array(points), progressbar=True)
 
-# Predict expected points
-predictions = fpl_model.predict(df, extend_idata=False, combined=False, predictions=True)
-print(predictions)
+# Generate posterior predictive samples
+preds = model.predict(df, predictions=True)
+print(preds)
+# np.array([5, 4, 1, ...])
 ```
 
 ### Selecting an Optimal Team
@@ -173,6 +183,14 @@ We provide a set of **example scripts** (located in `examples/`) to demonstrate 
 
 4. **`example_custom_constraints.py`**  
    Illustrates creating **custom constraints** with `BaseSelector` for specialized optimization scenarios (e.g., ensuring at least one player from a specific team).
+
+5. **`model/example_fpl_points_model.py`**  
+   A simple script using the `FPLPointsModel` to fit and predict on a tiny dataset.
+
+6. **`model/example_extend_base_model.py`**  
+   Shows how to **extend** the base Bayesian model (`BaseBayesianModel`) to create a brand-new custom points model for your own use case—then fit and predict with it.
+
+By following these examples, you can see how **Lionel**’s modular architecture supports everything from standard FPL squad selection to **completely new** modeling or selection strategies.
 
 ---
 
@@ -247,6 +265,7 @@ This project is licensed under the [MIT License](LICENSE).
 ---
 
 ## Acknowledgements
+
 
 - **[PyMC](https://www.pymc.io/welcome.html)** for Bayesian modeling 
    - [Baio, Blangiardo (2010)](https://discovery.ucl.ac.uk/id/eprint/16040/) and [Alan Turing Institute](https://github.com/alan-turing-institute/AIrsenal) for model choice.

@@ -1,20 +1,23 @@
-from pymc_marketing.model_builder import ModelBuilder
-from typing import Dict, List, Optional, Tuple, Union, Any
-import pandas as pd
-import numpy as np
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import arviz as az
+import numpy as np
+import pandas as pd
 import pymc as pm
 import pytensor.tensor as pt
 import xarray as xr
-from pathlib import Path
 from pymc.util import RandomState
 
+from .base_bayesian_model import BaseBayesianModel
 
-class FPLPointsModel(ModelBuilder):
+
+class HierarchicalPointsModel(BaseBayesianModel):
     """
     A hierarchical model for predicting Fantasy Premier League (FPL) points.
 
-    This model is built using the `pymc_experimental` library and extends the `ModelBuilder` class.
+    This model is built using the `pymc_experimental` library and extends
+    the new BaseBayesianModel (which itself extends `ModelBuilder`).
 
     Attributes:
         __model_type__ (str): The type of the model.
@@ -22,7 +25,7 @@ class FPLPointsModel(ModelBuilder):
     """
 
     _model_type_ = "FPLPointsModel"
-    version = "0.1"
+    version = "1.0"
 
     # NOTE: no_contribution now implemented in model - tbc if that breaks anything
     EXPECTED_COLUMNS = [
@@ -253,15 +256,13 @@ class FPLPointsModel(ModelBuilder):
         Returns:
             None
         """
-
-        # Team/match level indices
+        # (Unchanged from original)
         final_match = self.match_idx.max() + 1
         X_teams_new = (
             X[["home_team", "away_team", "home_goals", "away_goals", "season"]]
             .drop_duplicates()
             .reset_index(drop=True)
         )
-
         match_idx_new, _ = pd.factorize(
             X_teams_new[["home_team", "away_team", "season"]].apply(tuple, axis=1)
         )
@@ -271,7 +272,6 @@ class FPLPointsModel(ModelBuilder):
         _ = X_teams_new["away_team"].values
         away_teams = np.array([np.where(self.teams == team)[0][0] for team in _])
 
-        # Player level indices
         is_home = X["is_home"].values
         player_app_idx_, _ = pd.factorize(
             X[["home_team", "away_team", "season"]].apply(tuple, axis=1)
@@ -279,7 +279,6 @@ class FPLPointsModel(ModelBuilder):
         player_idx_ = [np.where(self.players == player)[0][0] for player in X["player"]]
         position_idx = np.array(X["position"].map(self.pos_map))
 
-        # TODO: Allow some players to be estimated and others not
         if X["minutes"].isnull().sum() > 0:
             minutes_estimate = self.minutes_estimate[player_idx_]
         else:
@@ -287,7 +286,7 @@ class FPLPointsModel(ModelBuilder):
 
         self.X_pred = X
 
-        x_values = {  # new data to be passed into the model
+        x_values = {
             "home_team": home_teams,
             "away_team": away_teams,
             "is_home": is_home,
@@ -296,7 +295,7 @@ class FPLPointsModel(ModelBuilder):
             "positions": position_idx,
             "minutes": minutes_estimate,
         }
-        new_coords = {  # new dimensions to be added to the model
+        new_coords = {
             "match": match_idx_new,
             "player_app": player_app_idx_,
             "player": X["player"].unique(),
@@ -320,13 +319,11 @@ class FPLPointsModel(ModelBuilder):
         Returns:
             None
         """
-        # Check input data
         assert all(
-            [col in X.columns for col in self.EXPECTED_COLUMNS]
+            col in X.columns for col in self.EXPECTED_COLUMNS
         ), f"Missing columns: {set(self.EXPECTED_COLUMNS) - set(X.columns)}"
         X["no_contribution"] = self._get_no_contribution(X)
 
-        # How can I assert that player is a unique identifier? - I don't think I can because team and position can both change
         player_idx, players = pd.factorize(X["player"])
         player_app_idx, _ = pd.factorize(
             X[["home_team", "away_team", "season"]].apply(tuple, axis=1)
@@ -340,7 +337,6 @@ class FPLPointsModel(ModelBuilder):
             .drop_duplicates()
             .reset_index(drop=True)
         )
-
         home_idx, teams = pd.factorize(X_teams["home_team"], sort=True)
         away_idx, _ = pd.factorize(X_teams["away_team"], sort=True)
         match_idx, matches = pd.factorize(
@@ -348,7 +344,6 @@ class FPLPointsModel(ModelBuilder):
         )
         outcomes = ["goals_scored", "assists", "no_contribution"]
 
-        # Add the various attributes
         self.X = X
         self.y = y
         self.X_teams = X_teams
@@ -383,7 +378,6 @@ class FPLPointsModel(ModelBuilder):
         It supports more complex data structures like lists, dictionaries, etc.
         It will be passed to the class instance on initialization, in case the user doesn't provide any model_config of their own.
         """
-
         model_config: Dict = {
             "beta_intercept_mu_prior": 2,
             "beta_intercept_sigma_prior": 2,
@@ -449,8 +443,6 @@ class FPLPointsModel(ModelBuilder):
         y_pred : DataArray, shape (n_pred, chains * draws) if combined is True, otherwise (chains, draws, n_pred)
             Posterior predictive samples for each input X_pred
         """
-
-        # X_pred = self._validate_data(X_pred) # dropped to allow strings in X_pred
         posterior_predictive_samples = self.sample_posterior_predictive(
             X_pred, extend_idata, combined, **kwargs
         )
@@ -464,7 +456,6 @@ class FPLPointsModel(ModelBuilder):
             [self.output_var, "home_goals", "away_goals"]
         ]
 
-    # NOTE: changed this from player_id to player
     @classmethod
     def get_minutes_estimate(cls, df, players):
         assert df.player.nunique() == len(players)
@@ -489,65 +480,13 @@ class FPLPointsModel(ModelBuilder):
             X.away_goals - X.goals_scored - X.assists,
         )
 
-    def save(self, fname: str) -> None:
-        """
-        Save the model's inference data to a file.
-
-        Parameters
-        ----------
-        fname : str
-            The name and path of the file to save the inference data with model parameters.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        RuntimeError
-            If the model hasn't been fit yet (no inference data available).
-
-        Examples
-        --------
-
-        """
-        if not (self.idata is not None and "posterior" in self.idata):
-            raise RuntimeError("The model hasn't been fit yet, call .fit() first")
-
-        self.idata = self.set_idata_attrs()
-        file = Path(str(fname))
-        self.idata.to_netcdf(str(file))
-
-    @property
-    def _serializable_model_config(self) -> Dict[str, Union[int, float, Dict]]:
-        """
-        _serializable_model_config is a property that returns a dictionary with all the model parameters that we want to save.
-        as some of the data structures are not json serializable, we need to convert them to json serializable objects.
-        Some models will need them, others can just define them to return the model_config.
-        """
-        return self.model_config
-
-    # Mask base class - ensure that y is passed.
-    def fit(
-        self,
-        X: pd.DataFrame,
-        y: pd.Series | np.ndarray,
-        progressbar: bool = True,
-        predictor_names: list[str] | None = None,
-        random_seed: RandomState | None = None,
-        **kwargs: Any,
-    ) -> az.InferenceData:
-        super().fit(X, y, progressbar, predictor_names, random_seed, **kwargs)
-
     def summarise_players(self):
         df_theta = az.summary(self.idata, var_names=["theta"])
         df_theta = df_theta["mean"].reset_index()
 
-        # get the player name - withi
         df_theta["type"] = df_theta["index"].str.extract(r"\[(.*?)\]")
         df_theta["player"] = df_theta["type"].str.extract(r"(.*?)\,")
 
-        # TODO: Change: this is too tightly coupled to variable input names...
         df_theta[["player_id", "player_name"]] = df_theta["player"].str.split(
             "_", expand=True
         )
@@ -569,7 +508,7 @@ class FPLPointsModel(ModelBuilder):
             values="mean",
         ).reset_index()
         df_theta.columns = [col.strip(" ") for col in df_theta.columns]
-        # WOULD ALSO BE GOOD TO HAVE TEAMS HERE...
+
         df_theta["mean_minutes"] = (
             (self.X.groupby("player").minutes.sum() / 38)
             .reindex(df_theta.player)
@@ -590,9 +529,7 @@ class FPLPointsModel(ModelBuilder):
         df_beta = az.summary(self.idata, var_names=["beta_attack", "beta_defence"])
         df_beta = df_beta["mean"].reset_index()
 
-        # add regex to select the part of the string encased in []
         df_beta["team_name"] = df_beta["index"].str.extract(r"\[(.*?)\]")
-        # add regex to select the part of the string before the []
         df_beta["type"] = df_beta["index"].str.extract(r"(.*?)\[")
         df_beta["type"] = df_beta["type"].str.replace("beta_", "")
         df_beta = df_beta.pivot(
