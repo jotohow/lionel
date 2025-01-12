@@ -1,5 +1,3 @@
-# xi_selector.py
-
 import pandas as pd
 import pulp
 
@@ -25,24 +23,13 @@ class XISelector(BaseSelector):
     }
 
     def __init__(self, candidate_df: pd.DataFrame, pred_var: str = "predicted_points"):
-        """
-        Initializes an XISelector object.
-
-        Args:
-            candidate_df (pd.DataFrame): The candidate set of players (typically 15 from a bigger squad).
-            pred_var (str): The name of the variable/column used for prediction.
-        """
         super().__init__(candidate_df)
         self.pred_var = pred_var
 
-        # Ensure candidate_df has the prediction column
         if self.pred_var not in self.candidate_df.columns:
             raise ValueError(f"'{self.pred_var}' not found in candidate_df columns.")
 
-        # Set default objective to maximize sum of pred_var
         self.set_objective_function(self.default_objective)
-
-        # Add constraints: exactly 11 players, plus position constraints
         self.add_constraint(self.constraint_xi_size)
         self.add_constraint(self.constraint_positions)
 
@@ -51,10 +38,8 @@ class XISelector(BaseSelector):
         By default, maximize the sum of pred_var for selected players.
         """
         return pulp.lpSum(
-            [
-                decision_vars[i] * candidate_df.loc[i, self.pred_var]
-                for i in range(len(candidate_df))
-            ]
+            decision_vars[i] * candidate_df.iloc[i][self.pred_var]
+            for i in range(self.num_players)
         )
 
     def constraint_xi_size(self, candidate_df, decision_vars):
@@ -76,25 +61,23 @@ class XISelector(BaseSelector):
 
         constraints = []
         for pos, (min_pos, max_pos) in self.POS_CONSTRAINTS.items():
-            pos_indices = candidate_df[candidate_df["position"] == pos].index.tolist()
-            if (
-                pos_indices
-            ):  # Only add constraints if the position actually exists in the data
-                constraints.append(
-                    pulp.lpSum([decision_vars[i] for i in pos_indices]) >= min_pos
-                )
-                constraints.append(
-                    pulp.lpSum([decision_vars[i] for i in pos_indices]) <= max_pos
-                )
+            # label-based index where position == pos
+            pos_labels = candidate_df.index[candidate_df["position"] == pos].tolist()
+            # convert to integer positions
+            pos_ints = [candidate_df.index.get_loc(lbl) for lbl in pos_labels]
+
+            constraints.append(
+                pulp.lpSum([decision_vars[i] for i in pos_ints]) >= min_pos
+            )
+            constraints.append(
+                pulp.lpSum([decision_vars[i] for i in pos_ints]) <= max_pos
+            )
         return constraints
 
     def select(self):
-
-        # 1) Solve the problem
         selected_subset = super().select()
-
-        # 2) Mark columns
+        # Mark columns
         self.candidate_df["xi"] = 0
         self.candidate_df.loc[selected_subset.index, "xi"] = 1
 
-        return self.candidate_df.loc[self.candidate_df["xi"] == 1]
+        return self.candidate_df

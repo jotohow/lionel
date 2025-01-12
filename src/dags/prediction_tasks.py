@@ -117,10 +117,32 @@ class SelectTeam(PredictionTask):
         xvsel = XVSelector(df_pred, pred_var)
         xvsel.select()
 
-        xisel = XISelector(xvsel.selected_df, pred_var)
+        df_pred = xvsel.candidate_df # returns a df with all the players (indexed 0-...)
+        df_xv = df_pred.loc[df_pred.xv == 1] # returns a df with the selected players
+
+        xisel = XISelector(df_xv, pred_var)
         xisel.select()
 
-        return xisel.candidate_df
+        df_pred = xvsel.candidate_df # but then the indexes are all messed up... god this was a dumb idea
+
+
+
+
+        # take df_pred, add the selection columns
+        df_pred["xv"] = 0
+        df_pred.loc[xvsel.selected_df.index, "xv"] = 1
+        df_pred["xi"] = 0
+        df_pred.loc[xisel.selected_df.index, "xi"] = 1
+        df_pred["captain"] = 0
+
+        print(df_pred)
+
+        # add the captain column
+        captain_index = xvsel.selected_df.loc[xvsel.selected_df.captain==1].index
+        captain_index = captain_index[0]
+        df_pred.loc[captain_index, "captain"] = 1
+
+        return df_pred
 
 
 class LoadSelection(PredictionTask):
@@ -246,4 +268,4 @@ class PredictionTasks(luigi.WrapperTask):
 
 
 if __name__ == "__main__":
-    luigi.build([PredictionTasks(next_gw=next_gw, season=season)])
+    luigi.build([PredictionTasks(next_gw=next_gw, season=season)], local_scheduler=True)

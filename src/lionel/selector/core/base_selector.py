@@ -19,9 +19,14 @@ class BaseSelector:
         """
         :param candidate_df: DataFrame containing all candidate items (e.g. players).
                Must have a unique identifier for each row (e.g. player_id).
+               The original index is preserved to allow re-indexing or referencing
+               outside the class.
         """
-        self.candidate_df = candidate_df.reset_index(drop=True)
+        self.candidate_df = candidate_df
         self.selected_df = pd.DataFrame(columns=self.candidate_df.columns)
+
+        # We'll use integer-based indexing (range) for decision_vars,
+        # but keep track of the DataFrame length
         self.num_players = len(self.candidate_df)
 
         # Create a binary decision variable x_i for each row/player
@@ -37,7 +42,6 @@ class BaseSelector:
         self.objective_func = None
         self.custom_constraints = []
 
-    # is this needed? It's just masking smoething basic..
     def set_objective_function(self, objective_func):
         """
         Sets the objective function for the solver.
@@ -58,35 +62,40 @@ class BaseSelector:
         """
         Finalizes the objective & constraints, solves the problem, and returns
         the chosen items (players).
-        :return: A subset of candidate_df that were selected by the solver.
+        :return: A subset of candidate_df that were selected by the solver (preserving
+                 the original DataFrame index).
         """
-        # 1) Set the objective if provided
+        # 1) Check that an objective function is defined
         if self.objective_func is None:
             raise ValueError(
                 "No objective function has been set. Call set_objective_function() first."
             )
 
+        # 2) Set the objective
         self.problem.setObjective(
             self.objective_func(self.candidate_df, self.decision_vars)
         )
 
-        # 2) Add all custom constraints
+        # 3) Add all custom constraints
         for cfunc in self.custom_constraints:
             constraints = cfunc(self.candidate_df, self.decision_vars)
             if isinstance(constraints, list):
-                # If the function returns multiple constraints
                 for con in constraints:
                     self.problem.addConstraint(con)
             else:
-                # If a single constraint is returned
                 self.problem.addConstraint(constraints)
 
-        # 3) Solve the problem
+        # 4) Solve the problem
         self.problem.solve(pulp.PULP_CBC_CMD(msg=0))
 
-        # 4) Collect selected players
+        # 5) Identify which rows are selected
         selected_indices = [
             i for i, var in enumerate(self.decision_vars) if pulp.value(var) == 1
         ]
-        self.selected_df = self.candidate_df.loc[selected_indices].copy()
+
+        # Convert integer positions -> original DataFrame index
+        selected_index_labels = self.candidate_df.index[selected_indices]
+
+        # 6) Create selected_df
+        self.selected_df = self.candidate_df.loc[selected_index_labels].copy()
         return self.selected_df
