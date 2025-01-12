@@ -1,7 +1,0 @@
-{
-    "draws": 250,
-    "tune": 50,
-    "chains": 3,
-    "target_accept": 0.95,
-    "progressbar": true
-}
