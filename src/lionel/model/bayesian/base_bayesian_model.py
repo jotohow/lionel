@@ -13,7 +13,6 @@ from lionel.model.base_model import LionelBaseModel
 class BaseBayesianModel(ModelBuilder, LionelBaseModel):
     """
     Generic Bayesian base class that extends ModelBuilder from pymc_marketing.
-    Moved 'fit' and 'save' methods (plus associated logic) here from FPLPointsModel.
     """
 
     def fit(
@@ -29,8 +28,6 @@ class BaseBayesianModel(ModelBuilder, LionelBaseModel):
         Mask base class - ensure that y is passed.
         Calls super().fit(...) to leverage pymc_marketing's ModelBuilder logic.
         """
-        # EXACT code moved verbatim from the child's fit method:
-        # "def fit(...): super().fit(X, y, progressbar, predictor_names, random_seed, **kwargs)"
         super().fit(X, y, progressbar, predictor_names, random_seed, **kwargs)
 
     def save(self, fname: str) -> None:
@@ -54,8 +51,6 @@ class BaseBayesianModel(ModelBuilder, LionelBaseModel):
         Examples
         --------
         """
-        # EXACT code moved verbatim from the child's save method:
-        # (We assume 'self.idata', 'self.set_idata_attrs()', etc. exist)
         if not (self.idata is not None and "posterior" in self.idata):
             raise RuntimeError("The model hasn't been fit yet, call .fit() first")
 

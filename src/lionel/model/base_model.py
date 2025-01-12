@@ -31,13 +31,13 @@ class LionelBaseModel(ABC):
     @abstractmethod
     def save(self, filepath: str):
         """
-        Optional: save the model to the specified filepath.
+        Save the model to the specified filepath.
         """
         pass
 
     @abstractmethod
     def load(self, filepath: str):
         """
-        Optional: load the model from the specified filepath.
+        Load the model from the specified filepath.
         """
         pass

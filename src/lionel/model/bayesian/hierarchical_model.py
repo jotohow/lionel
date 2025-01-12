@@ -1,5 +1,3 @@
-# fpl_points_model.py
-
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -11,7 +9,6 @@ import pytensor.tensor as pt
 import xarray as xr
 from pymc.util import RandomState
 
-# Import the new base class
 from .base_bayesian_model import BaseBayesianModel
 
 
@@ -322,7 +319,6 @@ class HierarchicalPointsModel(BaseBayesianModel):
         Returns:
             None
         """
-        # (Unchanged from original)
         assert all(
             col in X.columns for col in self.EXPECTED_COLUMNS
         ), f"Missing columns: {set(self.EXPECTED_COLUMNS) - set(X.columns)}"
@@ -462,9 +458,6 @@ class HierarchicalPointsModel(BaseBayesianModel):
 
     @classmethod
     def get_minutes_estimate(cls, df, players):
-        """
-        (Unchanged from original)
-        """
         assert df.player.nunique() == len(players)
         df_mins = (
             df.sort_values(["season", "gameweek"], ascending=[True, True])
@@ -476,17 +469,11 @@ class HierarchicalPointsModel(BaseBayesianModel):
 
     @property
     def pos_map(self):
-        """
-        (Unchanged from original)
-        """
         positions = ["GK", "DEF", "MID", "FWD"]
         return {pos: i for i, pos in enumerate(positions)}
 
     @classmethod
     def _get_no_contribution(cls, X):
-        """
-        (Unchanged from original)
-        """
         return np.where(
             X.is_home,
             X.home_goals - X.goals_scored - X.assists,
@@ -494,9 +481,6 @@ class HierarchicalPointsModel(BaseBayesianModel):
         )
 
     def summarise_players(self):
-        """
-        (Unchanged from original)
-        """
         df_theta = az.summary(self.idata, var_names=["theta"])
         df_theta = df_theta["mean"].reset_index()
 
@@ -542,9 +526,6 @@ class HierarchicalPointsModel(BaseBayesianModel):
         ]
 
     def summarise_teams(self):
-        """
-        (Unchanged from original)
-        """
         df_beta = az.summary(self.idata, var_names=["beta_attack", "beta_defence"])
         df_beta = df_beta["mean"].reset_index()
 
