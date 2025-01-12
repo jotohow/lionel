@@ -1,4 +1,4 @@
-name: lionel2
+name: lionel3
 channels:
   - conda-forge
   - defaults
@@ -7,19 +7,10 @@ dependencies:
   - numpy
   - pandas
   - pip
-  - plotly
   - ipykernel
-  - pytest
-  - pytorch
   - pymc>=5
-  - arviz
-  - seaborn
   - pymc-marketing>=0.9.0
-  - sqlalchemy
+  - arviz=0.19.0
+  - seaborn
   - pip:
     - pulp
-    - python-dotenv
-    - requests
-    - luigi
-    - git+https://github.com/jth500/scrapl.git
-    # - apache-airflow[celery]==2.10.2" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.10.2/constraints-3.8.txt"

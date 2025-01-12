@@ -1,29 +1,23 @@
 [tool.poetry]
 name = "lionel"
-version = "0.1.0"
-description = "A Fantasy Premier League Team Optimisation Tool"
+version = "0.1.1"
+description = "Predict fantasy player points and optimise the team"
 authors = ["jth500 <jtobyh@gmail.com>"]
 license = "MIT"
 readme = "README.md"
+homepage = "https://github.com/jth500/lionel"  # Optional
+repository = "https://github.com/jth500/lionel"
+
 
 [tool.poetry.dependencies]
-python = ">=3.11,<3.13"
-numpy = "^2.1.1"
-pandas = "^2.2.3"
-plotly = "^5.24.1"
-ipykernel = "^6.29.5"
-pytest = "^8.3.3"
-pymc = ">=5"
-arviz = "^0.20.0"
-seaborn = "^0.13.2"
-pymc-marketing = "^0.9.0"
-SQLAlchemy = "^2.0.35"
-PuLP = "^2.9.0"
-python-dotenv = "^1.0.1"
-requests = "^2.32.3"
-scrapl = {git = "https://github.com/jth500/scrapl.git"}
-torch = "^2.4.1"
-
+python = "^3.11"
+numpy = "*"
+pandas = "*"
+pymc = "^5.0"
+pymc-marketing = ">=0.9.0"
+arviz = "==0.19.0"
+seaborn = "*"
+pulp = "*"
 
 [build-system]
 requires = ["poetry-core"]

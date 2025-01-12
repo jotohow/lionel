@@ -55,6 +55,12 @@ You can use the existing selection classes (e.g., for picking a 15-player squad 
 
 ### Using pip
 
+The released version
+```bash
+pip install lionel
+```
+
+Latest development version
 ```bash
 pip install git+https://github.com/jth500/lionel.git
 ```
