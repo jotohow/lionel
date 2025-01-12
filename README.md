@@ -1,34 +1,61 @@
 # Lionel
 
-**Lionel** is a Fantasy Premier League (FPL) team optimization tool that uses Bayesian hierarchical modeling and linear programming to predict and maximize expected points.
+**Lionel** is a Fantasy Premier League (FPL) team optimization tool that serves **two primary goals**:
+
+1. **Provide code to predict fantasy player points** using Bayesian hierarchical modeling.  
+2. **Offer an extendable selection/optimization framework** for building squads under FPL-style constraints (budget, positions, transfers, etc.).
+
+With **Lionel**, you can either use the existing selection classes (e.g., for picking a 15-player squad or 11-player lineup) or adapt the underlying selection framework to build new team selection techniques.
+
+---
 
 ## Table of Contents
 
 - [Features](#features)
 - [Installation](#installation)
+  - [Using pip](#using-pip)
+  - [Cloning the Repository](#cloning-the-repository)
 - [Usage](#usage)
   - [Predicting Expected Points](#predicting-expected-points)
   - [Selecting an Optimal Team](#selecting-an-optimal-team)
+  - [Extensibility for Custom Optimization](#extensibility-for-custom-optimization)
+- [Examples](#examples)
 - [Data Sources](#data-sources)
 - [Web Application](#web-application)
 - [Contributing](#contributing)
+  - [How to Contribute](#how-to-contribute)
+  - [Code of Conduct](#code-of-conduct)
 - [License](#license)
 - [Contact](#contact)
 - [Acknowledgements](#acknowledgements)
 
+---
+
 ## Features
 
-- **Bayesian Hierarchical Modeling:** Predict player performance using PyMC's No-U-Turn Sampler.
-- **Linear Programming Optimization:** Optimize team selection within budget and positional constraints using PuLP.
-- **Pipeline Management:** Handle data workflows with Luigi.
-- **Web Interface:** Access team selections and model details via a web application.
-- **Open Source:** Contributions welcomed!
+- **Bayesian Hierarchical Modeling**  
+  Predict player performance using PyMC’s No-U-Turn Sampler
+
+- **Linear Programming Optimization**  
+  Optimize team selection within budget, positional, and transfer constraints using PuLP.
+
+- **Modular & Extendable**  
+  A core `BaseSelector` class plus specialized selectors (XV, XI, Update XV, etc.) let you add custom constraints/objectives for new or unanticipated use cases.
+
+- **Pipeline Management**  
+  Handle data preparation and model training workflows with Luigi.
+
+- **Web Interface**  
+  Access team selections and model details via a web application.
+
+- **Open Source**  
+  Contributions are welcomed!
+
+---
 
 ## Installation
 
-Lionel can be installed using `pip` or by cloning the repository.
-
-### Using `pip`
+### Using pip
 
 ```bash
 pip install git+https://github.com/jth500/lionel.git
@@ -42,11 +69,13 @@ cd lionel
 pip install -r requirements.txt
 ```
 
+---
+
 ## Usage
 
 ### Predicting Expected Points
 
-Use the `FPLPointsModel` to build and fit the Bayesian hierarchical model.
+One core functionality is **predicting FPL points** using a Bayesian hierarchical model:
 
 ```python
 import pandas as pd
@@ -81,87 +110,95 @@ predictions = fpl_model.predict(df, extend_idata=False, combined=False, predicti
 print(predictions)
 ```
 
-**Output:**
-```
-[8.1046909 , 4.69126912, 6.41898185, 8.3587504 , 2.86888174, 6.79323443,
- 7.11748533, 3.33156234, 4.50141007, 6.13532871, 1.75916264, 5.61056724]
-```
-
 ### Selecting an Optimal Team
 
-Use `NewXVSelector` and `XISelector` to select the starting XI and bench players.
+Another main feature is **team selection**. The project provides several specialized selectors, each inheriting from a base optimization class:
+
+- **`XVSelector`**: Pick a 15-player squad (budget, max from each team, positional constraints, plus 1 captain).  
+- **`XISelector`**: From an existing 15-player squad, select the best 11.  
+- **`UpdateXVSelector`**: Make a limited number of transfers to an existing 15-player squad.
+
+#### Example (Selecting XV)
 
 ```python
 import pandas as pd
-import numpy as np
-from lionel.selector import NewXVSelector, XISelector
+from lionel.selector.fpl.xv_selector import XVSelector 
 
-# Sample data
-df = pd.DataFrame({
-    'player': [f"player_{i}" for i in range(20)],
-    'team_name': [f'team_{i%10}' for i in range(20)],
-    'position': ["FWD"]*3 + ["MID"]*8 + ["DEF"]*7 + ["GK"]*2,
-    'value': [100, 90, 55, 45, 100, 90, 55, 45, 100, 90, 55, 45, 100, 90, 55, 45, 100, 90, 55, 45],
-    'points_pred': np.random.normal(5, 2, 20),
-    'xv': [0]*20,
-    'xi': [0]*20,
-    'captain': [0]*20,
-})
+data = [
+    {"player_id": 1, "name": "Player A1", "team": "Arsenal", "position": "GK", "price": 5.0, "predicted_points": 50},
+    # ... more players ...
+]
+candidate_df = pd.DataFrame(data)
 
-# Select starting XI
-xv_selector = NewXVSelector('points_pred')
-xv_selector.build_problem(df, budget=1000)
-xv_selector.solve()
+# Instantiate XVSelector
+selector = XVSelector(candidate_df, pred_var="predicted_points", budget=1000)
+optimal_squad = selector.select()
 
-# Select bench players
-xi_selector = XISelector("points_pred")
-xi_selector.build_problem(xv_selector.data)
-xi_selector.solve()
-
-# Display selected players
-selected_players = xi_selector.data[xi_selector.data.xv == 1]
-print(selected_players)
+print("Selected 15-player squad:")
+print(optimal_squad[optimal_squad["xv"] == 1])
+print("\nCaptain chosen:")
+print(optimal_squad[optimal_squad["captain"] == 1])
 ```
 
-**Sample Output:**
+### Extensibility for Custom Optimization
 
-| player    | team_name | position | value | points_pred | xv | xi | captain |
-|-----------|-----------|----------|-------|-------------|----|----|---------|
-| player_0  | team_0    | FWD      | 100   | 4.55        | 1  | 1  | 0       |
-| player_1  | team_1    | FWD      | 90    | 4.95        | 1  | 1  | 0       |
-| player_2  | team_2    | FWD      | 55    | 7.78        | 1  | 1  | 0       |
-| player_3  | team_3    | MID      | 45    | 4.96        | 1  | 1  | 0       |
-| player_5  | team_5    | MID      | 90    | 4.55        | 1  | 1  | 0       |
-| player_7  | team_7    | MID      | 45    | 3.11        | 1  | 0  | 0       |
-| player_9  | team_9    | MID      | 90    | 4.90        | 1  | 1  | 0       |
-| player_10 | team_0    | MID      | 55    | 5.30        | 1  | 1  | 0       |
-| player_11 | team_1    | DEF      | 45    | 2.45        | 1  | 0  | 0       |
-| player_13 | team_3    | DEF      | 90    | 6.90        | 1  | 1  | 0       |
-| player_14 | team_4    | DEF      | 55    | 10.78       | 1  | 1  | 1       |
-| player_15 | team_5    | DEF      | 45    | 3.83        | 1  | 0  | 0       |
-| player_17 | team_7    | DEF      | 90    | 6.71        | 1  | 1  | 0       |
-| player_18 | team_8    | GK       | 55    | 3.96        | 1  | 0  | 0       |
-| player_19 | team_9    | GK       | 45    | 7.77        | 1  | 1  | 0       |
+Under the hood, these selectors use a **`BaseSelector`** that:
+
+- Defines binary decision variables for each player  
+- Sets an objective function (e.g., maximize total predicted points)  
+- Applies constraints (budget, positions, etc.)  
+- Solves the optimization with PuLP or another solver
+
+You can **create your own selectors** or **custom constraints** by subclassing `BaseSelector`. For instance, you might:
+
+- Set an entirely different objective (e.g., risk-adjusted points).  
+- Enforce different constraints (e.g., “must include at least 2 defenders from Team X”).  
+
+This modular design makes it straightforward to plug in new logic without rewriting the entire optimization code.
+
+---
+
+## Examples
+
+We provide a set of **example scripts** (located in `examples/`) to demonstrate various use cases:
+
+1. **`example_xv_selection.py`**  
+   Demonstrates how to use `XVSelector` to pick a 15-player squad from a larger candidate pool.
+
+2. **`example_xi_selection.py`**  
+   Shows using `XISelector` to choose an 11-player lineup from a 15-player squad.
+
+3. **`example_update_xv.py`**  
+   Demonstrates how `UpdateXVSelector` can modify an existing 15-player squad, making a limited number of transfers.
+
+4. **`example_custom_constraints.py`**  
+   Illustrates creating **custom constraints** with `BaseSelector` for specialized optimization scenarios (e.g., ensuring at least one player from a specific team).
+
+---
 
 ## Data Sources
 
-- **Fantasy Premier League (Pre-2024/25):** [Vaastav/Fantasy-Premier-League](https://github.com/vaastav/Fantasy-Premier-League)
+- **Fantasy Premier League (Pre-2024/25):** [Vaastav/Fantasy-Premier-League](https://github.com/vaastav/Fantasy-Premier-League)  
 - **Betting Odds:** [The Odds API](https://the-odds-api.com)
+
+---
 
 ## Web Application
 
-Access the web application for team selections and model information:
+A simple **web application** built with Streamlit offers a GUI to explore model predictions and recommended teams:
 
 [https://lionel.streamlit.app/](https://lionel.streamlit.app/)
 
+---
+
 ## Contributing
 
-Contributions are welcome. Please follow the guidelines below.
+We welcome contributions of all kinds—whether it’s new selection strategies, improved data pipelines, or expanded analytics.
 
 ### How to Contribute
 
-1. **Fork the Repository**
-   - Click the **Fork** button on the repository page.
+1. **Fork the Repository**  
+   Click the **Fork** button on the repository page.
 
 2. **Clone Your Fork**
    ```bash
@@ -174,41 +211,47 @@ Contributions are welcome. Please follow the guidelines below.
    git checkout -b feature/your-feature-name
    ```
 
-4. **Make Changes**
-   - Implement your feature or fix.
+4. **Implement Your Feature**  
+   Add or modify code in a clear, maintainable way.
 
 5. **Commit Changes**
    ```bash
-   git commit -m "Add feature: description"
+   git commit -m "Add feature: your description"
    ```
 
-6. **Push to Fork**
+6. **Push to Your Fork**
    ```bash
    git push origin feature/your-feature-name
    ```
 
-7. **Create a Pull Request**
-   - Navigate to the original repository and open a pull request.
+7. **Create a Pull Request**  
+   Open a PR from your fork to the main repository.
 
 ### Code of Conduct
 
-Please adhere to the [Code of Conduct](CODE_OF_CONDUCT.md).
+Please adhere to our [Code of Conduct](CODE_OF_CONDUCT.md) to foster an inclusive environment.
+
+---
 
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
 
+---
+
 ## Contact
 
-- **Email:** jtobyh@gmail.com
+- **Email:** [jtobyh@gmail.com](mailto:jtobyh@gmail.com)
 - **GitHub Issues:** [Issues Page](https://github.com/jth500/lionel/issues)
+
+---
 
 ## Acknowledgements
 
-- **[PyMC](https://www.pymc.io/welcome.html):** Bayesian modeling.
-- **[PuLP](https://coin-or.github.io/pulp/):** Linear programming.
-- **[Luigi](https://github.com/spotify/luigi):** Pipeline orchestration.
-- **[Vaastav/Fantasy-Premier-League](https://github.com/vaastav/Fantasy-Premier-League):** FPL data.
-- **[The Odds API](https://the-odds-api.com):** Betting odds data.
+- **[PyMC](https://www.pymc.io/welcome.html)** for Bayesian modeling 
+   - [Baio, Blangiardo (2010)](https://discovery.ucl.ac.uk/id/eprint/16040/) and [Alan Turing Institute](https://github.com/alan-turing-institute/AIrsenal) for model choice.
+- **[PuLP](https://coin-or.github.io/pulp/)** for linear programming  
+- **[Luigi](https://github.com/spotify/luigi)** for pipeline orchestration  
+- **[Vaastav/Fantasy-Premier-League](https://github.com/vaastav/Fantasy-Premier-League)** for historical FPL data  
+- **[The Odds API](https://the-odds-api.com)** for betting odds data  
 
----
