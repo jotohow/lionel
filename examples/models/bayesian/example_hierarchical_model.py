@@ -6,7 +6,6 @@ Shows how the hierarchical points model can be fit and used for posterior predic
 import numpy as np
 import pandas as pd
 
-# Adjust import paths to your actual project structure
 from lionel.model.bayesian.hierarchical_model import HierarchicalPointsModel
 
 
