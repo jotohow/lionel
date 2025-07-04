@@ -28,7 +28,14 @@ class BaseBayesianModel(ModelBuilder, LionelBaseModel):
         Mask base class - ensure that y is passed.
         Calls super().fit(...) to leverage pymc_marketing's ModelBuilder logic.
         """
-        super().fit(X, y, progressbar, predictor_names, random_seed, **kwargs)
+        super().fit(
+            X=X,
+            y=y,
+            progressbar=progressbar,
+            random_seed=random_seed,
+            predictor_names=predictor_names,
+            **kwargs,
+        )
 
     def save(self, fname: str) -> None:
         """
