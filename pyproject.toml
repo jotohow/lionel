@@ -1,31 +1,38 @@
-[tool.poetry]
+[project]
 name = "lionel"
-version = "0.1.2"
+version = "0.3.0"
 description = "Predict fantasy player points and optimise the team"
-authors = ["jth500 <jtobyh@gmail.com>"]
-license = "MIT"
+authors = [{ name = "jotohow", email = "jtobyh@gmail.com" }]
+license = { text = "MIT" }
 readme = "README.md"
-homepage = "https://github.com/jth500/lionel"  # Optional
-repository = "https://github.com/jth500/lionel"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy",
+    "pandas",
+    "pymc>=5.0,<6",
+    "pymc-marketing>=0.9.0",
+    "arviz==0.19.0",
+    "seaborn",
+    "pulp",
+    "requests",
+    "pydantic>=2",
+]
 
-[tool.poetry.dependencies]
-python = "^3.11"
-numpy = "*"
-pandas = "*"
-pymc = "^5.0"
-pymc-marketing = ">=0.9.0"
-arviz = "==0.19.0"
-seaborn = "*"
-pulp = "*"
+[project.urls]
+Homepage = "https://github.com/jth500/lionel"
+Repository = "https://github.com/jth500/lionel"
 
-[tool.poetry.dev-dependencies]
-black = "^24.10.0"
-pytest = "^6.2.0"
-flake8 = "^3.9.0"
-ipykernel = "*"
+[dependency-groups]
+dev = [
+    "black>=24.10.0",
+    "flake8>=7",
+    "ipykernel>=7.4.0",
+    "pandas>=3.0.6",
+    "pytest>=8",
+]
 
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=2.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.black]

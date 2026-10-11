@@ -26,6 +26,13 @@ REQUIRED_FIELDS = ("player_id", "team", "position", "price", "predicted_points")
 OPTIONAL_FIELDS = ("name", "xv", "xi", "captain")
 
 
+def coerce_player_id(value: object) -> object:
+    """A string of digits becomes an int, so "123" and 123 are the same id."""
+    if isinstance(value, str) and value.isdigit():
+        return int(value)
+    return value
+
+
 class Player(BaseModel):
     """One selection candidate.
 
@@ -52,9 +59,7 @@ class Player(BaseModel):
     @field_validator("player_id", mode="before")
     @classmethod
     def _digits_to_int(cls, value: object) -> object:
-        if isinstance(value, str) and value.isdigit():
-            return int(value)
-        return value
+        return coerce_player_id(value)
 
 
 def resolve_columns(columns: Mapping[str, str] | None = None) -> dict[str, str]:

@@ -1,22 +1,18 @@
-# TODO: Add common objectives that can be used by all selectors
-
-from abc import ABC
-
 import pulp
+from pydantic import BaseModel, ConfigDict
 
-from .base_selector import DecisionVars
+from .constraints import Variables
 from .player import Player
 
 
-class Objective(ABC):
-    pass
+class Objective(BaseModel):
+    """
+    Base class. `build` returns the expression that the selector maximises.
+    """
 
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
-class DefaultObjective(Objective):
-    def __init__(self, players: list[Player], decision_vars: DecisionVars, pred_var: str = "predicted_points") -> None:
-        self.players = players
-        self.decision_vars = decision_vars
-        self.pred_var = pred_var
+    type: str
 
-    def __call__(self) -> pulp.LpAffineExpression:
-        return pulp.lpSum(getattr(p, self.pred_var) * self.decision_vars[p.player_id] for p in self.players)
+    def build(self, players: list[Player], v: Variables) -> pulp.LpAffineExpression:
+        raise NotImplementedError

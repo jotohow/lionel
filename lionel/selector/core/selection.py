@@ -26,6 +26,8 @@ class Selection(BaseModel):
     "Optimal", `selected` is empty and `objective` is None. Call
     `raise_for_status()` to raise on failure.
 
+    `constraints` lists the labels of the constraints that were applied.
+
     `candidates` holds all the input players with the flags set. It is not
     part of `model_dump()` or the JSON, so that the output stays small.
     """
@@ -35,7 +37,8 @@ class Selection(BaseModel):
     status: str
     objective: float | None = None
     selected: list[Player] = Field(default_factory=list)
-    captain: Player | None = None
+    captain: Player | None = None  # TODO: FPL-specific behaviour should be moved out.
+    constraints: list[str] = Field(default_factory=list)
     candidates: list[Player] = Field(default_factory=list, exclude=True)
 
     def raise_for_status(self) -> None:
@@ -52,10 +55,7 @@ class Selection(BaseModel):
         fields = [*REQUIRED_FIELDS, *OPTIONAL_FIELDS]
         if all(p.name is None for p in self.candidates):
             fields.remove("name")
-        rows = [
-            {columns[f]: _cell(getattr(p, f)) for f in fields}
-            for p in self.candidates
-        ]
+        rows = [{columns[f]: _cell(getattr(p, f)) for f in fields} for p in self.candidates]
         return pd.DataFrame(rows, columns=[columns[f] for f in fields])
 
 
