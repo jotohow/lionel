@@ -1,92 +1,150 @@
+from collections.abc import Callable, Mapping, Sequence
+from typing import Self
+
 import pandas as pd
 import pulp
+from pydantic import TypeAdapter
+
+from .constraints import Constraint, CoreConstraint, Custom, DecisionVars, Variables
+from .objectives import Objective
+from .player import Player, PlayerId, players_from_dataframe, validate_players
+from .selection import OPTIMAL, Selection
+
+FLAG_FIELDS = ("xv", "xi", "captain")
 
 
-class BaseSelector:
+class Selector:
     """
-    A generic selector class for building optimization solutions.
+    Picks players by maximising an objective subject to constraints.
 
     Usage:
-        1) Provide a dataframe of 'players' or items to choose from.
-        2) Override or call `set_constraints()` to add constraints.
-        3) Define or override an objective function with `set_objective_function()`.
-        4) Call `select()` to solve the optimization problem.
+        1) Create the selector from a list of `Player`, or with `from_dataframe()`.
+        2) Give it an objective and constraints. Add more with `add_constraint()`.
+        3) Call `select()` to solve the problem.
 
-    Subclasses should override or extend these methods for specific logic.
+    Constraints are `Constraint` objects, dicts of the same fields (chosen by `type`),
+    or callables `(players, x)` for Python authors. `x` maps each `player_id` to its
+    binary "selected" variable.
+
+    `flags` maps a variable family to the `Player` flag that marks it in the result,
+    for example {"selected": "xv", "captain": "captain"}.
     """
 
-    def __init__(self, candidate_df: pd.DataFrame):
+    # Used to validate constraints that are given as dicts. Subclasses add their own types.
+    CONSTRAINT_ADAPTER: TypeAdapter = TypeAdapter(CoreConstraint)
+
+    def __init__(
+        self,
+        players: Sequence[Player | Mapping],
+        *,
+        objective: Objective,
+        constraints: Sequence[Constraint | Mapping | Callable] = (),
+        flags: Mapping[str, str] | None = None,
+    ) -> None:
         """
-        :param candidate_df: DataFrame containing all candidate items (e.g. players).
-               Must have a unique identifier for each row (e.g. player_id).
-               The original index is preserved to allow re-indexing or referencing
-               outside the class.
+        :param players: The candidates, as `Player` or dicts of the same fields.
+               Each candidate needs a unique `player_id`.
+        :param objective: The sum to maximise.
+        :param constraints: The constraints to apply, in order.
+        :param flags: Variable family -> `Player` flag field to set in the result.
         """
-        self.candidate_df = candidate_df
-        self.selected_df = pd.DataFrame(columns=self.candidate_df.columns)
+        self.players: list[Player] = validate_players(players)
+        self.num_players: int = len(self.players)
+        self.objective = objective
+        self.flags: dict[str, str] = dict(flags or {})
+        bad = set(self.flags.values()) - set(FLAG_FIELDS)
+        if bad:
+            raise ValueError(f"flags must map to one of {FLAG_FIELDS}, got {sorted(bad)}")
 
-        # We'll use integer-based indexing (range) for decision_vars,
-        # but keep track of the DataFrame length
-        self.num_players = len(self.candidate_df)
+        self.variables = Variables(self.players)
+        self.constraints: list[Constraint] = []
+        for constraint in constraints:
+            self.add_constraint(constraint)
 
-        # Create a binary decision variable x_i for each row/player
-        self.decision_vars = [pulp.LpVariable(f"x_{i}", cat=pulp.LpBinary) for i in range(self.num_players)]
+    @property
+    def decision_vars(self) -> DecisionVars:
+        """The binary "selected" variable for each player."""
+        return self.variables["selected"]
 
-        # Create the base problem
-        self.problem = pulp.LpProblem("GenericSelectorProblem", pulp.LpMaximize)
-
-        # Default objective and constraints are empty
-        self.objective_func = None
-        self.custom_constraints = []
-
-    def set_objective_function(self, objective_func):
+    @classmethod
+    def from_dataframe(cls, df: pd.DataFrame, columns: Mapping[str, str] | None = None, **kwargs) -> Self:
         """
-        Sets the objective function for the solver.
-        :param objective_func: A callable that takes (candidate_df, decision_vars)
-                               and returns a PuLP expression.
+        Create the selector from a DataFrame, with one row for each candidate.
+        :param columns: Maps `Player` field names to column names, for example
+               {"player_id": "player_id", "price": "value"}. Unlisted fields use `DEFAULT_COLUMNS`.
+        :param kwargs: Passed to the constructor, for example `budget`.
         """
-        self.objective_func = objective_func
+        return cls(players_from_dataframe(df, columns), **kwargs)
 
-    def add_constraint(self, constraint_func):
+    def add_constraint(self, constraint: Constraint | Mapping | Callable) -> None:
         """
-        Adds a constraint to the solver.
-        :param constraint_func: A callable that takes (candidate_df, decision_vars)
-                                and returns a PuLP constraint or list of constraints.
+        Adds a constraint. A dict is validated by its `type`. A callable is wrapped in `Custom`.
         """
-        self.custom_constraints.append(constraint_func)
+        if callable(constraint) and not isinstance(constraint, Constraint):
+            constraint = Custom(fn=constraint)
+        elif isinstance(constraint, Mapping):
+            constraint = self.CONSTRAINT_ADAPTER.validate_python(dict(constraint))
+        self.constraints.append(constraint)
 
-    def select(self):
+    def select(self) -> Selection:
         """
-        Finalizes the objective & constraints, solves the problem, and returns
-        the chosen items (players).
-        :return: A subset of candidate_df that were selected by the solver (preserving
-                 the original DataFrame index).
+        Builds the problem, solves it, and returns the result.
+        If the solver does not find an optimal selection, `Selection.status` says why
+        and `Selection.selected` is empty.
         """
-        # 1) Check that an objective function is defined
-        if self.objective_func is None:
-            raise ValueError("No objective function has been set. Call set_objective_function() first.")
+        labels = _unique([c.label() for c in self.constraints])
 
-        # 2) Set the objective
-        self.problem.setObjective(self.objective_func(self.candidate_df, self.decision_vars))
+        # A new problem for each call, so a second call does not repeat the constraints
+        self.problem = pulp.LpProblem("SelectorProblem", pulp.LpMaximize)
+        self.problem.setObjective(self.objective.build(self.players, self.variables))
+        used: set[str] = set()
+        for constraint in self.constraints:
+            try:
+                rows = constraint.apply(self.players, self.variables)
+            except (KeyError, ValueError) as e:
+                raise ValueError(f"constraint {constraint.label()!r}: {type(e).__name__}: {e}") from e
+            names = [constraint.label()] if len(rows) == 1 else [f"{constraint.label()}_{i}" for i in range(len(rows))]
+            for name, row in zip(names, rows):
+                self.problem.addConstraint(row, _unique([name], used)[0])
 
-        # 3) Add all custom constraints
-        for cfunc in self.custom_constraints:
-            constraints = cfunc(self.candidate_df, self.decision_vars)
-            if isinstance(constraints, list):
-                for con in constraints:
-                    self.problem.addConstraint(con)
-            else:
-                self.problem.addConstraint(constraints)
-
-        # 4) Solve the problem
         self.problem.solve(pulp.PULP_CBC_CMD(msg=0))
 
-        # 5) Identify which rows are selected
-        selected_indices = [i for i, var in enumerate(self.decision_vars) if pulp.value(var) == 1]
+        status = pulp.LpStatus[self.problem.status]
+        if status != OPTIMAL:
+            return Selection(status=status, candidates=self.players, constraints=labels)
 
-        # Convert integer positions -> original DataFrame index
-        selected_index_labels = self.candidate_df.index[selected_indices]
+        selected_ids = self._chosen(self.decision_vars)
+        flags = {field: self._chosen(self.variables[family]) for family, field in self.flags.items()}
+        candidates = [
+            p.model_copy(update={field: p.player_id in ids for field, ids in flags.items()}) for p in self.players
+        ]
+        selected = [p for p in candidates if p.player_id in selected_ids]
+        return Selection(
+            status=status,
+            objective=pulp.value(self.problem.objective),
+            selected=selected,
+            captain=next((p for p in selected if p.captain), None),
+            constraints=labels,
+            candidates=candidates,
+        )
 
-        # 6) Create selected_df
-        self.selected_df = self.candidate_df.loc[selected_index_labels].copy()
-        return self.selected_df
+    @staticmethod
+    def _chosen(variables: DecisionVars) -> set[PlayerId]:
+        """The ids whose binary variable equals 1 after the solve."""
+        return {pid for pid, var in variables.items() if (pulp.value(var) or 0) > 0.5}
+
+
+BaseSelector = Selector
+
+
+def _unique(names: list[str], used: set[str] | None = None) -> list[str]:
+    """Adds a suffix to repeated names. `used` carries the names between calls."""
+    used = set() if used is None else used
+    result = []
+    for name in names:
+        candidate, n = name, 2
+        while candidate in used:
+            candidate, n = f"{name}_{n}", n + 1
+        used.add(candidate)
+        result.append(candidate)
+    return result
