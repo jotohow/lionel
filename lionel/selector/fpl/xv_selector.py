@@ -16,15 +16,15 @@ class XVSelector(BaseSelector):
     """
 
     # Example distribution. Adjust as needed.
-    POS_CONSTRAINTS = {"GK": 2, "DEF": 5, "MID": 5, "FWD": 3}
-    MAX_PER_TEAM = 3
+    POS_CONSTRAINTS: dict[str, int] = {"GK": 2, "DEF": 5, "MID": 5, "FWD": 3}
+    MAX_PER_TEAM: int = 3
 
     def __init__(
         self,
         candidate_df: pd.DataFrame,
         pred_var: str = "predicted_points",
         budget: float = 1000.0,
-    ):
+    ) -> None:
         super().__init__(candidate_df)
         self.pred_var = pred_var
         self.budget = budget
@@ -40,7 +40,7 @@ class XVSelector(BaseSelector):
             raise ValueError("'position' column is required for position constraints.")
 
         # Create captain decision variables (one per row)
-        self.captain_vars = [pulp.LpVariable(f"capt_{i}", cat=pulp.LpBinary) for i in range(self.num_players)]
+        self.captain_vars: list[pulp.LpVariable] = [pulp.LpVariable(f"capt_{i}", cat=pulp.LpBinary) for i in range(self.num_players)]
 
         # Objective: sum( (x_i + c_i)*pred_var )
         self.set_objective_function(self._objective_with_captains)
@@ -53,7 +53,7 @@ class XVSelector(BaseSelector):
         self.add_constraint(self._constraint_exactly_one_captain)
         self.add_constraint(self._constraint_captain_must_be_selected)
 
-    def _objective_with_captains(self, candidate_df, decision_vars):
+    def _objective_with_captains(self, candidate_df: pd.DataFrame, decision_vars: list[pulp.LpVariable]) -> pulp.LpAffineExpression:
         """
         Maximize sum of predicted points + an extra predicted_points for the captain.
         i.e. (x_i + c_i)*predicted_points[i].
@@ -63,17 +63,17 @@ class XVSelector(BaseSelector):
             for i in range(self.num_players)
         )
 
-    def _constraint_xv_size(self, candidate_df, decision_vars):
+    def _constraint_xv_size(self, candidate_df: pd.DataFrame, decision_vars: list[pulp.LpVariable]) -> pulp.LpConstraint:
         """Enforce exactly 15 selected players."""
         return pulp.lpSum(decision_vars) == 15
 
-    def _constraint_budget(self, candidate_df, decision_vars):
+    def _constraint_budget(self, candidate_df: pd.DataFrame, decision_vars: list[pulp.LpVariable]) -> pulp.LpConstraint:
         """Total cost of selected players must not exceed the budget."""
         return (
             pulp.lpSum(decision_vars[i] * candidate_df.iloc[i]["price"] for i in range(self.num_players)) <= self.budget
         )
 
-    def _constraint_positions(self, candidate_df, decision_vars):
+    def _constraint_positions(self, candidate_df: pd.DataFrame, decision_vars: list[pulp.LpVariable]) -> list[pulp.LpConstraint]:
         """
         Enforce standard position requirements.
         Example: {'GK':2, 'DEF':5, 'MID':5, 'FWD':3}.
@@ -87,7 +87,7 @@ class XVSelector(BaseSelector):
             constraints.append(pulp.lpSum(decision_vars[j] for j in int_positions) == required_count)
         return constraints
 
-    def _constraint_max_team(self, candidate_df, decision_vars):
+    def _constraint_max_team(self, candidate_df: pd.DataFrame, decision_vars: list[pulp.LpVariable]) -> list[pulp.LpConstraint]:
         """
         Enforce no more than MAX_PER_TEAM players from the same club.
         """
@@ -99,11 +99,11 @@ class XVSelector(BaseSelector):
             constraints.append(pulp.lpSum(decision_vars[j] for j in int_positions) <= self.MAX_PER_TEAM)
         return constraints
 
-    def _constraint_exactly_one_captain(self, candidate_df, decision_vars):
+    def _constraint_exactly_one_captain(self, candidate_df: pd.DataFrame, decision_vars: list[pulp.LpVariable]) -> pulp.LpConstraint:
         """Enforce exactly 1 captain among all selected players."""
         return pulp.lpSum(self.captain_vars) == 1
 
-    def _constraint_captain_must_be_selected(self, candidate_df, decision_vars):
+    def _constraint_captain_must_be_selected(self, candidate_df: pd.DataFrame, decision_vars: list[pulp.LpVariable]) -> list[pulp.LpConstraint]:
         """
         For each player i: x_i >= c_i
         (i.e. a player can't be captain if not in the team).
@@ -113,7 +113,7 @@ class XVSelector(BaseSelector):
             constraints.append(decision_vars[i] - self.captain_vars[i] >= 0)
         return constraints
 
-    def select(self):
+    def select(self) -> pd.DataFrame:
         """
         Solves the optimization problem and returns the chosen subset of candidate_df.
         Also sets 'xv'=1 for selected players, 'captain'=1 for the captain.

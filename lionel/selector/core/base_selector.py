@@ -1,5 +1,8 @@
+from collections.abc import Callable
+
 import pandas as pd
 import pulp
+
 
 
 class BaseSelector:
@@ -15,31 +18,31 @@ class BaseSelector:
     Subclasses should override or extend these methods for specific logic.
     """
 
-    def __init__(self, candidate_df: pd.DataFrame):
+    def __init__(self, candidate_df: pd.DataFrame) -> None:
         """
         :param candidate_df: DataFrame containing all candidate items (e.g. players).
                Must have a unique identifier for each row (e.g. player_id).
                The original index is preserved to allow re-indexing or referencing
                outside the class.
         """
-        self.candidate_df = candidate_df
+        self.candidate_df: pd.DataFrame = candidate_df
         self.selected_df = pd.DataFrame(columns=self.candidate_df.columns)
 
         # We'll use integer-based indexing (range) for decision_vars,
         # but keep track of the DataFrame length
-        self.num_players = len(self.candidate_df)
+        self.num_players: int = len(self.candidate_df)
 
         # Create a binary decision variable x_i for each row/player
-        self.decision_vars = [pulp.LpVariable(f"x_{i}", cat=pulp.LpBinary) for i in range(self.num_players)]
+        self.decision_vars: list[pulp.LpVariable] = [pulp.LpVariable(f"x_{i}", cat=pulp.LpBinary) for i in range(self.num_players)]
 
         # Create the base problem
         self.problem = pulp.LpProblem("GenericSelectorProblem", pulp.LpMaximize)
 
         # Default objective and constraints are empty
-        self.objective_func = None
-        self.custom_constraints = []
+        self.objective_func: Callable[[pd.DataFrame, list[pulp.LpVariable]], pulp.LpAffineExpression] | None = None
+        self.custom_constraints: list[Callable[[pd.DataFrame, list[pulp.LpVariable]], pulp.LpConstraint | list[pulp.LpConstraint]]] = []
 
-    def set_objective_function(self, objective_func):
+    def set_objective_function(self, objective_func: Callable[[pd.DataFrame, list[pulp.LpVariable]], pulp.LpAffineExpression]) -> None:
         """
         Sets the objective function for the solver.
         :param objective_func: A callable that takes (candidate_df, decision_vars)
@@ -47,7 +50,7 @@ class BaseSelector:
         """
         self.objective_func = objective_func
 
-    def add_constraint(self, constraint_func):
+    def add_constraint(self, constraint_func: Callable[[pd.DataFrame, list[pulp.LpVariable]], pulp.LpConstraint | list[pulp.LpConstraint]]) -> None:
         """
         Adds a constraint to the solver.
         :param constraint_func: A callable that takes (candidate_df, decision_vars)
@@ -55,7 +58,7 @@ class BaseSelector:
         """
         self.custom_constraints.append(constraint_func)
 
-    def select(self):
+    def select(self) -> pd.DataFrame:
         """
         Finalizes the objective & constraints, solves the problem, and returns
         the chosen items (players).

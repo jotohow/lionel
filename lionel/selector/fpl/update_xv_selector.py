@@ -24,7 +24,7 @@ class UpdateXVSelector(XVSelector):
         max_transfers: int = 1,
         pred_var: str = "predicted_points",
         budget: float = 1000.0,
-    ):
+    ) -> None:
         super().__init__(candidate_df, pred_var=pred_var, budget=budget)
         self.max_transfers = max_transfers
 
@@ -37,7 +37,7 @@ class UpdateXVSelector(XVSelector):
         # Add the constraint for the maximum number of new players
         self.add_constraint(self._constraint_max_transfers)
 
-    def _constraint_max_transfers(self, candidate_df, decision_vars):
+    def _constraint_max_transfers(self, candidate_df: pd.DataFrame, decision_vars: list[pulp.LpVariable]) -> pulp.LpConstraint:
         """
         For players who currently have xv=0 (not in the existing squad),
         limit how many of those can be added to at most 'max_transfers'.

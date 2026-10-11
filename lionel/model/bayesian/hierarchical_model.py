@@ -267,16 +267,20 @@ class HierarchicalPointsModel(BaseBayesianModel):
             X_teams_new[["home_team", "away_team", "season"]].apply(tuple, axis=1)
         )
         match_idx_new += final_match
-        _ = X_teams_new["home_team"].values
-        home_teams = np.array([np.where(self.teams == team)[0][0] for team in _])
-        _ = X_teams_new["away_team"].values
-        away_teams = np.array([np.where(self.teams == team)[0][0] for team in _])
+        home_teams = np.array(
+            [self._index_of(self.teams, team, "team") for team in X_teams_new["home_team"]]
+        )
+        away_teams = np.array(
+            [self._index_of(self.teams, team, "team") for team in X_teams_new["away_team"]]
+        )
 
         is_home = X["is_home"].values
         player_app_idx_, _ = pd.factorize(
             X[["home_team", "away_team", "season"]].apply(tuple, axis=1)
         )
-        player_idx_ = [np.where(self.players == player)[0][0] for player in X["player"]]
+        player_idx_ = [
+            self._index_of(self.players, player, "player") for player in X["player"]
+        ]
         position_idx = np.array(X["position"].map(self.pos_map))
 
         if X["minutes"].isnull().sum() > 0:
@@ -472,6 +476,21 @@ class HierarchicalPointsModel(BaseBayesianModel):
         positions = ["GK", "DEF", "MID", "FWD"]
         return {pos: i for i, pos in enumerate(positions)}
 
+    @staticmethod
+    def _index_of(labels, value, kind: str) -> int:
+        """Map a label to its training index; raise clearly if unseen at predict time."""
+        matches = np.where(labels == value)[0]
+        if len(matches) == 0:
+            known = list(labels[:20])
+            more = "" if len(labels) <= 20 else f" ... ({len(labels)} total)"
+            raise ValueError(
+                f"Unknown {kind} {value!r} at predict time; "
+                f"model was trained with {kind}s including {known}{more}. "
+                f"Filter prediction inputs to labels seen in training, "
+                f"or retrain with a wider window."
+            )
+        return int(matches[0])
+
     @classmethod
     def _get_no_contribution(cls, X):
         return np.where(
@@ -480,6 +499,8 @@ class HierarchicalPointsModel(BaseBayesianModel):
             X.away_goals - X.goals_scored - X.assists,
         )
 
+
+    # TODO: this is way too tied to specific format - e.g. the df_theta["player"].str.split( is breaking
     def summarise_players(self):
         df_theta = az.summary(self.idata, var_names=["theta"])
         df_theta = df_theta["mean"].reset_index()

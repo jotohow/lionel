@@ -15,14 +15,14 @@ class XISelector(BaseSelector):
     """
 
     # Minimum and maximum number of each position allowed
-    POS_CONSTRAINTS = {
+    POS_CONSTRAINTS: dict[str, tuple[int, int]] = {
         "GK": (1, 1),  # exactly 1 GK
         "DEF": (3, 5),
         "MID": (2, 5),
         "FWD": (1, 3),
     }
 
-    def __init__(self, candidate_df: pd.DataFrame, pred_var: str = "predicted_points"):
+    def __init__(self, candidate_df: pd.DataFrame, pred_var: str = "predicted_points") -> None:
         super().__init__(candidate_df)
         self.pred_var = pred_var
 
@@ -33,19 +33,19 @@ class XISelector(BaseSelector):
         self.add_constraint(self.constraint_xi_size)
         self.add_constraint(self.constraint_positions)
 
-    def default_objective(self, candidate_df, decision_vars):
+    def default_objective(self, candidate_df: pd.DataFrame, decision_vars: list[pulp.LpVariable]) -> pulp.LpAffineExpression:
         """
         By default, maximize the sum of pred_var for selected players.
         """
         return pulp.lpSum(decision_vars[i] * candidate_df.iloc[i][self.pred_var] for i in range(self.num_players))
 
-    def constraint_xi_size(self, candidate_df, decision_vars):
+    def constraint_xi_size(self, candidate_df: pd.DataFrame, decision_vars: list[pulp.LpVariable]) -> pulp.LpConstraint:
         """
         Enforces exactly 11 selected players.
         """
         return pulp.lpSum(decision_vars) == 11
 
-    def constraint_positions(self, candidate_df, decision_vars):
+    def constraint_positions(self, candidate_df: pd.DataFrame, decision_vars: list[pulp.LpVariable]) -> list[pulp.LpConstraint]:
         """
         Enforces position constraints:
           - Each position must be between its defined min and max.
@@ -63,7 +63,7 @@ class XISelector(BaseSelector):
             constraints.append(pulp.lpSum([decision_vars[i] for i in pos_ints]) <= max_pos)
         return constraints
 
-    def select(self):
+    def select(self) -> pd.DataFrame:
         selected_subset = super().select()
         # Mark columns
         self.candidate_df["xi"] = 0
