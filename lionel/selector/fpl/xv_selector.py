@@ -1,7 +1,9 @@
-import pandas as pd
+from collections.abc import Mapping, Sequence
+
 import pulp
 
-from ..core.base_selector import BaseSelector
+from ..core.base_selector import BaseSelector, DecisionVars
+from ..core.player import Player, PlayerId
 
 
 class XVSelector(BaseSelector):
@@ -21,28 +23,19 @@ class XVSelector(BaseSelector):
 
     def __init__(
         self,
-        candidate_df: pd.DataFrame,
-        pred_var: str = "predicted_points",
+        players: Sequence[Player | Mapping],
+        *,
         budget: float = 1000.0,
     ) -> None:
-        super().__init__(candidate_df)
-        self.pred_var = pred_var
+        super().__init__(players)
         self.budget = budget
 
-        # Ensure candidate_df has needed columns
-        if self.pred_var not in self.candidate_df.columns:
-            raise ValueError(f"'{self.pred_var}' not found in candidate_df columns.")
-        if "price" not in self.candidate_df.columns:
-            raise ValueError("'price' column is required for budget constraints.")
-        if "team" not in self.candidate_df.columns:
-            raise ValueError("'team' column is required for max-team constraints.")
-        if "position" not in self.candidate_df.columns:
-            raise ValueError("'position' column is required for position constraints.")
+        # Create captain decision variables (one per player)
+        self.captain_vars: DecisionVars = {
+            p.player_id: pulp.LpVariable(f"capt_{i}", cat=pulp.LpBinary) for i, p in enumerate(self.players)
+        }
 
-        # Create captain decision variables (one per row)
-        self.captain_vars: list[pulp.LpVariable] = [pulp.LpVariable(f"capt_{i}", cat=pulp.LpBinary) for i in range(self.num_players)]
-
-        # Objective: sum( (x_i + c_i)*pred_var )
+        # Objective: sum( (x_i + c_i)*predicted_points )
         self.set_objective_function(self._objective_with_captains)
 
         # Add constraints
@@ -53,85 +46,51 @@ class XVSelector(BaseSelector):
         self.add_constraint(self._constraint_exactly_one_captain)
         self.add_constraint(self._constraint_captain_must_be_selected)
 
-    def _objective_with_captains(self, candidate_df: pd.DataFrame, decision_vars: list[pulp.LpVariable]) -> pulp.LpAffineExpression:
+    def _objective_with_captains(self, players: list[Player], x: DecisionVars) -> pulp.LpAffineExpression:
         """
         Maximize sum of predicted points + an extra predicted_points for the captain.
         i.e. (x_i + c_i)*predicted_points[i].
         """
-        return pulp.lpSum(
-            (decision_vars[i] + self.captain_vars[i]) * candidate_df.iloc[i][self.pred_var]
-            for i in range(self.num_players)
-        )
+        return pulp.lpSum((x[p.player_id] + self.captain_vars[p.player_id]) * p.predicted_points for p in players)
 
-    def _constraint_xv_size(self, candidate_df: pd.DataFrame, decision_vars: list[pulp.LpVariable]) -> pulp.LpConstraint:
+    def _constraint_xv_size(self, players: list[Player], x: DecisionVars) -> pulp.LpConstraint:
         """Enforce exactly 15 selected players."""
-        return pulp.lpSum(decision_vars) == 15
+        return pulp.lpSum(x.values()) == 15
 
-    def _constraint_budget(self, candidate_df: pd.DataFrame, decision_vars: list[pulp.LpVariable]) -> pulp.LpConstraint:
+    def _constraint_budget(self, players: list[Player], x: DecisionVars) -> pulp.LpConstraint:
         """Total cost of selected players must not exceed the budget."""
-        return (
-            pulp.lpSum(decision_vars[i] * candidate_df.iloc[i]["price"] for i in range(self.num_players)) <= self.budget
-        )
+        return pulp.lpSum(x[p.player_id] * p.price for p in players) <= self.budget
 
-    def _constraint_positions(self, candidate_df: pd.DataFrame, decision_vars: list[pulp.LpVariable]) -> list[pulp.LpConstraint]:
+    def _constraint_positions(self, players: list[Player], x: DecisionVars) -> list[pulp.LpConstraint]:
         """
         Enforce standard position requirements.
         Example: {'GK':2, 'DEF':5, 'MID':5, 'FWD':3}.
         """
-        constraints = []
-        for pos, required_count in self.POS_CONSTRAINTS.items():
-            # Get the integer-based positions for this 'pos'
-            idxs = candidate_df.index[candidate_df["position"] == pos].tolist()
-            # Convert index labels -> integer positions
-            int_positions = [candidate_df.index.get_loc(label) for label in idxs]
-            constraints.append(pulp.lpSum(decision_vars[j] for j in int_positions) == required_count)
-        return constraints
+        return [
+            pulp.lpSum(x[p.player_id] for p in players if p.position == pos) == required_count
+            for pos, required_count in self.POS_CONSTRAINTS.items()
+        ]
 
-    def _constraint_max_team(self, candidate_df: pd.DataFrame, decision_vars: list[pulp.LpVariable]) -> list[pulp.LpConstraint]:
+    def _constraint_max_team(self, players: list[Player], x: DecisionVars) -> list[pulp.LpConstraint]:
         """
         Enforce no more than MAX_PER_TEAM players from the same club.
         """
-        constraints = []
-        unique_teams = candidate_df["team"].unique()
-        for team in unique_teams:
-            idxs = candidate_df.index[candidate_df["team"] == team].tolist()
-            int_positions = [candidate_df.index.get_loc(label) for label in idxs]
-            constraints.append(pulp.lpSum(decision_vars[j] for j in int_positions) <= self.MAX_PER_TEAM)
-        return constraints
+        unique_teams = dict.fromkeys(p.team for p in players)
+        return [
+            pulp.lpSum(x[p.player_id] for p in players if p.team == team) <= self.MAX_PER_TEAM for team in unique_teams
+        ]
 
-    def _constraint_exactly_one_captain(self, candidate_df: pd.DataFrame, decision_vars: list[pulp.LpVariable]) -> pulp.LpConstraint:
+    def _constraint_exactly_one_captain(self, players: list[Player], x: DecisionVars) -> pulp.LpConstraint:
         """Enforce exactly 1 captain among all selected players."""
-        return pulp.lpSum(self.captain_vars) == 1
+        return pulp.lpSum(self.captain_vars.values()) == 1
 
-    def _constraint_captain_must_be_selected(self, candidate_df: pd.DataFrame, decision_vars: list[pulp.LpVariable]) -> list[pulp.LpConstraint]:
+    def _constraint_captain_must_be_selected(self, players: list[Player], x: DecisionVars) -> list[pulp.LpConstraint]:
         """
         For each player i: x_i >= c_i
         (i.e. a player can't be captain if not in the team).
         """
-        constraints = []
-        for i in range(self.num_players):
-            constraints.append(decision_vars[i] - self.captain_vars[i] >= 0)
-        return constraints
+        return [x[p.player_id] - self.captain_vars[p.player_id] >= 0 for p in players]
 
-    def select(self) -> pd.DataFrame:
-        """
-        Solves the optimization problem and returns the chosen subset of candidate_df.
-        Also sets 'xv'=1 for selected players, 'captain'=1 for the captain.
-        """
-        selected_subset = super().select()  # This calls the base solve logic
-        selected_capt_idxs = [i for i in range(self.num_players) if pulp.value(self.captain_vars[i]) == 1]
-        captain_labels = self.candidate_df.index[selected_capt_idxs]
-
-        # Mark columns in the original candidate_df
-        self.candidate_df["xv"] = 0
-        self.candidate_df.loc[selected_subset.index, "xv"] = 1
-        self.candidate_df["captain"] = 0
-        self.candidate_df.loc[captain_labels, "captain"] = 1
-
-        # Also mark them in selected_df
-        self.selected_df["xv"] = 1
-        self.selected_df["captain"] = 0
-        # Note: Some rows in selected_df might not be captain
-        self.selected_df.loc[captain_labels.intersection(self.selected_df.index), "captain"] = 1
-
-        return self.candidate_df
+    def _flags(self, selected_ids: set[PlayerId]) -> dict[str, set[PlayerId]]:
+        """Sets 'xv' for the selected players and 'captain' for the captain."""
+        return {"xv": selected_ids, "captain": self._chosen(self.captain_vars)}

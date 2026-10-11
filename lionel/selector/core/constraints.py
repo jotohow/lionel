@@ -1,9 +1,11 @@
 # TODO: Add common constraints that can be used by all selectors
 
-from abc import ABC, abstractmethod
+from abc import ABC
 
-import pandas as pd
 import pulp
+
+from .base_selector import DecisionVars
+from .player import Player
 
 
 class Constraint(ABC):
@@ -11,20 +13,25 @@ class Constraint(ABC):
 
 
 class SumConstraint(Constraint):
+    """
+    A constraint on the sum of `weight * x` over the selected players.
+    `weight` names a numeric `Player` field. If it is None, every weight is 1.
+    """
+
     def __init__(
         self,
-        candidate_df: pd.DataFrame,
-        decision_vars: list[pulp.LpVariable],
-        sum_var: str | None = None,
+        players: list[Player],
+        decision_vars: DecisionVars,
+        weight: str | None = None,
     ) -> None:
-        self.candidate_df = candidate_df
+        self.players = players
         self.decision_vars = decision_vars
-        self.sum_var = sum_var
+        self.weight = weight
 
     def _total(self) -> pulp.LpAffineExpression:
-        if self.sum_var is None:
-            return pulp.lpSum(self.decision_vars)
-        return pulp.lpSum(self.decision_vars * self.candidate_df[self.sum_var])
+        if self.weight is None:
+            return pulp.lpSum(self.decision_vars.values())
+        return pulp.lpSum(getattr(p, self.weight) * self.decision_vars[p.player_id] for p in self.players)
 
     def less_than(self, max_sum: float) -> pulp.LpConstraint:
         return self._total() <= max_sum
@@ -41,7 +48,7 @@ class CountConstraint(SumConstraint):
 
     def __init__(
         self,
-        candidate_df: pd.DataFrame,
-        decision_vars: list[pulp.LpVariable],
+        players: list[Player],
+        decision_vars: DecisionVars,
     ) -> None:
-        super().__init__(candidate_df, decision_vars, sum_var=None)
+        super().__init__(players, decision_vars, weight=None)

@@ -1,10 +1,11 @@
 # TODO: Add common objectives that can be used by all selectors
 
-from abc import ABC, abstractmethod
+from abc import ABC
 
-import pandas as pd
 import pulp
 
+from .base_selector import DecisionVars
+from .player import Player
 
 
 class Objective(ABC):
@@ -12,12 +13,10 @@ class Objective(ABC):
 
 
 class DefaultObjective(Objective):
-    def __init__(self, candidate_df: pd.DataFrame, decision_vars: list[pulp.LpVariable], pred_var: str) -> None:
-        self.candidate_df = candidate_df
+    def __init__(self, players: list[Player], decision_vars: DecisionVars, pred_var: str = "predicted_points") -> None:
+        self.players = players
         self.decision_vars = decision_vars
         self.pred_var = pred_var
 
     def __call__(self) -> pulp.LpAffineExpression:
-        return pulp.lpSum(
-            self.decision_vars[i] * self.candidate_df.iloc[i][self.pred_var] for i in range(self.num_players)
-        )
+        return pulp.lpSum(getattr(p, self.pred_var) * self.decision_vars[p.player_id] for p in self.players)
